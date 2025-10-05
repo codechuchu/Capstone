@@ -9,7 +9,7 @@ session_set_cookie_params([
 session_start();
 header('Content-Type: application/json');
 
-$conn = new mysqli("localhost", "root", "", "sulivannhs");
+$conn = new mysqli("localhost", "root", "Sulivannhs2025", "sulivannhs");
 if ($conn->connect_error) {
     http_response_code(500);
     echo json_encode(["success" => false, "message" => "Database connection failed"]);
