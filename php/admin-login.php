@@ -5,7 +5,7 @@ session_set_cookie_params([
     'httponly' => true,
     'secure' => false,       // set to true if using HTTPS
     'samesite' => 'Lax'
-]);
+]);//up
 session_start();
 header('Content-Type: application/json');
 
