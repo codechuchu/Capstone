@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sulivan National High School Parent Profile</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="parent-profile.css">
+    <!-- Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-md p-4 flex justify-between items-center rounded-b-lg">
+        <div class="bg-blue-500 text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-sm">
+            Sulivan National High School
+        </div>
+        <div class="parent-profile relative inline-block">
+            <button id="parentProfileBtn"
+                class="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-blue-600 transition duration-200 ease-in-out shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span id="parentBtnName">Parent Profile</span>
+            </button>
+
+            <!-- Parent Panel -->
+            <div id="parentPanel" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-40 p-4">
+                <div class="flex items-center space-x-3 border-b pb-3 mb-3">
+                    <div>
+                        <p id="parentName" class="font-semibold text-gray-800">Parent Name</p>
+                        <p id="parentEmail" class="text-sm text-gray-500">parent@example.com</p>
+                    </div>
+                </div>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="parentChangePasswordLink"
+                            class="block px-4 py-2 rounded hover:bg-gray-100">Change Password</a>
+                    </li>
+                    <li>
+                        <a href="#" id="addLrn" class="block px-4 py-2 rounded hover:bg-gray-100">Add Child LRN</a>
+                    </li>
+                    <li>
+                        <a href="#" class="logout-btn block px-4 py-2 rounded hover:bg-gray-100 text-red-600">Logout</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Modal Background -->
+            <div id="lrnModal"
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <!-- Modal Box -->
+                <div class="bg-white rounded-lg shadow-lg w-96 max-w-full p-6 relative">
+                    <!-- Close Button -->
+                    <button id="closeLrnModal"
+                        class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
+
+                    <!-- Modal Title -->
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">Add Child LRN</h2>
+
+                    <!-- Form -->
+                    <form id="lrnForm" class="space-y-4">
+                        <div>
+                            <label for="childLrn" class="block text-gray-700 text-sm font-medium mb-1">LRN *</label>
+                            <input type="text" id="childLrn" name="childLrn"
+                                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                required>
+                        </div>
+
+                        <div class="flex justify-end space-x-2 mt-4">
+                            <button type="button" id="cancelLrn"
+                                class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Cancel</button>
+                            <button type="submit"
+                                class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Change Password Modal -->
+            <div id="parentChangePasswordModal"
+                class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+                <div class="bg-white rounded-lg shadow-lg w-96 p-6 relative">
+                    <h2 class="text-xl font-semibold mb-4">Change Password</h2>
+
+                    <form id="parentChangePasswordForm">
+                        <div class="mb-4">
+                            <label class="block mb-1 font-medium">Current Password</label>
+                            <input type="password" name="current_password" required
+                                class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-1 font-medium">New Password</label>
+                            <input type="password" name="new_password" required
+                                class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-1 font-medium">Confirm New Password</label>
+                            <input type="password" name="confirm_password" required
+                                class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" id="parentCloseChangePassword"
+                                class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancel</button>
+                            <button type="submit"
+                                class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600">Save</button>
+                        </div>
+                    </form>
+
+                    <!-- Close Button -->
+                    <button id="parentCloseModalX"
+                        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-1 mt-4 p-4">
+        <!-- Sidebar Navigation -->
+        <nav class="w-64 bg-gray-800 text-white rounded-lg p-4 shadow-lg h-full flex flex-col justify-between">
+            <div>
+                <div class="sidebar-header mb-6 text-center">
+                    <div class="text-3xl font-bold mb-2 text-blue-400">SNHS</div>
+                    <h3 class="text-xl font-semibold text-gray-200">Parent Portal</h3>
+                </div>
+                <ul class="space-y-4">
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out active"
+                            data-pane="home-pane" data-title="">Home</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="child-schedule-pane" data-title="Child's Schedule">Child's Schedule</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="child-grades-pane" data-title="">Child's Grades</button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content Panel -->
+        <main class="flex-1 bg-white rounded-lg shadow-lg ml-4 p-6">
+            <h2 id="page-title" class="text-2xl font-semibold mb-6 text-gray-800">Child's Schedule</h2>
+
+            <!-- Content Panes -->
+            <!-- Content Panes -->
+            <div id="home-pane" class="content-pane h-full w-full">
+                <div id="slideshowContainer" class="relative w-full h-full overflow-hidden rounded-xl shadow-lg">
+                    <img id="slideshowImage" class="absolute inset-0 w-full h-full object-cover rounded-xl" src=""
+                        alt="Slideshow">
+                    <div class="absolute top-3 right-3 flex space-x-2 z-10">
+                        <button id="prevSlide"
+                            class="bg-black bg-opacity-50 hover:bg-opacity-70 text-white px-3 py-1 rounded-md">Prev</button>
+                        <button id="nextSlide"
+                            class="bg-black bg-opacity-50 hover:bg-opacity-70 text-white px-3 py-1 rounded-md">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="child-schedule-pane" class="content-pane hidden">
+
+                <!-- Child Selection Dropdown -->
+                <div class="mb-4 overflow-visible">
+                    <label for="childSelectSchedule" class="block mb-2 font-medium text-gray-700">Select Child:</label>
+                    <select id="childSelectSchedule"
+                        class="w-64 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="scheduleTitle" class="text-xl font-semibold text-gray-800">Today's Schedule</h3>
+                    <button class="text-blue-600 hover:text-blue-900 font-medium" id="viewFullScheduleBtn">View Full
+                        Schedule</button>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-gray-200 table-container">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-pink-100">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                    Subject</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Time</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+                                    Teacher</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody" class="bg-white divide-y divide-pink-200">
+                            <!-- Schedule rows will be populated dynamically based on selected child -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <div id="child-grades-pane" class="content-pane hidden">
+                <!-- Child Selection Dropdown -->
+                <div class="mb-4">
+                    <label for="childSelect" class="block mb-2 font-medium text-gray-700">Select Child:</label>
+                    <select id="childSelect"
+                        class="w-64 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <!-- Options will be populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <!-- Grades Table -->
+                <!-- Junior High Grades Table -->
+                <div id="jhs-grades-pane" class="hidden overflow-x-auto rounded-lg border border-gray-200 mt-4">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-pink-100">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                    Subject
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    1st Quarter
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    2nd Quarter
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    3rd Quarter
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+                                    4th Quarter
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Teacher
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradesTableBody" class="bg-white divide-y divide-pink-200">
+                            <!-- JHS grades will be appended dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Senior High Grades Table -->
+                <div id="shs-grades-pane" class="hidden overflow-x-auto rounded-lg border border-gray-200 mt-4">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-green-100">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Subject</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Q1</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Q2</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    1st Sem Avg</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Q3</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Q4</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    2nd Sem Avg</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Teacher</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shsGradesTableBody">
+                            <!-- SHS grades will be appended dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+
+        </main>
+    </div>
+    <script>
+        fetch("../php/auth.php", {
+          method: "GET",
+          credentials: "include"
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success || data.role !== "parents") {
+            window.location.href = "parent-login.html"; // redirect to login
+            return;
+          }
+        })
+        .catch(err => {
+          console.error("Auth check failed:", err);
+          window.location.href = "parent-login.html";
+        });
+        </script>
+        
+        
+
+    <!-- Link to external JavaScript file -->
+    <script src="parent-profile.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sulivan National High School</title>
+    <link rel="stylesheet" href="homepage.css" />
+    <style>
+        /* Enable smooth scrolling for anchor links */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Ensure body allows vertical scrolling */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="navbar">
+            <img src="sulivanlogo.png" alt="Sulivan Logo" class="school-logo">
+            <div class="logo">Sulivan National High School</div>
+            <nav class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#programs">Programs</a>
+                <a href="#about">About</a>
+
+                <div class="track-status">
+                    <input type="text" id="lrnInput" placeholder="Enter LRN" />
+                    <button class="search-btn">🔍</button> <!-- Fixed: No leading dot, proper class -->
+                    <div id="popup" class="popup hidden"></div>
+                </div>
+
+                <button class="enroll-btn">Enroll Now</button>
+                <button class="admin-login" onclick="window.location.href='admin-login.html'">Login</button>
+            </nav>
+        </div>
+    </header>
+
+
+    <!-- Banner Section -->
+    <section id="home" class="banner">
+        <div class="banner-overlay">
+            <img src="school-building.jpg" alt="Sulivan National High School" class="banner-img" />
+            <div class="banner-text">
+                <h1>Welcome to Sulivan National High School</h1>
+                <p>Enroll now and be part of our growing family!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Programs Section -->
+    <section id="programs" class="content-section">
+        <div class="container">
+            <h2>Senior High School Strands</h2>
+            <p>At Sulivan National High School, we offer a range of strands under the K-12 Senior High School curriculum
+                to match the diverse interests and career goals of our students. Our programs emphasize practical
+                skills, academic rigor, and real-world preparation.</p>
+
+            <ul class="strands-list">
+                <li class="strand-item">
+                    <span class="strand-icon">🔬</span>
+                    <strong>STEM</strong> &ndash; For students interested in science, technology, engineering, and
+                    mathematics. Ideal for future engineers, doctors, scientists, and IT professionals.
+                </li>
+                <li class="strand-item">
+                    <span class="strand-icon">💼</span>
+                    <strong>ABM</strong> &ndash; Focuses on business, finance, marketing, and entrepreneurship. Perfect
+                    for aspiring accountants, business owners, and economists.
+                </li>
+                <li class="strand-item">
+                    <span class="strand-icon">📚</span>
+                    <strong>HUMSS</strong> &ndash; Humanities and Social Sciences. Best for those who want to pursue
+                    careers in education, psychology, communication, or politics.
+                </li>
+                <li class="strand-item">
+                    <span class="strand-icon">👩‍🍳</span>
+                    <strong>TVL HE</strong> &ndash; Technical-Vocational-Livelihood in Home Economics. Hands-on skills
+                    training in areas like cookery, beauty care, and hospitality &ndash; great for careers in culinary
+                    arts, tourism, and wellness services.
+                </li>
+                <li class="strand-item">
+                    <span class="strand-icon">💻</span>
+                    <strong>TVL ICT</strong> &ndash; Technical-Vocational-Livelihood in Information and Communications
+                    Technology. Hands-on training in computer systems servicing, programming, electronics, and
+                    networking &ndash; ideal for IT professionals, tech support, and digital careers.
+                </li>
+                <li class="strand-item">
+                    <span class="strand-icon">🎓</span>
+                    <strong>GAS</strong> &ndash; General Academic Strand. A flexible track for students who are still
+                    exploring their career path or want to take a mix of subjects.
+                </li>
+            </ul>
+
+            <div class="programs-cta">
+                <p>Ready to choose your path? Contact our guidance office for personalized advising.</p>
+                <button class="cta-btn" onclick="window.location.href='#about'">Learn More About Our School</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="content-section">
+        <div class="container">
+            <h2>About Sulivan National High School</h2>
+            <p>Sulivan National High School is a public secondary institution committed to academic excellence,
+                community involvement, and the holistic development of every learner. We provide quality education
+                through modern teaching strategies, dedicated faculty, and a safe, inclusive learning environment.</p>
+
+            <!-- Updated Mission & Vision Section - Separate Boxes Styled Like Programs -->
+            <div class="mission-vision-container">
+                <div class="mission-box">
+                    <h3>Mission</h3>
+                    <p>We dream of Filipinos<br>who passionately love their country<br>and whose values and
+                        competencies<br>enable them to realize their full potential<br>and contribute meaningfully to
+                        building the nation.</p>
+                    <p>As a learner-centered public institution,<br>the Department of Education<br>continuously improves
+                        itself<br>to better serve its stakeholders.</p>
+                </div>
+                <div class="vision-box">
+                    <h3>Vision</h3>
+                    <p>To protect and promote the right of every Filipino to quality, equitable, culture-based, and
+                        complete basic education where:</p>
+                    <ul>
+                        <li>Students learn in a child-friendly, gender-sensitive, safe, and motivating environment.</li>
+                        <li>Teachers facilitate learning and constantly nurture every learner.</li>
+                        <li>Administrators and staff, as stewards of the institution, ensure an enabling and supportive
+                            environment for effective learning to happen.</li>
+                        <li>Family, community, and other stakeholders are actively engaged and share responsibility for
+                            developing life-long learners.</li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <div class="get-in-touch">
+                <h3>Get in Touch</h3>
+                <p>For inquiries about enrollment, programs, or events, reach out via our social media channels below.
+                    We're here to support your educational journey.</p>
+            </div>
+
+            <ul class="social-links">
+                <li><a href="https://www.facebook.com/sulivanians1994" target="_blank">📘 Facebook</a></li>
+                <li><a href="https://tiktok.com/@sulivannhs" target="_blank">🎵 TikTok</a></li>
+                <li><a href="https://instagram.com/sulivannhs" target="_blank">📸 Instagram</a></li>
+            </ul>
+        </div>
+    </section>
+
+
+
+    <!-- JavaScript -->
+    <script src="homepage.js"></script>
+</body>
+
+</html>

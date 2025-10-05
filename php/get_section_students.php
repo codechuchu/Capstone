@@ -1,0 +1,69 @@
+<?php
+session_start();
+header('Content-Type: application/json');
+
+$host = 'localhost';
+$db   = 'sulivannhs';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+
+    $sectionName = trim($_GET['section_name'] ?? '');
+    if ($sectionName === '') {
+        echo json_encode(["error" => "Section name is required"]);
+        exit;
+    }
+
+    // Get section_id
+    $stmt = $pdo->prepare("SELECT section_id FROM sections_list WHERE section_name = ?");
+    $stmt->execute([$sectionName]);
+    $section = $stmt->fetch();
+
+    if (!$section) {
+        echo json_encode(["error" => "Section not found"]);
+        exit;
+    }
+
+    $sectionId = $section['section_id'];
+
+    // Fetch students in that section
+    $stmt = $pdo->prepare("
+        SELECT student_id, student_name, strand, grade_level
+        FROM section
+        WHERE section_id = ?
+        ORDER BY student_name
+    ");
+    $stmt->execute([$sectionId]);
+    $students = $stmt->fetchAll();
+
+    // 🔴 For each student, also fetch their grades
+    foreach ($students as &$student) {
+        $gradesStmt = $pdo->prepare("SELECT average FROM studentgrade WHERE student_id = ?");
+        $gradesStmt->execute([$student['student_id']]);
+        $grades = $gradesStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $student['grades'] = $grades;
+        $student['failed'] = false;
+
+        foreach ($grades as $avg) {
+            if ($avg < 75) {
+                $student['failed'] = true;
+                break;
+            }
+        }
+    }
+
+    echo json_encode($students);
+
+} catch (Throwable $e) {
+    echo json_encode(["error" => $e->getMessage()]);
+}

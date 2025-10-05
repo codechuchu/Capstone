@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enrollment Form - Sulivan National High School</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="enrollment.css" />
+</head>
+
+<body class="bg-pink-50 min-h-screen flex flex-col">
+  <header>
+    <div class="navbar">
+      <div class="logo">
+        <a href="homepage.html" style="text-decoration: none; color: inherit;">
+          Sulivan National High School
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-bar">
+    <div class="step">
+      <div class="circle">1</div>
+      <div class="label">Program</div>
+    </div>
+    <div class="step active">
+      <div class="circle">2</div>
+      <div class="label">Personal Information</div>
+    </div>
+    <div class="step">
+      <div class="circle">3</div>
+      <div class="label">Validate Details</div>
+    </div>
+    <div class="step">
+      <div class="circle">4</div>
+      <div class="label">Finish</div>
+    </div>
+  </div>
+
+  <main class="form-container">
+    <div class="bg-white p-8 rounded-lg shadow-lg relative">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-800">Upload Documents</h2>
+      <p class="text-sm text-red-500 absolute top-8 right-8">* Required Fields</p>
+
+      <!-- FORM: submits to applicant.php which will handle files + DB -->
+      <form id="document-form">
+
+
+        <!-- Hidden fields to pass sessionStorage data to PHP -->
+        <input type="hidden" name="track" id="hidden_track">
+        <input type="hidden" name="grade_level" id="hidden_grade_level">
+        <input type="hidden" name="semester" id="hidden_semester">
+        <input type="hidden" name="student_name" id="hidden_student_name">
+        <input type="hidden" name="gender" id="hidden_gender">
+        <input type="hidden" name="birthdate" id="hidden_birthdate">
+        <input type="hidden" name="address" id="hidden_address">
+        <input type="hidden" name="contact" id="hidden_contact">
+        <input type="hidden" name="email" id="hidden_email">
+        <input type="hidden" name="guardian_name" id="hidden_guardian_name">
+        <input type="hidden" name="guardian_relation" id="hidden_guardian_relation">
+        <input type="hidden" name="guardian_contact" id="hidden_guardian_contact">
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="birth-certificate" class="block text-gray-700 text-lg font-medium mb-2">Birth
+              Certificate</label>
+            <div class="flex items-center space-x-4">
+              <input type="file" id="birth-certificate" name="birth_certificate" class="hidden"
+                accept=".pdf,.doc,.docx,.jpg,.png" required />
+              <button type="button"
+                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+                data-target-input="birth-certificate">Attach file</button>
+              <span class="filename-text text-gray-600">No file chosen</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="original-form-138" class="block text-gray-700 text-lg font-medium mb-2">Original Form
+              138</label>
+            <div class="flex items-center space-x-4">
+              <!-- NAME matches PHP expectation: original_form_138 -->
+              <input type="file" id="original-form-138" name="original_form_138" class="hidden"
+                accept=".pdf,.doc,.docx,.jpg,.png" required />
+              <button type="button"
+                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+                data-target-input="original-form-138">Attach file</button>
+              <span class="filename-text text-gray-600">No file chosen</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="good-moral" class="block text-gray-700 text-lg font-medium mb-2">Good Moral</label>
+            <div class="flex items-center space-x-4">
+              <input type="file" id="good-moral" name="good_moral" class="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
+                required />
+              <button type="button"
+                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+                data-target-input="good-moral">Attach file</button>
+              <span class="filename-text text-gray-600">No file chosen</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="original-form-137" class="block text-gray-700 text-lg font-medium mb-2">Original Form
+              137</label>
+            <div class="flex items-center space-x-4">
+              <!-- NAME matches PHP expectation: original_form_137 -->
+              <input type="file" id="original-form-137" name="original_form_137" class="hidden"
+                accept=".pdf,.doc,.docx,.jpg,.png" required />
+              <button type="button"
+                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+                data-target-input="original-form-137">Attach file</button>
+              <span class="filename-text text-gray-600">No file chosen</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-8">
+          <button id="next-button" type="submit"
+            class="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 transition">Next</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="enrollment-file.js"></script>
+</body>
+
+</html>

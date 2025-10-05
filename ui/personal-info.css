@@ -1,0 +1,242 @@
+/* General Body and Font Styles */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #ffffff; /* white */
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* Navbar */
+header {
+    background-color: #004aad; /* deep blue */
+    padding: 1em 2em;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffffff;
+}
+
+.logo {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #ffffff;
+
+}
+
+.nav-links a {
+    color: #ffdd00; /* yellow links */
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: 500;
+}
+
+.progress-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2em auto;
+    width: 1200px; /* longer progress bar */
+    position: relative;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+}
+
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 100%;
+    top: 18px;
+    height: 4px;
+    background: #004aad;
+    z-index: 0;
+}
+
+/* Full connector line behind all circles, trimmed to start/end inside circles */
+.progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 15px;   /* start just inside first circle */
+    right: 15px;  /* end just inside last circle */
+    height: 4px;
+    background: #004aad;
+    z-index: 0;
+}
+
+.circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #004aad;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    z-index: 1;
+}
+
+.step.active .circle {
+    background-color: #ffdd00;
+    color: #004aad;
+}
+
+.label {
+  margin-top: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Form Container */
+.personal-form {
+    background-color: white; /* Changed from pink to white */
+    padding: 2em;
+    border-radius: 8px;
+    max-width: 950px;
+    margin: 2em auto;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); /* Added box shadow for a clean look */
+}
+
+/* Headings */
+h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #004aad; /* Changed to deep blue */
+    text-align: center;
+}
+
+h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #004aad; /* Changed to deep blue */
+}
+
+/* Form Row Layout */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    margin-bottom: 15px;
+}
+
+.form-row input {
+    flex: 1;
+    min-width: 180px;
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+input[type="date"],
+.form-select {
+    flex: 1;
+    padding: 0.6em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #374151;
+    background-color: #fff;
+}
+
+/* Placeholder text */
+input::placeholder {
+    color: #9ca3af;
+}
+
+/* Focus State */
+input[type="text"]:focus,
+input[type="tel"]:focus,
+input[type="email"]:focus,
+input[type="date"]:focus,
+.form-select:focus {
+    border-color: #ffdd00; /* Changed to yellow */
+    box-shadow: 0 0 0 3px rgba(255, 221, 0, 0.5); /* Changed to yellow shadow */
+}
+
+/* Button Container */
+.btn-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+/* Back and Next Buttons */
+button,
+.next-btn {
+    background-color: #004aad; /* deep blue */
+    color: white;
+    padding: 0.6em 2em;
+    border: none;
+    border-radius: 20px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+button:hover,
+.next-btn:hover {
+    background-color: #00347a; /* darker blue */
+}
+
+/* File input */
+input[type="file"] {
+    font-size: 15px;
+    margin-bottom: 15px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .personal-form {
+        padding: 1.5rem;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    h2 {
+        font-size: 1.5rem;
+    }
+    h3 {
+        font-size: 1.125rem;
+    }
+}
+
+#childSelectSchedule {
+    position: relative;
+    z-index: 50; /* or higher if needed */
+}
+.input-container {
+    position: relative; /* Make sure the popup is positioned relative to this container */
+}
+
+.error-message {
+    position: absolute;
+    top: -1.5rem; /* Above the input */
+    left: 0;
+    font-size: 0.75rem;
+    background-color: #f87171; /* red-400 */
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+input.error {
+    border-color: #f87171; /* red border */
+}

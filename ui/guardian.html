@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guardian Form</title>
+    <link rel="stylesheet" href="guardian.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+</head>
+<body class="bg-pink-50 min-h-screen flex items-center justify-center">
+    <header>
+    <div class="navbar">
+        <div class="logo">
+            <a href="homepage.html" style="text-decoration: none; color: inherit;">
+                Sulivan National High School
+            </a>
+        </div>
+    </div>
+</header>
+
+    
+    <div class="progress-bar">
+    <div class="step">
+      <div class="circle">1</div>
+      <div class="label">Program</div>
+    </div>
+    <div class="step active">
+      <div class="circle">2</div>
+      <div class="label">Personal Information</div>
+    </div>
+    <div class="step">
+      <div class="circle">3</div>
+      <div class="label">Validate Details</div>
+    </div>
+    <div class="step">
+      <div class="circle">4</div>
+      <div class="label">Finish</div>
+    </div>
+  </div>
+
+    
+
+    <main class="form-container">
+        <form id="guardianForm" novalidate>
+            <h3>Guardian's Information</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="form-row">
+                <input type="text" id="guardianFirstName" placeholder="First Name *" required autocomplete="given-name">
+                <input type="text" id="guardianMiddleName" placeholder="Middle Name" autocomplete="additional-name">
+                <input type="text" id="guardianLastName" placeholder="Last Name *" required autocomplete="family-name">
+                <input type="text" id="guardianSuffix" placeholder="Suffix Name" autocomplete="honorific-suffix">
+            </div>
+
+            <div class="form-row">
+                <input type="text" id="guardianMobile" placeholder="Mobile Number (11 digits) *" inputmode="numeric" maxlength="11" required autocomplete="tel">
+                <div class="input-wrapper">
+                    <input type="email" id="guardianEmail" placeholder="Email *" required autocomplete="email" />
+                    <span class="error-inline">Email does not exist</span>
+                  </div>
+                  
+                <select id="guardianRelation" required>
+                    <option value="" disabled selected>Relationship *</option>
+                    <option value="Father">Father</option>
+                    <option value="Mother">Mother</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Guardian">Guardian</option>
+                </select>
+            </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem;">
+                <button class="next-btn" type="submit">Next</button>
+            </div>
+        </form>
+    </main>
+
+    <script src="guardian.js"></script>
+</body>
+</html>

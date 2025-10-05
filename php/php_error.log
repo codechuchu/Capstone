@@ -1,0 +1,49 @@
+[09-Sep-2025 11:01:00 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:72
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(72): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get_subjects.php on line 72
+[09-Sep-2025 11:01:07 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:72
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(72): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get_subjects.php on line 72
+[09-Sep-2025 11:01:11 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:72
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(72): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get_subjects.php on line 72
+[09-Sep-2025 11:01:17 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:72
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(72): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get_subjects.php on line 72
+[09-Sep-2025 11:01:44 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:72
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(72): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get_subjects.php on line 72
+[09-Sep-2025 11:02:05 Europe/Berlin] mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:88
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(88): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+[09-Sep-2025 11:02:42 Europe/Berlin] mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:88
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(88): mysqli->prepare('SELECT id, subc...')
+#1 {main}
+[09-Sep-2025 11:08:19 Europe/Berlin] mysqli_sql_exception: Table 'sulivannhs.strands' doesn't exist in C:\xampp\htdocs\Capstone\php\get_subjects.php:41
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(41): mysqli->prepare('\r\n    SELECT sl...')
+#1 {main}
+[09-Sep-2025 11:08:47 Europe/Berlin] mysqli_sql_exception: Table 'sulivannhs.strands' doesn't exist in C:\xampp\htdocs\Capstone\php\get_subjects.php:41
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(41): mysqli->prepare('\r\n    SELECT sl...')
+#1 {main}
+[09-Sep-2025 11:09:22 Europe/Berlin] mysqli_sql_exception: Unknown column 'st.code' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:41
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(41): mysqli->prepare('\r\n    SELECT sl...')
+#1 {main}
+[09-Sep-2025 11:09:46 Europe/Berlin] mysqli_sql_exception: Unknown column 'st.subcode' in 'field list' in C:\xampp\htdocs\Capstone\php\get_subjects.php:41
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get_subjects.php(41): mysqli->prepare('\r\n    SELECT sl...')
+#1 {main}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Online Application</title>
+  <link rel="stylesheet" href="enrollment.css" />
+</head>
+<body>
+  <header>
+    <div class="navbar">
+      <div class="logo">
+        <a href="homepage.html" style="text-decoration: none; color: inherit;">
+          Sulivan National High School
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-bar">
+    <div class="step active">
+      <div class="circle">1</div>
+      <div class="label">Program</div>
+    </div>
+    <div class="step">
+      <div class="circle">2</div>
+      <div class="label">Personal Information</div>
+    </div>
+    <div class="step">
+      <div class="circle">3</div>
+      <div class="label">Validate Details</div>
+    </div>
+    <div class="step">
+      <div class="circle">4</div>
+      <div class="label">Finish</div>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <h1>Online Application</h1>
+    <p>We warmly welcome junior high school completers, senior high school graduates, college transferees, second coursers, and foreign applicants to our campuses.</p>
+    <p>Kindly fill-out the online application form for a fast and efficient admissions procedure.</p>
+
+    <!-- School level -->
+    <div class="radio-group" id="levelBox">
+      <h3>Are you applying for:</h3>
+      <label class="radio-box">
+        <input type="radio" name="schoolLevel" value="junior" />
+        <span class="custom-radio"></span>
+        Junior High School
+      </label>
+      <label class="radio-box">
+        <input type="radio" name="schoolLevel" value="senior" />
+        <span class="custom-radio"></span>
+        Senior High School
+      </label>
+    </div>
+
+    <!-- Junior Grades -->
+    <div class="radio-group" id="juniorGrades" style="display: none;">
+      <h3>Select Grade Level:</h3>
+      <select id="juniorSelect" name="gradeLevel">
+        <option value="">-- Select Grade --</option>
+        <option value="7">Grade 7</option>
+        <option value="8">Grade 8</option>
+        <option value="9">Grade 9</option>
+        <option value="10">Grade 10</option>
+      </select>
+    </div>
+
+<!-- Senior Strands + Grade + Semester -->
+<div class="radio-group" id="seniorOptions" style="display: none;">
+  <h3>Select Strand, Grade, and Semester:</h3>
+
+  <!-- Strand -->
+  <div style="margin-bottom: 12px;">
+    <label for="strandSelect">Strand:</label><br>
+    <select id="strandSelect" name="strand" style="width: 200px;">
+      <option value="">Select Strand</option>
+    </select>
+  </div>
+
+  <!-- Grade -->
+  <div style="margin-bottom: 12px;">
+    <label for="seniorGradeSelect">Grade:</label><br>
+    <select id="seniorGradeSelect" name="seniorGrade" style="width: 200px;">
+      <option value="">-- Select Grade --</option>
+      <option value="11">Grade 11</option>
+      <option value="12">Grade 12</option>
+    </select>
+  </div>
+
+  <!-- Semester -->
+  <div id="semesterWrapper" style="margin-bottom: 12px; display: none;">
+    <label for="semesterSelect">Semester:</label><br>
+    <select id="semesterSelect" name="semester" style="width: 200px;">
+      <option value="">-- Select Semester --</option>
+      <option value="1">1st Semester</option>
+      <option value="2">2nd Semester</option>
+    </select>
+  </div>
+</div>
+
+</div>
+
+  <script src="enrollment.js"></script>
+
+  <div class="form-actions" id="nextBtnContainer" style="display: none;">
+    <button id="nextBtn">Next →</button>
+  </div>
+
+</body>
+</html>

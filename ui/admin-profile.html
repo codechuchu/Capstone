@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sulivan National High School Admin Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-profile.css">
+</head>
+
+<body class="flex flex-col min-h-screen">
+    <!-- Header -->
+    <!-- Header -->
+    <header class="bg-white shadow-md p-4 flex justify-between items-center rounded-b-lg relative">
+        <div class="bg-blue-500 text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-sm">
+            Sulivan National High School
+        </div>
+
+        <!-- Wrapper -->
+        <div class="relative inline-block space-x-4">
+
+            <!-- Admin Profile -->
+            <div class="relative inline-block">
+                <button id="adminProfileBtn"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center space-x-2 hover:bg-blue-600 transition duration-200 ease-in-out shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span>Admin Profile</span>
+                </button>
+
+                <!-- Profile Panel -->
+                <div id="adminPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 p-4">
+                    <div class="flex items-center space-x-3 border-b pb-3 mb-3">
+                        <div>
+                            <p class="font-semibold text-gray-800">Admin User</p>
+                            <p class="text-sm text-gray-500">admin@example.com</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" id="openCalendar" class="block px-4 py-2 rounded hover:bg-gray-100">Calendar</a>
+                        </li>
+                        <li>
+                            <a href="#" id="activePeriod" class="block px-4 py-2 rounded hover:bg-gray-100">Activation
+                                Period</a>
+                        </li>
+                        <li>
+                            <a href="#" id="schoolyearPeriod" class="block px-4 py-2 rounded hover:bg-gray-100">School
+                                Year Period</a>
+                        </li>
+                        <li>
+                            <a href="#" id="frontpage-banner"
+                                class="block px-4 py-2 rounded hover:bg-gray-100">Frontpage Banner Manager</a>
+                        </li>
+                        <li>
+                            <a href="#" id="changePasswordLink" class="block px-4 py-2 rounded hover:bg-gray-100">Change
+                                Password</a>
+                        </li>
+                        <li>
+                            <a href="#" class="logout-btn block px-4 py-2 rounded hover:bg-gray-100 text-red-600">
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Frontpage Banner Manager Modal -->
+                <div id="bannerModal"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                    <div class="bg-white rounded-lg shadow-lg w-[40rem] p-6 relative max-h-[90vh] overflow-y-auto">
+                        <h2 class="text-xl font-semibold mb-4">Frontpage Banner Manager</h2>
+                        <form id="bannerForm" class="space-y-3">
+
+                            <div id="photoInputs" class="space-y-3">
+                                <!-- Example draggable item -->
+                                <div class="photo-item flex gap-2 items-center p-2 border rounded bg-gray-50 cursor-move"
+                                    draggable="true">
+                                    <span class="photo-label font-semibold">PHOTO 1</span>
+                                    <input type="file" name="bannerPhotos[]" class="flex-1 border rounded p-2">
+                                    <button type="button"
+                                        class="removePhoto px-2 py-1 bg-red-500 text-white rounded">X</button>
+                                </div>
+                            </div>
+
+                            <button type="button" id="addPhoto" class="px-3 py-1 bg-green-500 text-white rounded">+ Add
+                                Photo</button>
+
+                            <div class="flex justify-end gap-2 mt-4">
+                                <button type="button" id="closeModal"
+                                    class="px-3 py-1 bg-gray-300 rounded">Cancel</button>
+                                <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+
+
+                <!-- Modal Overlay -->
+                <div id="changePasswordModal"
+                    class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+                    <div class="bg-white rounded-lg shadow-lg w-96 p-6 relative">
+                        <h2 class="text-xl font-semibold mb-4">Change Password</h2>
+
+                        <form id="changePasswordForm">
+                            <div class="mb-4">
+                                <label class="block mb-1 font-medium">Current Password</label>
+                                <input type="password" name="current_password" required
+                                    class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block mb-1 font-medium">New Password</label>
+                                <input type="password" name="new_password" required
+                                    class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block mb-1 font-medium">Confirm New Password</label>
+                                <input type="password" name="confirm_password" required
+                                    class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div class="flex justify-end space-x-2">
+                                <button type="button" id="closeChangePassword"
+                                    class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancel</button>
+                                <button type="submit"
+                                    class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600">Save</button>
+                            </div>
+                        </form>
+
+                        <!-- Close Button -->
+                        <button id="closeModalX"
+                            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
+                    </div>
+                </div>
+
+            </div>
+            <!-- Mini Calendar -->
+            <div id="miniCalendar"
+                class="hidden absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-80 z-50 p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">‹</button>
+                    <h2 id="monthYear" class="font-semibold"></h2>
+                    <button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">›</button>
+                </div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center"></div>
+            </div>
+            <!-- Activation Period Modal -->
+            <div id="activationModal"
+                class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+                    <h2 class="text-lg font-bold mb-4">Set Activation Period</h2>
+
+                    <label class="block mb-2">Start Date</label>
+                    <input type="date" id="startDate" class="w-full p-2 border rounded mb-4">
+
+                    <label class="block mb-2">End Date</label>
+                    <input type="date" id="endDate" class="w-full p-2 border rounded mb-4">
+
+                    <div class="flex justify-end space-x-2">
+                        <button id="cancelPeriod" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                        <button id="savePeriod" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Modal / Popup to set the period -->
+            <div id="schoolyearModal"
+                class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <div class="bg-white p-6 rounded shadow-lg w-80">
+                    <h2 class="text-lg font-bold mb-4">Set School Year Period</h2>
+                    <label class="block mb-2">Start Date:</label>
+                    <input type="date" id="schoolyearStart" class="border p-2 w-full mb-4">
+
+                    <label class="block mb-2">End Date:</label>
+                    <input type="date" id="schoolyearEnd" class="border p-2 w-full mb-4">
+
+                    <div class="flex justify-end space-x-2">
+                        <button id="cancelSchoolyear" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                        <button id="saveSchoolyear" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+        <!-- Add Event Modal -->
+        <div id="eventModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-6 rounded shadow-lg w-96">
+                <h2 class="text-lg font-bold mb-4">Add Event</h2>
+                <form id="eventForm">
+                    <label class="block mb-2">Title:</label>
+                    <input type="text" id="eventTitle" class="border w-full p-2 mb-4" required>
+
+                    <label class="block mb-2">Start Date:</label>
+                    <input type="date" id="eventStart" class="border w-full p-2 mb-4" required>
+
+                    <label class="block mb-2">End Date:</label>
+                    <input type="date" id="eventEnd" class="border w-full p-2 mb-4" required>
+
+                    <div class="flex justify-end gap-2">
+                        <button type="button" id="cancelBtn" class="px-4 py-2 border rounded">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        </div>
+
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-1 mt-4 p-4">
+        <!-- Sidebar Navigation -->
+        <nav class="w-64 bg-gray-800 text-white rounded-lg p-4 shadow-lg h-full flex flex-col justify-between">
+            <div>
+                <div class="sidebar-header mb-6 text-center">
+                    <div class="text-3xl font-bold mb-2 text-blue-400">SNHS</div>
+                    <h3 class="text-xl font-semibold text-gray-200">Admin Panel</h3>
+                </div>
+                <ul class="space-y-4">
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="home-pane" data-title="">
+                            Home
+                        </button>
+                    </li>
+
+
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="pending-pane" data-title="Pending Applications">
+                            Pending Applications
+                        </button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="enrolled-students-pane" data-title="List of Enrolled Students">List of Enrolled
+                            Students</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="create-class-sections-pane" data-title="Create Class / Sections">Create Class /
+                            Sections</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="create-class-schedules-pane" data-title="Create Class Schedules">Create Class
+                            Schedules</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="teachers-list-pane" data-title="Teachers List">Teachers List</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="create-teacher-pane" data-title="Create Teacher Account">Create Teacher
+                            Account</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="file-maintenance-pane" data-title="Archive">File Maintenance</button>
+                    </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="master-list" data-title="Master List">Records</button>
+                    </li>
+                </ul>
+
+            </div>
+
+            <!-- Create Teacher Account Card -->
+
+
+        </nav>
+
+        <!-- Main Content Panel -->
+        <main class="flex-1 bg-white rounded-lg shadow-lg ml-4 p-6">
+            <h2 id="page-title" class="text-2xl font-semibold mb-6 text-gray-800">Enrolled Students</h2>
+
+            <!-- Content Panes -->
+            <!-- Slideshow -->
+            <div id="home-pane" class="content-pane h-full w-full">
+                <div id="slideshowContainer"
+                    class="relative w-full h-full flex items-center justify-center overflow-hidden">
+                    <button id="prevSlide"
+                        class="absolute left-3 text-3xl font-bold bg-black bg-opacity-40 text-white px-3 py-1 rounded-full">&lt;</button>
+                    <img id="slideshowImage" class="w-full h-full object-cover" src="" alt="Slideshow">
+                    <button id="nextSlide"
+                        class="absolute right-3 text-3xl font-bold bg-black bg-opacity-40 text-white px-3 py-1 rounded-full">&gt;</button>
+                </div>
+            </div>
+
+
+            <div id="pending-pane" class="content-pane hidden">
+                <p class="text-gray-700 mb-4"></p>
+
+                <!-- Table wrapper with scroll -->
+                <div class="overflow-x-auto rounded-lg border border-gray-200 table-container">
+                    <div class="table-scroll-wrapper">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-pink-100">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                        Strand/Track</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                        Year-Level</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Name</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Contact #</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email Address</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-applications-body" class="bg-white divide-y divide-pink-200">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="applicationModal"
+                    class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center">
+                    <div
+                        class="bg-white w-11/12 max-w-4xl rounded-xl shadow-lg p-8 relative overflow-y-auto max-h-[90vh]">
+
+                        <!-- Close button -->
+                        <button onclick="closeApplicationModal()"
+                            class="absolute top-3 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+
+                        <!-- Modal Title -->
+                        <h2 class="text-2xl font-bold mb-6 text-center">Application Details</h2>
+
+                        <!-- Applicant Info -->
+                        <h3 class="font-semibold text-blue-600 text-lg mb-2">Applicant Info</h3>
+                        <p><strong>Strand/Track:</strong> <span id="modal-strand"></span></p>
+                        <p><strong>Name:</strong> <span id="modal-fullname"></span></p>
+                        <p><strong>Gender:</strong> <span id="modal-gender"></span></p>
+                        <p><strong>Birth Date:</strong> <span id="modal-birth"></span></p>
+                        <p><strong>Address:</strong> <span id="modal-address"></span></p>
+                        <p><strong>Contact:</strong> <span id="modal-contact"></span></p>
+                        <p><strong>Email:</strong> <span id="modal-email"></span></p>
+
+                        <hr class="my-4">
+
+                        <!-- Guardian Info -->
+                        <h3 class="font-semibold text-green-600 text-lg mb-2">Guardian Info</h3>
+                        <p><strong>Name:</strong> <span id="modal-guardian-name"></span></p>
+                        <p><strong>Contact:</strong> <span id="modal-guardian-contact"></span></p>
+                        <p><strong>Email:</strong> <span id="modal-guardian-email"></span></p>
+                        <p><strong>Relationship:</strong> <span id="modal-guardian-relationship"></span></p>
+
+                        <hr class="my-4">
+
+                        <!-- Documents -->
+                        <h3 class="font-semibold text-purple-600 text-lg mb-2">Submitted Documents</h3>
+                        <ul class="list-disc list-inside text-base text-gray-700">
+                            <li>Birth Certificate: <span id="doc-birth"></span></li>
+                            <li>Form 138: <span id="doc-138"></span></li>
+                            <li>Good Moral: <span id="doc-goodmoral"></span></li>
+                            <li>Form 137: <span id="doc-137"></span></li>
+                        </ul>
+
+                        <div class="flex justify-end space-x-4">
+                            <button onclick="approveApplication()"
+                                class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                Approve
+                            </button>
+                            <button onclick="closeApplicationModal()"
+                                class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="adviser-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white rounded-lg w-96 p-6 relative">
+                    <h2 class="text-lg font-semibold mb-4">Select Adviser</h2>
+                    <select id="teacher-dropdown" class="w-full px-3 py-2 border rounded mb-4">
+                        <option value="">Loading teachers...</option>
+                    </select>
+                    <div class="flex justify-end gap-2">
+                        <button id="cancel-btn" class="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500">Cancel</button>
+                        <button id="save-btn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div id="enrolled-students-pane" class="content-pane hidden">
+                <p class="text-gray-700 mb-4"></p>
+
+                <!-- Table wrapper with scroll -->
+                <div class="overflow-x-auto rounded-lg border border-gray-200 table-container">
+                    <div class="table-scroll-wrapper">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-green-100">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                        Strand/Track</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                        Year-Level</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Name</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Contact #</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email Address</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="enrolled-students-body" class="bg-white divide-y divide-green-200">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Create Class/Sections Pane -->
+            <div id="create-class-sections-pane" class="content-pane hidden">
+                <!-- Input + Create dropdown -->
+                <div class="flex items-center gap-4 mb-4">
+                    <input type="text" id="class-section-name" class="flex-1 p-2 border border-gray-300 rounded-md"
+                        placeholder="e.g., STEM 11-A" />
+                    <div id="section-search-results" class="mt-2 border border-gray-300 rounded-md bg-white hidden">
+                    </div>
+                    <div id="create-class-schedules-pane1" class="content-pane hidden">
+                        <p class="text-gray-700 mb-4"></p>
+                        <div id="sections-container1" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                            <!-- Section buttons will be dynamically inserted here -->
+                        </div>
+                    </div>
+
+
+                    <!-- Create Dropdown -->
+                    <div id="create-dropdown" class="relative inline-block text-left">
+                        <button id="dropdownButton"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none">
+                            Create
+                        </button>
+                        <button id="displaySectionsBtn"
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            Display Sections
+                        </button>
+
+                        <div id="dropdownMenuSHS"
+                            class="hidden absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+
+                            <!-- STEM -->
+                            <button data-strand="STEM" data-grade="11"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">STEM 11</button>
+                            <button data-strand="STEM" data-grade="12"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">STEM 12</button>
+
+                            <!-- ABM -->
+                            <button data-strand="ABM" data-grade="11"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">ABM 11</button>
+                            <button data-strand="ABM" data-grade="12"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">ABM 12</button>
+
+                            <!-- HUMSS -->
+                            <button data-strand="HUMSS" data-grade="11"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">HUMSS 11</button>
+                            <button data-strand="HUMSS" data-grade="12"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">HUMSS 12</button>
+
+                            <!-- GAS -->
+                            <button data-strand="GAS" data-grade="11"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">GAS 11</button>
+                            <button data-strand="GAS" data-grade="12"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">GAS 12</button>
+
+                            <!-- TVL -->
+                            <button data-strand="TVL" data-grade="11"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">TVL 11</button>
+                            <button data-strand="TVL" data-grade="12"
+                                class="block px-4 py-2 hover:bg-gray-100 w-full text-left">TVL 12</button>
+                        </div>
+
+
+                        <!-- Junior High School Menu -->
+                        <div id="dropdownMenuJHS"
+                            class="hidden absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                            <button data-grade="7" class="block px-4 py-2 hover:bg-gray-100 w-full text-left">Grade
+                                7</button>
+                            <button data-grade="8" class="block px-4 py-2 hover:bg-gray-100 w-full text-left">Grade
+                                8</button>
+                            <button data-grade="9" class="block px-4 py-2 hover:bg-gray-100 w-full text-left">Grade
+                                9</button>
+                            <button data-grade="10" class="block px-4 py-2 hover:bg-gray-100 w-full text-left">Grade
+                                10</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Display Sections Table -->
+                <div id="display-sections-pane" class="hidden overflow-x-auto rounded-lg border border-gray-200 mt-4">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-green-100">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Section</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Year Level</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Total Students</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sections-table-body-new" class="bg-white divide-y divide-green-200">
+                            <!-- JS will populate sections here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Table for Created Class/Section -->
+                <div id="created-class-section-pane" class="hidden mt-4">
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 table-container">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <button id="createSectionsBtn"
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                Create Sections
+                            </button>
+
+                            <thead class="bg-green-100">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                        Strand/Track</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Year-Level</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Name</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Contact #</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email Address</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="created-class-section-body" class="bg-white divide-y divide-green-200">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="students-modal"
+                    class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg p-6 w-11/12 max-w-3xl max-h-[80vh] overflow-y-auto overflow-x-auto">
+                        <h2 id="modal-section-name" class="text-xl font-bold mb-4">Students in Section</h2>
+                        <table class="min-w-full divide-y divide-gray-200 mb-4">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Student Name</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Strand</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Grade Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-list" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                        <button id="close-modal"
+                            class="mt-2 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Close</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Add Student Modal -->
+            <div id="add-student-modal"
+                class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-6 w-[700px]">
+                    <h2 id="add-student-modal-title" class="text-lg font-bold mb-4">Add Students</h2>
+                    <div class="overflow-y-auto max-h-80 mb-4">
+                        <table class="w-full border border-gray-300">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="px-4 py-2"><input type="checkbox" id="select-all"></th>
+                                    <th class="px-4 py-2 text-left">Name</th>
+                                    <th class="px-4 py-2 text-left">Strand</th>
+                                    <th class="px-4 py-2 text-left">Grade Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="add-student-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button id="cancel-add-student"
+                            class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                        <button id="submit-add-student"
+                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Submit</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="create-class-schedules-pane" class="content-pane hidden">
+                <button id="back-to-sections-btn"
+                    class="hidden px-4 py-2 mb-4 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">
+                    ← Back
+                </button>
+                <p class="text-gray-700 mb-4"></p>
+                <div id="sections-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                    <!-- Section buttons will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div id="teachers-list-pane" class="content-pane hidden">
+                <div class="overflow-x-auto rounded-lg border border-gray-200 table-container"
+                    style="max-height: 700px; overflow-y: auto;">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-green-100">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Firstname</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Middlename</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Lastname</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Email</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Password</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachers-list-body" class="bg-white divide-y divide-green-200">
+                            <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="create-teacher-pane" class="content-pane hidden">
+                <form id="create-teacher-form" action="save_teacher.php" method="POST"
+                    class="bg-white p-8 rounded-xl shadow-lg max-w-5xl mx-auto">
+                    <h2 class="text-3xl font-bold mb-8 text-gray-800">Create Teacher Account</h2>
+
+                    <!-- Row 1: Name Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label for="teacher-firstname" class="block text-lg font-medium text-gray-700 mb-2">First
+                                Name</label>
+                            <input type="text" id="teacher-firstname" name="teacher_firstname"
+                                class="w-full border border-gray-300 rounded-lg px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                placeholder="Enter first name" required>
+                        </div>
+                        <div>
+                            <label for="teacher-middlename" class="block text-lg font-medium text-gray-700 mb-2">Middle
+                                Name</label>
+                            <input type="text" id="teacher-middlename" name="teacher_middlename"
+                                class="w-full border border-gray-300 rounded-lg px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                placeholder="Enter middle name">
+                        </div>
+                        <div>
+                            <label for="teacher-lastname" class="block text-lg font-medium text-gray-700 mb-2">Last
+                                Name</label>
+                            <input type="text" id="teacher-lastname" name="teacher_lastname"
+                                class="w-full border border-gray-300 rounded-lg px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                placeholder="Enter last name" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Contact Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label for="teacher-email"
+                                class="block text-lg font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="teacher-email" name="teacher_email"
+                                class="w-full border border-gray-300 rounded-lg px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                placeholder="Enter email address" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Subjects -->
+                    <div class="mb-8">
+                        <label class="block text-lg font-medium text-gray-700 mb-3">Subjects</label>
+                        <div id="subject-container"></div>
+                        <button type="button" id="add-subject-btn"
+                            class="mt-3 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            + Add Subject
+                        </button>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit"
+                            class="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-lg px-8 py-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+
+
+
+
+            <!-- New: Enrolled Student Details Pane -->
+            <div id="enrolled-student-details-pane" class="content-pane hidden">
+                <button id="back-to-enrolled-btn"
+                    class="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-200 ease-in-out flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>Back to Enrolled Students</span>
+                </button>
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Enrolled Student Details</h3>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                    <p class="mb-2"><strong class="text-gray-700">Strand/Track:</strong> <span
+                            id="enrolled-detail-strand" class="text-gray-900"></span></p>
+                    <p class="mb-2"><strong class="text-gray-700">Student Name:</strong> <span id="enrolled-detail-name"
+                            class="text-gray-900"></span></p>
+                    <p class="mb-2"><strong class="text-gray-700">Contact Number:</strong> <span
+                            id="enrolled-detail-contact" class="text-gray-900"></span></p>
+                    <p class="mb-2"><strong class="text-gray-700">Email Address:</strong> <span
+                            id="enrolled-detail-email" class="text-gray-900"></span></p>
+                    <p class="text-gray-600 mt-4"><em>More detailed information about the enrolled student would go
+                            here.</em></p>
+                </div>
+                <!-- Add more details and management options here -->
+            </div>
+
+            <div id="file-maintenance-pane" class="content-pane hidden p-4">
+
+                <div id="section-container" class="mt-6 overflow-x-auto">
+                    <table class="min-w-full border border-gray-300 text-sm rounded-lg">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="border px-4 py-2 text-left">Section</th>
+                                <th class="border px-4 py-2 text-left">Year Level</th>
+                                <th class="border px-4 py-2 text-left">Total Students</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sections-table-body">
+                            <!-- Rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="confirm-modal"
+                    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+                    <div class="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
+                        <h2 class="text-lg font-semibold mb-4">Are you sure?</h2>
+                        <p class="mb-6">Do you really want to unarchive this section?</p>
+                        <div class="flex justify-center gap-4">
+                            <button id="confirm-yes"
+                                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Yes</button>
+                            <button id="confirm-no"
+                                class="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">No</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="student-modal"
+                    class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+                    <div class="bg-white rounded-lg p-6 w-1/2 shadow-lg">
+                        <h2 class="text-lg font-bold mb-4">Student List</h2>
+                        <div id="student-list" class="max-h-64 overflow-y-auto"></div>
+                        <div class="mt-4 text-right">
+                            <button id="student-close"
+                                class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extra Records Buttons -->
+            <!-- Buttons for Records -->
+            <div id="records-buttons" class="hidden mt-4 grid grid-cols-2 gap-3">
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Enrollment by Grade
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Enrollment by Section
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Enrollment Audit
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Demographics Report
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Teachers List
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Subjects List
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Class List
+                </button>
+
+            </div>
+
+            <!-- Records Modal -->
+            <div id="records-modal"
+                class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div
+                    class="bg-gray-800 text-gray-200 rounded-lg w-[1400px] max-w-full h-[700px] p-6 relative overflow-auto">
+                    <button id="modal-close"
+                        class="absolute top-2 right-2 text-gray-300 hover:text-white font-bold text-2xl">&times;</button>
+                    <div id="records-modal-content" class="overflow-auto h-full">
+                        <!-- Dropdown and table will be inserted here dynamically -->
+                    </div>
+                </div>
+            </div>
+            <script src="records-buttons.js"></script>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        fetch("../php/auth.php", {
+            method: "GET",
+            credentials: "include"
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success || data.role !== "admin") {
+                    window.location.href = "admin-login.html"; // redirect to login
+                    return;
+                }
+            })
+            .catch(err => {
+                console.error("Auth check failed:", err);
+                window.location.href = "admin-login.html";
+            });
+    </script>
+
+
+
+
+    <script src="admin.js"></script>
+</body>
+
+</html>

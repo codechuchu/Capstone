@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Information</title>
+    <link rel="stylesheet" href="personal-info.css" />
+</head>
+
+<body class="bg-pink-50 min-h-screen flex items-center justify-center">
+    <header>
+        <div class="navbar">
+            <div class="logo">
+                <a href="homepage.html" style="text-decoration: none; color: inherit;">
+                    Sulivan National High School
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="progress-bar">
+        <div class="step">
+            <div class="circle">1</div>
+            <div class="label">Program</div>
+        </div>
+        <div class="step active">
+            <div class="circle">2</div>
+            <div class="label">Personal Information</div>
+        </div>
+        <div class="step">
+            <div class="circle">3</div>
+            <div class="label">Validate Details</div>
+        </div>
+        <div class="step">
+            <div class="circle">4</div>
+            <div class="label">Finish</div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form class="personal-form" id="personalInfoForm">
+        <h2>Personal Information</h2>
+
+        <div class="form-row">
+            <input type="text" id="firstName" placeholder="First Name *" required />
+            <input type="text" id="middleName" placeholder="Middle Name" />
+            <input type="text" id="lastName" placeholder="Last Name *" required />
+            <input type="text" id="suffixName" placeholder="Suffix Name" />
+        </div>
+
+        <div class="form-row">
+            <select id="gender" required class="form-select">
+                <option value="" disabled selected>Select Gender *</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+            <input type="date" id="dateOfBirth" placeholder="Date of Birth *" required class="form-input" />
+            <div><input type="text" id="lrn" placeholder="LRN *" required /></div>
+        </div>
+
+        <h3>Address:</h3>
+        <div class="form-row">
+            <input type="text" id="streetHouse" placeholder="Street/House # *" required />
+            <input type="text" id="barangay" placeholder="Barangay *" required />
+            <input type="text" id="municipalityCity" placeholder="Municipality/City *" required />
+            <input type="text" id="province" placeholder="Province *" required />
+        </div>
+
+        <h3>Contact Details:</h3>
+        <div class="form-row">
+            <input type="tel" id="cellphoneNumber" placeholder="Cellphone # *" required class="form-input" />
+            <div><input type="email" id="emailAddress" placeholder="Email Address *" required class="form-input" /></div>
+        </div>
+
+        <div class="btn-container">
+            <button type="submit" class="next-btn">Next</button>
+        </div>
+    </form>
+
+    <script src="personal-info.js"></script>
+</body>
+
+</html>

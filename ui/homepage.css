@@ -1,0 +1,762 @@
+/* homepage.css - Complete and Updated Styles for Sulivan National High School Homepage */
+
+/* Global Styles and Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth; /* Smooth scrolling for anchor links */
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to bottom, #f4faff, #e0f0ff); /* Keep your light blue gradient */
+    color: #333;
+    overflow-x: hidden;
+    overflow-y: auto; /* Enable vertical scrolling */
+    /* Removed height: 100vh and flex to allow full scrolling through sections */
+}
+
+/* Container Utility */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Header and Navbar */
+header {
+    width: 100%;
+    height: 90px; /* Adjust height to content */
+    background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent white for subtle overlay */
+    backdrop-filter: blur(10px); /* Modern blur effect if supported */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Ensures navbar stays on top during scroll */
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px; /* Keep your padding */
+    flex-wrap: wrap;
+}
+
+.logo {
+    background-color: #004aad; /* Keep your deep blue */
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #fff; /* White text */
+    text-decoration: none;
+    font-size: 1.5rem; /* Slightly larger for prominence */
+    margin-left: 10px;
+}
+.school-logo {
+    height: 60px;   /* controls the logo height */
+    width: auto;    /* keeps the aspect ratio */
+    margin-right: 0px; /* space between logo and text */
+    vertical-align: middle;
+}
+
+
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 30px; /* Keep your gap */
+    flex-wrap: wrap;
+    margin-left: auto;
+    list-style: none; /* Ensure no bullets if treated as ul */
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #004aad; /* Keep your deep blue text for links */
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ffdd00; /* Yellow hover for consistency */
+}
+
+/* Track Status Search */
+.track-status {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 5px; /* Keep your radius */
+    overflow: hidden;
+    border: 1px solid #ccc;
+    min-width: 200px;
+    position: relative; /* For absolute popup positioning */
+}
+
+.track-status input {
+    border: none;
+    padding: 5px 10px;
+    outline: none;
+    font-size: 14px;
+    width: 150px; /* Keep your width */
+    flex: 1;
+}
+
+.search-btn {
+    background-color: #ffdd00; /* Keep your yellow */
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.search-btn:hover {
+    background-color: #e6c800; /* Darker yellow on hover */
+}
+
+/* Popup for Search Results */
+.popup {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-width: 250px;
+    z-index: 1001;
+}
+
+.popup.hidden {
+    display: none;
+}
+
+.popup p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Buttons */
+.enroll-btn {
+    background-color: #ffdd00; /* Keep your yellow */
+    color: #004aad; /* Keep your blue text */
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+}
+
+.enroll-btn:hover {
+    background-color: #e6c800; /* Keep your darker yellow */
+    transform: translateY(-2px);
+}
+
+.enroll-btn.error {
+    background-color: #f44336;
+    color: #fff;
+}
+
+.admin-login {
+    background-color: #004aad; /* Keep your deep blue */
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 25px; /* Keep pill shape */
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+}
+
+.admin-login:hover {
+    background-color: #00347a; /* Keep your darker blue */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+.admin-login:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* Enroll Message (kept from your CSS, assuming JS handles .show) */
+.enroll-msg {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 5px 10px;
+    background: #f44336;
+    color: #fff;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.enroll-msg.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Banner Section (Home) - Updated for Full-Screen Fit */
+.banner {
+    position: relative;
+    width: 100%;
+    height: 100vh; /* Full viewport height to fit the entire screen */
+    overflow: hidden;
+    background-color: #f0f4f8; /* Fallback if image fails */
+    scroll-margin-top: 80px; /* Offset for sticky header - scrolls to top of section */
+}
+
+.banner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0, 74, 173, 0.4), rgba(0, 74, 173, 0.6)); /* Adapted to your deep blue */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.banner-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures coverage without distortion - full screen fit */
+    filter: brightness(0.85); /* Keep your brightness */
+    z-index: 0;
+}
+
+.banner-text {
+    position: relative;
+    text-align: center;
+    color: white;
+    background: rgba(0, 74, 173, 0.6); /* Keep your semi-transparent deep blue */
+    padding: 20px 40px;
+    border-radius: 10px;
+    z-index: 2;
+    animation: fadeInUp 1s ease-out; /* Added smooth entrance */
+    max-width: 80%;
+}
+
+.banner-text h1 {
+    font-size: 3rem; /* Slightly larger for full-screen impact */
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Added depth */
+    line-height: 1.2;
+}
+
+.banner-text p {
+    font-size: 1.4rem; /* Adjusted for better visibility on full screen */
+    color: #ffdd00; /* Keep your yellow */
+    font-weight: bold;
+    margin: 0;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Animation for text fade-in */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Programs Section */
+.content-section {
+    padding: 4rem 0;
+}
+
+#programs {
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white for contrast on gradient bg */
+    scroll-margin-top: 80px; /* Offset for sticky header - scrolls to top of section */
+}
+
+#programs h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #004aad; /* Your deep blue for headings */
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+#programs > .container > p {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.strands-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.strands-list li {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 5px solid #004aad; /* Your deep blue accent */
+    line-height: 1.5; /* Apply line-height to the entire li for description text */
+}
+
+.strands-list li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.strands-list strong {
+    font-size: 1.3rem;
+    color: #004aad; /* Your deep blue for strand names */
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Removed .strands-list li p since no <p> tags in li; description text inherits from li */
+
+/* Programs Section Enhancements */
+.strand-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    position: relative;
+}
+
+.strand-icon {
+    font-size: 1.5rem;
+    min-width: 1.5rem;
+    margin-top: 0.2rem;
+    opacity: 0.8;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.strand-item:hover .strand-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.programs-cta {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f4faff, #e0f0ff);
+    border-radius: 10px;
+}
+
+.programs-cta p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 1rem;
+}
+
+.cta-btn {
+    background-color: #ffdd00;
+    color: #004aad;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cta-btn:hover {
+    background-color: #e6c800;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* About Section (kept and integrated your styles) */
+#about {
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent for gradient compatibility */
+    padding: 4rem 0;
+    scroll-margin-top: 80px; /* Offset for sticky header - scrolls to top of section */
+}
+
+#about h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #004aad; /* Changed to your deep blue */
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+#about > .container > p:first-of-type {
+    font-size: 1.2rem;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#about p strong {
+    color: #ffdd00; /* Changed to your yellow accent for school ID */
+    font-size: 1.1rem;
+}
+
+#about h3 {
+    font-size: 1.8rem;
+    color: #004aad; /* Your deep blue */
+    margin: 2rem 0 1rem 0;
+    text-align: center;
+}
+
+.social-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.social-links li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    background-color: #004aad; /* Adapted to your deep blue base */
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.social-links li a:hover {
+    background-color: #00347a; /* Your darker blue */
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Specific icon styling (emojis act as icons) - adapted colors */
+.social-links li a[href*="facebook"] {
+    background-color: #3b5998;
+}
+
+.social-links li a[href*="facebook"]:hover {
+    background-color: #2d4373;
+}
+
+.social-links li a[href*="tiktok"] {
+    background-color: #000000;
+}
+
+.social-links li a[href*="tiktok"]:hover {
+    background-color: #333333;
+}
+
+.social-links li a[href*="instagram"] {
+    background-color: #e4405f;
+}
+
+.social-links li a[href*="instagram"]:hover {
+    background-color: #c13584;
+}
+
+/* About Section Enhancements - Updated for Separate Mission/Vision Boxes (Styled like Programs) */
+/* Replace the old .mission-vision blockquote with a grid container for separate boxes */
+.mission-vision-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.mission-box,
+.vision-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow, like strands */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 5px solid #004aad; /* Your deep blue accent, like strands */
+    line-height: 1.5;
+}
+
+.mission-box:hover,
+.vision-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.mission-box h3,
+.vision-box h3 {
+    font-size: 1.3rem;
+    color: #004aad; /* Your deep blue for titles, like strand strong */
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.mission-box p,
+.vision-box p {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1rem;
+    text-align: justify; /* For better readability in descriptions */
+}
+
+/* Vision-specific: Style the bullet points as a list */
+.vision-box ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-top: 1rem;
+}
+
+.vision-box li {
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.about-details {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin: 2rem 0;
+    border-left: 4px solid #004aad;
+}
+
+.about-details p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.get-in-touch {
+    margin: 2rem 0;
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+}
+
+.get-in-touch h3 {
+    color: #004aad;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.get-in-touch p {
+    color: #555;
+    line-height: 1.6;
+    font-size: 1.1rem;
+}
+
+/* Responsive Design */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .navbar {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 1
+    }}
+
+
+/* Track Status Search - Updated for Popup Visibility */
+.track-status {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    min-width: 200px;
+    position: relative; /* Critical: Positions popup relative to this container */
+    z-index: 1002; /* High z-index to keep container above navbar */
+    overflow: visible; /* Allow popup to extend outside without clipping */
+    margin: 0 10px; /* Small margin to prevent edge clipping in flex navbar */
+}
+
+.track-status input {
+    border: none;
+    padding: 8px 12px; /* Slightly more padding for better touch on mobile */
+    outline: none;
+    font-size: 14px;
+    width: 150px;
+    flex: 1;
+    background: transparent; /* Ensure no background conflicts */
+}
+
+.search-btn {
+    background-color: #ffdd00; /* Your yellow */
+    border: none;
+    padding: 8px 12px; /* Match input padding */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px; /* Ensure button doesn't shrink */
+}
+
+.search-btn:hover {
+    background-color: #e6c800; /* Darker yellow on hover */
+}
+
+/* Popup for Search Results - Fully Visible and Positioned */
+.popup {
+    position: absolute;
+    top: calc(100% + 5px); /* Position below the track-status with a small gap */
+    left: 50%; /* Center horizontally relative to track-status */
+    transform: translateX(-50%); /* Perfect centering */
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 16px; /* More padding for better readability */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow to "pop" it out */
+    min-width: 220px;
+    max-width: 280px; /* Controlled width to fit messages */
+    z-index: 1004; /* Very high: Above everything (navbar is 1000) */
+    display: none; /* Hidden by default */
+    opacity: 0; /* Start invisible for animation */
+    visibility: hidden; /* Extra layer to ensure it's not rendered off-screen */
+    transition: all 0.3s ease; /* Smooth fade and slide */
+    margin: 0; /* No extra margins that could push it off */
+    font-family: inherit; /* Inherit from body */
+    white-space: nowrap; /* Prevent text wrapping if message is short */
+    overflow: hidden; /* Clip long messages if needed */
+    text-overflow: ellipsis; /* Add ... for very long text */
+    /* Temporary Debug: Red border to see the popup bounds (remove after testing) */
+    /* border: 2px solid red !important; */
+}
+
+.popup:not(.hidden) {
+    display: block !important; /* Force show */
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateX(-50%) translateY(0) !important; /* Slide down into view */
+}
+
+.popup.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateX(-50%) translateY(-5px) !important; /* Slide up to hide */
+}
+
+.popup::before { /* Optional arrow pointer to connect to input */
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #ddd;
+    z-index: -1; /* Behind the popup */
+}
+
+.popup p,
+.popup { /* Style for text content (JS sets textContent directly) */
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 1rem; /* Readable size */
+    color: #333 !important; /* Dark text for contrast */
+    line-height: 1.4;
+    text-align: center;
+    font-weight: 500;
+    word-break: break-word; /* Allow wrapping for longer messages if needed */
+}
+
+/* Ensure navbar doesn't clip the popup */
+.navbar {
+    overflow: visible !important; /* Allow popup to extend beyond navbar bounds */
+    position: relative;
+    z-index: 1001; /* Slightly below popup but above body */
+}
+
+/* Responsive Adjustments for Mobile/Tablet */
+@media (max-width: 768px) {
+    .track-status {
+        width: 100%;
+        max-width: 250px;
+        margin: 10px auto; /* Center on mobile */
+        justify-content: center;
+    }
+    
+    .track-status input {
+        width: 120px;
+        padding: 10px 12px; /* Larger touch target */
+    }
+    
+    .search-btn {
+        padding: 10px 12px;
+        min-width: 45px;
+    }
+    
+    .popup {
+        min-width: 200px;
+        max-width: 90vw; /* Fit screen width */
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important; /* Full-width centering */
+        margin: 0 auto !important;
+        top: calc(100% + 8px); /* More gap on mobile */
+    }
+    
+    .popup::before {
+        left: calc(50% - 3px); /* Adjust arrow for full-width */
+    }
+}
+
+/* Extra Safety: If navbar flex is causing issues, ensure popup breaks out */
+@media (max-width: 480px) {
+    .nav-links {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .track-status {
+        order: -1; /* Move to top on very small screens if needed */
+    }
+}

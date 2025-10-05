@@ -1,0 +1,60 @@
+[26-Sep-2025 11:58:35 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:12 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:22 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:24 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:25 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[26-Sep-2025 12:00:26 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'student_id' in 'field list' in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php:37
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Validate Information</title>
+  <link rel="stylesheet" href="validateInfo.css" />
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-content p {
+      font-size: 1.2em;
+      margin-bottom: 15px;
+    }
+
+    #okBtn {
+      padding: 8px 16px;
+      border: none;
+      background: #4caf50;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    #okBtn:hover {
+      background: #43a047;
+    }
+
+    #uploadedDocsList label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    /* Optional: LRN / error styling if needed */
+    .input-container {
+      position: relative;
+    }
+
+    .error-message {
+      position: absolute;
+      top: -1.5rem;
+      left: 0;
+      font-size: 0.75rem;
+      background-color: #f87171;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    input.error {
+      border-color: #f87171;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="navbar">
+      <div class="logo">
+        <a href="homepage.html" style="text-decoration: none; color: inherit;">
+          Sulivan National High School
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-bar">
+    <div class="step">
+      <div class="circle">1</div>
+      <div class="label">Program</div>
+    </div>
+    <div class="step">
+      <div class="circle">2</div>
+      <div class="label">Personal Information</div>
+    </div>
+    <div class="step active">
+      <div class="circle">3</div>
+      <div class="label">Validate Details</div>
+    </div>
+    <div class="step">
+      <div class="circle">4</div>
+      <div class="label">Finish</div>
+    </div>
+  </div>
+
+  <main class="form-container">
+    <form id="validateForm" enctype="multipart/form-data">
+      <h3>Validate Information</h3>
+
+      <details open>
+        <summary>Student’s Information</summary>
+        <div class="validate-group">
+          <label>Chosen Strand/Track
+            <input type="text" id="chosenStrand" readonly />
+          </label>
+          <label>LRN
+            <input type="text" id="lrn" readonly />
+          </label>
+          <label>Name
+            <input type="text" id="fullName" readonly />
+          </label>
+          <label>Gender
+            <input type="text" id="gender" readonly />
+          </label>
+          <label>Birthdate
+            <input type="text" id="birthdate" readonly />
+          </label>
+          <label>Address
+            <input type="text" id="address" readonly />
+          </label>
+          <label>Mobile #
+            <input type="text" id="mobile" readonly />
+          </label>
+          <label>Email Address
+            <input type="text" id="email" readonly />
+          </label>
+        </div>
+      </details>
+
+      <details>
+        <summary>Guardian’s Information</summary>
+        <div class="validate-group">
+          <label>Guardian Name
+            <input type="text" id="guardianName" readonly />
+          </label>
+          <label>Relationship
+            <input type="text" id="guardianRelation" readonly />
+          </label>
+          <label>Contact #
+            <input type="text" id="guardianContact" readonly />
+          </label>
+        </div>
+      </details>
+
+      <details>
+        <summary>Uploaded Documents</summary>
+        <div class="validate-group" id="uploadedDocsList"></div>
+      </details>
+
+      <button type="submit" class="submit-btn">Submit</button>
+    </form>
+  </main>
+
+  <!-- Success Modal -->
+  <div id="submitModal" class="modal">
+    <div class="modal-content">
+      <p>Are you sure you want to submit?</p>
+      <button id="okBtn">Yes, Submit</button>
+    </div>
+  </div>
+
+  <!-- Updated JavaScript -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const personal = JSON.parse(sessionStorage.getItem("personalInfo") || "{}");
+      const guardian = JSON.parse(sessionStorage.getItem("guardianInfo") || "{}");
+      const uploadedDocs = JSON.parse(sessionStorage.getItem("uploadedDocs") || {});
+
+      let strand = sessionStorage.getItem("strand") || "";
+      let gradeLevel = sessionStorage.getItem("gradeLevel") || "";
+      let semester = sessionStorage.getItem("semester") || "";
+
+      const strandSelect = document.getElementById("strandSelect");
+      const gradeSelect = document.getElementById("seniorGradeSelect");
+      const semesterSelect = document.getElementById("semesterSelect");
+
+      // Capture dropdown changes and save to sessionStorage
+      [strandSelect, gradeSelect, semesterSelect].forEach(select => {
+        if (!select) return;
+        select.addEventListener("change", () => {
+          strand = strandSelect.value || "";
+          gradeLevel = gradeSelect.value || "";
+          semester = semesterSelect.value;
+
+          // Only allow 1 or 2 for semester
+          if (semester !== "1" && semester !== "2") semester = "";
+
+          sessionStorage.setItem("strand", strand);
+          sessionStorage.setItem("gradeLevel", gradeLevel);
+          sessionStorage.setItem("semester", semester);
+
+          document.getElementById("chosenStrand").value =
+            [strand, gradeLevel ? `Grade ${gradeLevel}` : "", semester ? `Semester ${semester}` : ""]
+              .filter(Boolean).join(" - ");
+        });
+      });
+
+      // Ensure sessionStorage always has initial values
+      if (semester !== "1" && semester !== "2") semester = "";
+      sessionStorage.setItem("strand", strand);
+      sessionStorage.setItem("gradeLevel", gradeLevel);
+      sessionStorage.setItem("semester", semester);
+
+      // Display student info
+      document.getElementById("chosenStrand").value =
+        [strand, gradeLevel ? `Grade ${gradeLevel}` : "", semester ? `Semester ${semester}` : ""]
+          .filter(Boolean).join(" - ");
+
+      document.getElementById("lrn").value = personal.lrn || ""; // <-- Added LRN display
+
+      document.getElementById("fullName").value =
+        [personal.firstName, personal.middleName, personal.lastName, personal.suffixName].filter(Boolean).join(" ");
+      document.getElementById("gender").value = personal.gender || "";
+      document.getElementById("birthdate").value = personal.dateOfBirth || personal.birthdate || "";
+      document.getElementById("address").value =
+        [personal.streetHouse, personal.barangay, personal.municipalityCity, personal.province].filter(Boolean).join(", ");
+      document.getElementById("mobile").value = personal.cellphoneNumber || "";
+      document.getElementById("email").value = personal.emailAddress || "";
+
+      document.getElementById("guardianName").value =
+        [guardian.firstName, guardian.middleName, guardian.lastName, guardian.suffixName].filter(Boolean).join(" ");
+      document.getElementById("guardianRelation").value = guardian.relation || "";
+      document.getElementById("guardianContact").value = guardian.contact || "";
+
+      const uploadedDocsList = document.getElementById("uploadedDocsList");
+      if (uploadedDocsList) {
+        for (const [key, fileObj] of Object.entries(uploadedDocs)) {
+          const label = document.createElement("label");
+          label.textContent = `${key}: ${fileObj.name}`;
+          uploadedDocsList.appendChild(label);
+        }
+      }
+
+      document.querySelector("#validateForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+
+        // ✅ Append grade, strand, semester, and LRN
+        formData.append("grade_level", gradeLevel || "");
+        formData.append("track", strand || "");
+        formData.append("semester", (semester === "1" || semester === "2") ? semester : "1");
+        formData.append("lrn", personal.lrn || ""); // <-- Added LRN
+
+        // Personal info
+        formData.append("first_name", personal.firstName || "");
+        formData.append("middle_name", personal.middleName || "");
+        formData.append("last_name", personal.lastName || "");
+        formData.append("suffix", personal.suffixName || "");
+        formData.append("gender", personal.gender || "");
+        formData.append("birthdate", personal.dateOfBirth || personal.birthdate || "");
+        formData.append("street_house", personal.streetHouse || "");
+        formData.append("barangay", personal.barangay || "");
+        formData.append("municipal_city", personal.municipalityCity || "");
+        formData.append("province", personal.province || "");
+        formData.append("cellphone", personal.cellphoneNumber || "");
+        formData.append("emailaddress", personal.emailAddress || "");
+
+        // Guardian info
+        formData.append("guardian_first_name", guardian.firstName || "");
+        formData.append("guardian_middle_name", guardian.middleName || "");
+        formData.append("guardian_last_name", guardian.lastName || "");
+        formData.append("guardian_suffix", guardian.suffixName || "");
+        formData.append("guardian_contact", guardian.contact || "");
+        formData.append("guardian_email", guardian.email || "");
+        formData.append("guardian_relation", guardian.relation || "");
+
+        // Files
+        for (const [key, fileObj] of Object.entries(uploadedDocs)) {
+          if (fileObj.data) {
+            const blob = base64ToBlob(fileObj.data.split(",")[1], fileObj.type);
+            formData.append(key, blob, fileObj.name);
+            formData.append(key + "_base64", fileObj.data);
+          }
+        }
+
+        try {
+          const response = await fetch("../php/applicant.php", {
+            method: "POST",
+            body: formData
+          });
+          const result = await response.json();
+          if (result.status === "success") {
+            alert(result.message);
+            sessionStorage.clear();
+            window.location.href = "homepage.html";
+          } else {
+            alert("Error: " + result.message);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred while submitting your application.");
+        }
+      });
+
+      function base64ToBlob(base64, type = "application/octet-stream") {
+        const binStr = atob(base64);
+        const len = binStr.length;
+        const arr = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          arr[i] = binStr.charCodeAt(i);
+        }
+        return new Blob([arr], { type });
+      }
+    });
+  </script>
+
+</body>
+
+</html>

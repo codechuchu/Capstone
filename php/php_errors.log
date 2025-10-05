@@ -1,0 +1,27 @@
+[03-Oct-2025 11:38:50 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 12
+[03-Oct-2025 11:38:50 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 13
+[03-Oct-2025 11:38:50 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 14
+[03-Oct-2025 11:38:50 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Capstone\php\config.php on line 21
+[03-Oct-2025 11:38:50 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 11:38:55 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 12
+[03-Oct-2025 11:38:55 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 13
+[03-Oct-2025 11:38:55 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 14
+[03-Oct-2025 11:38:55 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Capstone\php\config.php on line 21
+[03-Oct-2025 11:38:55 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 11:57:58 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 11:58:46 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 11:58:55 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 11:59:46 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 11:59:53 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:01:25 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:01:36 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:02:04 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:02:09 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:02:42 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:03:21 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:03:26 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[03-Oct-2025 12:04:08 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 12
+[03-Oct-2025 12:04:08 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 13
+[03-Oct-2025 12:04:08 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 14
+[03-Oct-2025 12:04:08 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Capstone\php\config.php on line 21
+[03-Oct-2025 12:04:08 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)

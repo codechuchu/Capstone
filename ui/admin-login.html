@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="admin-login.css">
+</head>
+
+<body>
+
+  <div class="login-container">
+
+    <!-- Login Form -->
+    <form id="loginForm" autocomplete="off">
+
+      <!-- Logo + School Name replacing Login text -->
+      <img src="sulivanlogo.png" alt="Sulivan Logo" class="school-logo">
+      <a href="homepage.html" class="school-name">SNHS</a>
+
+
+      <input type="text" id="username" name="username" placeholder="Enter username" required>
+
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" placeholder="Enter password" required>
+        <span class="toggle-password" id="togglePassword" role="button" aria-label="Show password"
+          tabindex="0">👁</span>
+      </div>
+
+      <button type="submit">Login</button>
+      <p id="error" class="error" aria-live="polite"></p>
+    </form>
+
+  </div>
+
+  <script src="admin-login.js"></script>
+</body>
+
+</html>
