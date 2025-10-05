@@ -2924,3 +2924,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load slideshow immediately when page loads
     loadBanners();
 });
+//testing changes
