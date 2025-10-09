@@ -9,7 +9,7 @@ session_set_cookie_params([
 session_start();
 header('Content-Type: application/json');
 
-$conn = new mysqli("localhost", "u705788258_sulivan", "Sulivannhs2025", "u705788258_sulivannhs");
+$conn = new mysqli("localhost", "root", "", "sulivannhs");
 
 if ($conn->connect_error) {
     http_response_code(500);

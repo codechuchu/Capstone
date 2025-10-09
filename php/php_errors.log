@@ -25,3 +25,13 @@
 [03-Oct-2025 12:04:08 Europe/Berlin] PHP Warning:  ini_set(): Session ini settings cannot be changed when a session is active in C:\xampp\htdocs\Capstone\php\config.php on line 14
 [03-Oct-2025 12:04:08 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Capstone\php\config.php on line 21
 [03-Oct-2025 12:04:08 Europe/Berlin] Database error: SQLSTATE[HY000] [1045] Access denied for user 'appuser'@'localhost' (using password: YES)
+[09-Oct-2025 10:14:34 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'section_name' in 'field list' in C:\xampp\htdocs\Capstone\php\re_enroll_students.php:48
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\re_enroll_students.php(48): mysqli->query('INSERT INTO sec...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\re_enroll_students.php on line 48
+[09-Oct-2025 10:16:46 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'section_name' in 'field list' in C:\xampp\htdocs\Capstone\php\re_enroll_students.php:48
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\re_enroll_students.php(48): mysqli->query('INSERT INTO sec...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\re_enroll_students.php on line 48

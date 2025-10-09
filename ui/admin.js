@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.delete('assigned_level');
         }
 
-        fetch('/Capstone/php/save_teacher.php', {
+        fetch('../php/save_teacher.php', {
             method: 'POST',
             body: formData
         })
@@ -946,7 +946,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </tr>
                     `;
                 });
-                
+
 
                 const modal = document.getElementById("students-modal");
                 const studentsList = document.getElementById("students-list");
@@ -1000,81 +1000,81 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
 
-// Adviser modal elements
-const adviserModal = document.getElementById("adviser-modal");
-const teacherDropdown = document.getElementById("teacher-dropdown");
-const cancelAdviserBtn = document.getElementById("cancel-btn");
-const saveAdviserBtn = document.getElementById("save-btn");
+                // Adviser modal elements
+                const adviserModal = document.getElementById("adviser-modal");
+                const teacherDropdown = document.getElementById("teacher-dropdown");
+                const cancelAdviserBtn = document.getElementById("cancel-btn");
+                const saveAdviserBtn = document.getElementById("save-btn");
 
-// Event delegation
-displaySectionsBody.addEventListener("click", async (e) => {
-    const tr = e.target.closest("tr");
-    if (!tr) return;
+                // Event delegation
+                displaySectionsBody.addEventListener("click", async (e) => {
+                    const tr = e.target.closest("tr");
+                    if (!tr) return;
 
-    if (e.target.classList.contains("adviser-btn")) {
-        const sectionId = tr.dataset.sectionId;
-        const currentAdviserId = tr.dataset.adviserId || ''; // Ensure it's defined even if no adviser
+                    if (e.target.classList.contains("adviser-btn")) {
+                        const sectionId = tr.dataset.sectionId;
+                        const currentAdviserId = tr.dataset.adviserId || ''; // Ensure it's defined even if no adviser
 
-        // Show modal
-        adviserModal.classList.remove("hidden");
+                        // Show modal
+                        adviserModal.classList.remove("hidden");
 
-        // Fetch teachers
-        try {
-            const res = await fetch("../php/fetch_teachers.php", { credentials: "include" });
-            const data = await res.json();
+                        // Fetch teachers
+                        try {
+                            const res = await fetch("../php/fetch_teachers.php", { credentials: "include" });
+                            const data = await res.json();
 
-            if (!data.success) {
-                teacherDropdown.innerHTML = `<option value="">Failed to load teachers</option>`;
-                return;
-            }
+                            if (!data.success) {
+                                teacherDropdown.innerHTML = `<option value="">Failed to load teachers</option>`;
+                                return;
+                            }
 
-            // Populate dropdown and pre-select current adviser
-            teacherDropdown.innerHTML = `<option value="">Select a teacher</option>` +
-                data.teachers.map(t =>
-                    `<option value="${t.teacher_id}" ${t.teacher_id == currentAdviserId ? 'selected' : ''}>
+                            // Populate dropdown and pre-select current adviser
+                            teacherDropdown.innerHTML = `<option value="">Select a teacher</option>` +
+                                data.teachers.map(t =>
+                                    `<option value="${t.teacher_id}" ${t.teacher_id == currentAdviserId ? 'selected' : ''}>
                         ${t.firstname} ${t.middlename} ${t.lastname} (${t.assigned_level})
                     </option>`).join("");
 
-        } catch (err) {
-            console.error(err);
-            teacherDropdown.innerHTML = `<option value="">Error loading teachers</option>`;
-        }
+                        } catch (err) {
+                            console.error(err);
+                            teacherDropdown.innerHTML = `<option value="">Error loading teachers</option>`;
+                        }
 
-        // Cancel button
-        cancelAdviserBtn.onclick = () => adviserModal.classList.add("hidden");
+                        // Cancel button
+                        cancelAdviserBtn.onclick = () => adviserModal.classList.add("hidden");
 
-        // Save button
-        saveAdviserBtn.onclick = async () => {
-            const selectedTeacherId = teacherDropdown.value;
-            if (!selectedTeacherId) return alert("Please select a teacher.");
+                        // Save button
+                        saveAdviserBtn.onclick = async () => {
+                            const selectedTeacherId = teacherDropdown.value;
+                            if (!selectedTeacherId) return alert("Please select a teacher.");
 
-            try {
-                const formData = new FormData();
-                formData.append("teacher_id", selectedTeacherId);
-                formData.append("section_id", sectionId);
+                            try {
+                                const formData = new FormData();
+                                formData.append("teacher_id", selectedTeacherId);
+                                formData.append("section_id", sectionId);
 
-                const res = await fetch("../php/save_adviser.php", {
-                    method: "POST",
-                    body: formData,
-                    credentials: "include"
+                                const res = await fetch("../php/save_adviser.php", {
+                                    method: "POST",
+                                    body: formData,
+                                    credentials: "include"
+                                });
+                                const result = await res.json();
+
+                                if (!result.success) return alert(result.message || "Failed to save adviser.");
+
+                                alert("Adviser assigned successfully!");
+                                adviserModal.classList.add("hidden");
+
+                                // Update <tr> dataset for next modal opening
+                                tr.dataset.adviserId = selectedTeacherId;
+
+                            } catch (err) {
+                                console.error(err);
+                                alert("Error saving adviser.");
+                            }
+                        };
+                    }
                 });
-                const result = await res.json();
-
-                if (!result.success) return alert(result.message || "Failed to save adviser.");
-
-                alert("Adviser assigned successfully!");
-                adviserModal.classList.add("hidden");
-
-                // Update <tr> dataset for next modal opening
-                tr.dataset.adviserId = selectedTeacherId;
-
-            } catch (err) {
-                console.error(err);
-                alert("Error saving adviser.");
-            }
-        };
-    }
-});
 
 
 
@@ -1623,7 +1623,7 @@ function loadTeachers() {
         </tr>
     `;
 
-    fetch('/Capstone/php/fetch_teachers.php')
+    fetch('../php/fetch_teachers.php')
         .then(res => res.json())
         .then(data => {
             tbody.innerHTML = '';
@@ -1675,7 +1675,7 @@ function loadTeachers() {
 function resetTeacherPassword(id, lastname) {
     if (!confirm(`Reset password for ${lastname}?`)) return;
 
-    fetch('/Capstone/php/reset_password.php', {
+    fetch('../php/reset_password.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `teacher_id=${encodeURIComponent(id)}`
@@ -1695,7 +1695,7 @@ function resetTeacherPassword(id, lastname) {
 function removeTeacher(id, lastname) {
     if (!confirm(`Remove teacher ${lastname}?`)) return;
 
-    fetch('/Capstone/php/remove_teacher.php', {
+    fetch('../php/remove_teacher.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `teacher_id=${encodeURIComponent(id)}`
@@ -2235,260 +2235,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-//file maintenance
-document.addEventListener("DOMContentLoaded", () => {
-    const navItems = document.querySelectorAll(".nav-item");
-    const panes = document.querySelectorAll(".content-pane");
-    const paneTitle = document.getElementById("pane-title");
-    const tableBody = document.getElementById("sections-table-body");
 
-    const studentModal = document.getElementById("student-modal");
-    const studentListContainer = document.getElementById("student-list");
-    const studentClose = document.getElementById("student-close");
-
-    let currentSectionId = null;
-
-    navItems.forEach(item => {
-        item.addEventListener("click", () => {
-            const targetPaneId = item.getAttribute("data-pane");
-            const targetPane = document.getElementById(targetPaneId);
-
-            panes.forEach(pane => pane.classList.add("hidden"));
-            if (targetPane) targetPane.classList.remove("hidden");
-
-            if (paneTitle) paneTitle.textContent = item.getAttribute("data-title") || "";
-
-            if (targetPaneId === "file-maintenance-pane") {
-                loadSections();
-            }
-        });
-    });
-
-    async function loadSections() {
-        if (!tableBody) return;
-
-        try {
-            const res = await fetch(`../php/fetch_sections.php?status=archived`);
-            const data = await res.json();
-
-            tableBody.innerHTML = "";
-
-            if (!Array.isArray(data) || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500 py-2 border">No sections found.</td></tr>`;
-                return;
-            }
-
-            data.forEach(section => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="px-4 py-2 border">${section.section_name}</td>
-                    <td class="px-4 py-2 border">${section.grade_level || "N/A"}</td>
-                    <td class="px-4 py-2 border flex items-center justify-between">
-                        <span>${section.total_students || "0"}</span>
-                        <button 
-                            class="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 view-btn"
-                            data-id="${section.section_id}"
-                            data-name="${section.section_name}"
-                        >
-                            View
-                        </button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            document.querySelectorAll(".view-btn").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    currentSectionId = btn.dataset.id; // store section ID
-                    const sectionName = btn.dataset.name;
-                    await loadStudents(currentSectionId, sectionName);
-                });
-            });
-
-        } catch (err) {
-            console.error("Error loading sections:", err);
-            tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-red-500 py-2 border">Failed to load sections.</td></tr>`;
-        }
-    }
-
-    async function loadStudents(sectionId, sectionName) {
-        try {
-            const res = await fetch(`../php/get_section_students.php?section_id=${encodeURIComponent(sectionId)}&section_name=${encodeURIComponent(sectionName)}`);
-            const data = await res.json();
-
-            studentListContainer.innerHTML = "";
-
-            if (!Array.isArray(data) || data.length === 0) {
-                studentListContainer.innerHTML = `<p class="text-gray-500">No students found.</p>`;
-            } else {
-                const table = document.createElement("table");
-                table.className = "min-w-full divide-y divide-gray-200 border";
-                table.innerHTML = `
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-2 text-center"><input type="checkbox" id="select-all" /></th>
-                            <th class="px-4 py-2 text-left">Student</th>
-                        </tr>
-                    </thead>
-                `;
-
-                const tbody = document.createElement("tbody");
-
-                data.forEach(student => {
-                    const row = document.createElement("tr");
-
-                    // 🔴 highlight failing students
-                    if (student.failed) {
-                        row.classList.add("bg-red-200"); // light red background
-                    }
-
-                    row.innerHTML = `
-                        <td class="px-4 py-2 border text-center">
-                            <input type="checkbox" class="student-checkbox" data-student="${encodeURIComponent(student.student_name)}">
-                        </td>
-                        <td class="px-4 py-2 border">
-                            ${student.student_name} (${student.strand || "N/A"} - Grade ${student.grade_level || "N/A"})
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-
-                table.appendChild(tbody);
-                studentListContainer.appendChild(table);
-
-                document.getElementById("select-all").addEventListener("change", e => {
-                    document.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = e.target.checked);
-                });
-
-                let oldBtn = document.getElementById("re-enroll-btn");
-                if (oldBtn) oldBtn.remove();
-
-                const reEnrollBtn = document.createElement("button");
-                reEnrollBtn.id = "re-enroll-btn";
-                reEnrollBtn.textContent = "Re-enroll";
-                reEnrollBtn.className = "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 ml-2";
-                studentClose.insertAdjacentElement("afterend", reEnrollBtn);
-
-                reEnrollBtn.onclick = async () => {
-                    const selectedStudents = Array.from(document.querySelectorAll(".student-checkbox:checked"))
-                        .map(cb => decodeURIComponent(cb.dataset.student));
-
-                    if (selectedStudents.length === 0) {
-                        alert("Please select at least one student to re-enroll.");
-                        return;
-                    }
-
-                    // Fetch strands from backend
-                    let strands = [];
-                    try {
-                        const res = await fetch("../php/get_strands.php");
-                        const result = await res.json();
-                        if (result.success && Array.isArray(result.data)) {
-                            strands = result.data;
-                        }
-                    } catch (err) {
-                        console.error("Error loading strands:", err);
-                    }
-
-                    // Build popup modal
-                    const modal = document.createElement("div");
-                    modal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50";
-
-                    modal.innerHTML = `
-                        <div class="bg-white p-6 rounded-lg shadow-lg w-96 relative z-50">
-                            <h2 class="text-lg font-semibold mb-4">Re-enroll Students</h2>
-                            
-                            <label class="block mb-2">Grade Level</label>
-                            <select id="grade-level" class="w-full border p-2 rounded mb-4">
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                            </select>
-                
-                            <label class="block mb-2">Semester</label>
-                            <select id="semester" class="w-full border p-2 rounded mb-4">
-                                <option value="1">1st Semester</option>
-                                <option value="2">2nd Semester</option>
-                            </select>
-                
-                            <label class="block mb-2">Strand</label>
-                            <select id="strand" class="w-full border p-2 rounded mb-4">
-                                ${strands.map(s => `<option value="${s}">${s}</option>`).join("")}
-                            </select>
-                
-                            <div class="flex justify-end gap-2">
-                                <button id="cancel-modal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-                                <button id="confirm-modal" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-
-                    // Cancel button
-                    modal.querySelector("#cancel-modal").onclick = () => modal.remove();
-
-                    // Confirm button
-                    modal.querySelector("#confirm-modal").onclick = async () => {
-                        const gradeLevel = modal.querySelector("#grade-level").value;
-                        const semester = modal.querySelector("#semester").value;
-                        const strand = modal.querySelector("#strand").value;
-
-                        try {
-                            const res = await fetch("../php/re_enroll_students.php", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    section_id: currentSectionId,
-                                    students: selectedStudents,
-                                    grade_level: gradeLevel,
-                                    semester: semester,
-                                    strand: strand
-                                })
-                            });
-
-                            const text = await res.text();
-                            console.log("Server response:", text);
-
-                            let result;
-                            try {
-                                result = JSON.parse(text);
-                            } catch {
-                                alert("Server returned invalid JSON. Check console.");
-                                return;
-                            }
-
-                            if (result.success) {
-                                alert(result.message);
-                                studentModal.classList.add("hidden");
-                                modal.remove();
-                            } else {
-                                alert("❌ " + result.message);
-                            }
-                        } catch (err) {
-                            console.error("Re-enroll error:", err);
-                            alert("Something went wrong during re-enroll.");
-                        }
-                    };
-                };
-            }
-
-            studentModal.classList.remove("hidden");
-        } catch (err) {
-            console.error("Error loading students:", err);
-            studentListContainer.innerHTML = `<p class="text-red-500">Failed to load students.</p>`;
-            studentModal.classList.remove("hidden");
-        }
-    }
-
-
-    studentClose.addEventListener("click", () => {
-        studentModal.classList.add("hidden");
-        const reEnrollBtn = document.getElementById("re-enroll-btn");
-        if (reEnrollBtn) reEnrollBtn.remove();
-    });
-
-    // Initial load
-    loadSections();
-});
 //activation period
 document.addEventListener("DOMContentLoaded", () => {
     const activePeriodBtn = document.getElementById("activePeriod");
@@ -2925,3 +2672,1231 @@ document.addEventListener("DOMContentLoaded", () => {
     loadBanners();
 });
 //testing changes
+
+//file maintenance(section)
+document.addEventListener("DOMContentLoaded", () => {
+    const fileModal = document.getElementById("file-modal");
+    const fileModalClose = document.getElementById("file-modal-close");
+    const fileModalContent = document.getElementById("file-modal-content");
+
+    const sectionBtn = document.querySelector('#file-maintenance-pane button:nth-child(1)');
+
+    if (sectionBtn) {
+        sectionBtn.addEventListener("click", async () => {
+            fileModalContent.innerHTML = "";
+            fileModal.classList.remove("hidden");
+
+            try {
+                const sectionsRes = await fetch("../php/fetch_section.php", { credentials: "include" });
+                const sections = await sectionsRes.json();
+
+                if (!sections || sections.length === 0) {
+                    fileModalContent.innerHTML = "<p>No sections available.</p>";
+                    return;
+                }
+
+                const container = document.createElement("div");
+                container.className = "mb-4 flex items-center gap-2";
+
+                // Dropdown
+                const select = document.createElement("select");
+                select.className = "px-3 py-2 rounded-md border border-gray-600 bg-gray-800 text-gray-200";
+                select.innerHTML = `<option value="">Select Section</option>`;
+                sections.forEach(sec => {
+                    const opt = document.createElement("option");
+                    opt.value = sec.section_name;
+                    opt.textContent = sec.section_name;
+                    select.appendChild(opt);
+                });
+                container.appendChild(select);
+
+                // Delete Button
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete Section";
+                deleteBtn.className = "px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700";
+                container.appendChild(deleteBtn);
+
+                fileModalContent.appendChild(container);
+
+                select.addEventListener("change", async () => {
+                    const sectionName = select.value;
+                    if (!sectionName) return;
+
+                    const oldTable = document.getElementById("file-table");
+                    const oldTotal = document.getElementById("file-total");
+                    if (oldTable) oldTable.remove();
+                    if (oldTotal) oldTotal.remove();
+
+                    try {
+                        const studentsRes = await fetch(`../php/get_section_students.php?section_name=${encodeURIComponent(sectionName)}`, { credentials: "include" });
+                        const students = await studentsRes.json();
+
+                        if (students.error) {
+                            fileModalContent.innerHTML += `<p>${students.error}</p>`;
+                            return;
+                        }
+
+                        const totalText = document.createElement("p");
+                        totalText.id = "file-total";
+                        totalText.className = "mb-2 font-semibold text-gray-200";
+                        totalText.textContent = `Total Students: ${students.length}`;
+                        fileModalContent.appendChild(totalText);
+
+                        const table = document.createElement("table");
+                        table.id = "file-table";
+                        table.className = "mt-2 w-full border border-gray-600 text-sm text-gray-200";
+                        table.innerHTML = `
+                            <thead class="bg-gray-700 text-white">
+                                <tr>
+                                    <th class="px-3 py-2 border border-gray-600">Name</th>
+                                    <th class="px-3 py-2 border border-gray-600">Strand</th>
+                                    <th class="px-3 py-2 border border-gray-600">Grade Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${students.map(s => `
+                                    <tr>
+                                        <td class="px-3 py-2 border border-gray-600">${s.student_name}</td>
+                                        <td class="px-3 py-2 border border-gray-600">${s.strand}</td>
+                                        <td class="px-3 py-2 border border-gray-600">${s.grade_level}</td>
+                                    </tr>`).join("")}
+                            </tbody>
+                        `;
+                        fileModalContent.appendChild(table);
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Failed to fetch students in section.");
+                    }
+                });
+
+                // Delete Section
+                deleteBtn.addEventListener("click", async () => {
+                    const sectionName = select.value;
+                    if (!sectionName) {
+                        alert("Please select a section to delete.");
+                        return;
+                    }
+
+                    if (!confirm(`Are you sure you want to delete the section "${sectionName}"? This action cannot be undone.`)) return;
+
+                    try {
+                        const res = await fetch("../php/delete_section.php", {
+                            method: "POST",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ section_name: sectionName })
+                        });
+
+                        const result = await res.json();
+
+                        if (result.success) {
+                            alert("Section deleted successfully.");
+                            select.querySelector(`option[value="${sectionName}"]`).remove();
+                            const oldTable = document.getElementById("file-table");
+                            const oldTotal = document.getElementById("file-total");
+                            if (oldTable) oldTable.remove();
+                            if (oldTotal) oldTotal.remove();
+                        } else {
+                            alert("Failed to delete section: " + result.error);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error deleting section.");
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                fileModalContent.innerHTML = "<p class='text-red-400'>Error loading sections.</p>";
+            }
+        });
+    }
+
+    fileModalClose.addEventListener("click", () => {
+        fileModal.classList.add("hidden");
+    });
+
+    window.addEventListener("click", (e) => {
+        if (e.target === fileModal) {
+            fileModal.classList.add("hidden");
+        }
+    });
+});
+
+
+
+//file maintenance(student)
+document.addEventListener("DOMContentLoaded", () => {
+    const studentBtn = document.getElementById("studentBtn");
+    const fileModal = document.getElementById("file-modal");
+    const fileModalContent = document.getElementById("file-modal-content");
+    const fileModalClose = document.getElementById("file-modal-close");
+
+    if (studentBtn) {
+        studentBtn.addEventListener("click", async () => {
+            fileModalContent.innerHTML = "";
+            fileModal.classList.remove("hidden");
+
+            try {
+                const loginRes = await fetch("../php/get_assigned_level.php", { method: "GET", credentials: "include" });
+                const loginData = await loginRes.json();
+
+                if (!loginData.success || !loginData.assigned_level) {
+                    return alert("Unable to determine assigned level.");
+                }
+
+                const assignedLevel = loginData.assigned_level.toLowerCase();
+
+                const studentsRes = await fetch(`../php/get_all_students.php?level=${encodeURIComponent(assignedLevel)}`, { credentials: "include" });
+                const studentsData = await studentsRes.json();
+
+                if (!studentsData.success) {
+                    fileModalContent.innerHTML = `<p>${studentsData.message}</p>`;
+                    return;
+                }
+
+                const students = studentsData.students;
+
+                const table = document.createElement("table");
+                table.className = "w-full border border-gray-600 text-sm text-gray-200";
+                table.id = "student-table";
+
+                table.innerHTML = `
+                    <thead class="bg-gray-700 text-white">
+                        <tr>
+                            <th class="px-3 py-2 border border-gray-600">First Name</th>
+                            <th class="px-3 py-2 border border-gray-600">Last Name</th>
+                            ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Strand</th>' : ''}
+                            <th class="px-3 py-2 border border-gray-600">Grade Level</th>
+                            ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Semester</th>' : ''}
+                            <th class="px-3 py-2 border border-gray-600">Barangay</th>
+                            <th class="px-3 py-2 border border-gray-600">Municipal/City</th>
+                            <th class="px-3 py-2 border border-gray-600">Province</th>
+                            <th class="px-3 py-2 border border-gray-600">Cellphone</th>
+                            <th class="px-3 py-2 border border-gray-600">Email</th>
+                            <th class="px-3 py-2 border border-gray-600">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${students.map(s => `
+                            <tr data-id="${s.applicant_id}">
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="firstname" value="${s.firstname || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="lastname" value="${s.lastname || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                ${assignedLevel === 'senior high' ? `
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="strand" value="${s.strand || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>` : ''}
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="grade_level" value="${s.grade_level || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                ${assignedLevel === 'senior high' ? `
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="semester" value="${s.semester || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>` : ''}
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="barangay" value="${s.barangay || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="municipal_city" value="${s.municipal_city || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="province" value="${s.province || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="cellphone" value="${s.cellphone || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                <td class="px-3 py-2 border border-gray-600">
+                                    <input type="text" name="emailaddress" value="${s.emailaddress || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
+                                </td>
+                                <td class="px-3 py-2 border border-gray-600 text-center">
+                                    <button class="edit-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Edit</button>
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                `;
+
+                fileModalContent.appendChild(table);
+
+                table.querySelectorAll(".edit-btn").forEach(btn => {
+                    btn.addEventListener("click", async (e) => {
+                        const row = e.target.closest("tr");
+                        const inputs = row.querySelectorAll("input");
+                        const isEditing = e.target.textContent === "Save";
+
+                        if (!isEditing) {
+                            inputs.forEach(inp => {
+                                inp.removeAttribute("readonly");
+                                inp.classList.remove("bg-gray-700", "text-gray-200");
+                                inp.classList.add("bg-white", "text-black");
+                            });
+                            e.target.textContent = "Save";
+                            e.target.classList.remove("bg-blue-600");
+                            e.target.classList.add("bg-green-600", "hover:bg-green-500");
+                        } else {
+                            const studentId = row.dataset.id;
+                            const payload = {
+                                applicant_id: studentId,
+                                level: assignedLevel,
+                                firstname: row.querySelector('input[name="firstname"]').value.trim(),
+                                lastname: row.querySelector('input[name="lastname"]').value.trim(),
+                                strand: assignedLevel === 'senior high' ? row.querySelector('input[name="strand"]').value.trim() : '',
+                                grade_level: row.querySelector('input[name="grade_level"]').value.trim(),
+                                semester: assignedLevel === 'senior high' ? row.querySelector('input[name="semester"]').value.trim() : '',
+                                barangay: row.querySelector('input[name="barangay"]').value.trim(),
+                                municipal_city: row.querySelector('input[name="municipal_city"]').value.trim(),
+                                province: row.querySelector('input[name="province"]').value.trim(),
+                                cellphone: row.querySelector('input[name="cellphone"]').value.trim(),
+                                emailaddress: row.querySelector('input[name="emailaddress"]').value.trim()
+                            };
+
+                            if (!/^\d{11}$/.test(payload.cellphone)) return alert("Cellphone must be exactly 11 digits");
+                            if (!payload.emailaddress.includes("@") || !payload.emailaddress.includes(".com")) return alert("Email must contain '@' and end with '.com'");
+
+                            try {
+                                const res = await fetch("../php/update_student_info.php", {
+                                    method: "POST",
+                                    credentials: "include",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(payload)
+                                });
+                                const data = await res.json();
+
+                                if (data.success) {
+                                    alert("Updated successfully!");
+                                    inputs.forEach(inp => {
+                                        inp.setAttribute("readonly", true);
+                                        inp.classList.remove("bg-white", "text-black");
+                                        inp.classList.add("bg-gray-700", "text-gray-200");
+                                    });
+                                    e.target.textContent = "Edit";
+                                    e.target.classList.remove("bg-green-600", "hover:bg-green-500");
+                                    e.target.classList.add("bg-blue-600", "hover:bg-blue-500");
+                                } else {
+                                    alert("Update failed: " + data.message);
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert("Failed to update student info");
+                            }
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error(err);
+                alert("Error loading student data.");
+            }
+        });
+    }
+
+    fileModalClose.addEventListener("click", () => fileModal.classList.add("hidden"));
+    window.addEventListener("click", e => { if (e.target === fileModal) fileModal.classList.add("hidden"); });
+});
+
+//file maintenance(subjects)
+document.addEventListener("DOMContentLoaded", () => {
+    const subjectBtn = document.getElementById("subjectBtn");
+    const fileModal = document.getElementById("file-modal");
+    const fileModalContent = document.getElementById("file-modal-content");
+    const fileModalClose = document.getElementById("file-modal-close");
+
+    if (subjectBtn) {
+        subjectBtn.addEventListener("click", async () => {
+            fileModalContent.innerHTML = "";
+            fileModal.classList.remove("hidden");
+
+            try {
+                const levelRes = await fetch("../php/get_assigned_level.php", { credentials: "include" });
+                const levelData = await levelRes.json();
+
+                if (!levelData.success || !levelData.assigned_level) {
+                    fileModalContent.innerHTML = `<p>Unable to determine assigned level.</p>`;
+                    return;
+                }
+
+                const assignedLevel = levelData.assigned_level.toLowerCase();
+
+                const subjectsRes = await fetch("../php/fetch_subjects.php", { credentials: "include" });
+                const subjectsData = await subjectsRes.json();
+
+                if (!subjectsData.success) {
+                    fileModalContent.innerHTML = `<p>Failed to fetch subjects.</p>`;
+                    return;
+                }
+
+                let subjects = subjectsData.subjects;
+
+                const topControls = document.createElement("div");
+                topControls.className = "flex justify-between items-center mb-4";
+
+                const addBtn = document.createElement("button");
+                addBtn.className = "bg-green-600 text-white px-3 py-1 rounded hover:bg-green-500";
+                addBtn.textContent = "Add Subject";
+                topControls.appendChild(addBtn);
+
+                if (assignedLevel === "senior high") {
+                    const strandsRes = await fetch("../php/get_strands.php", { credentials: "include" });
+                    const strandsData = await strandsRes.json();
+                    const strands = strandsData.success ? strandsData.data : [];
+
+                    const filterDiv = document.createElement("div");
+                    filterDiv.className = "flex gap-2";
+
+                    const strandSelect = document.createElement("select");
+                    strandSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
+                    strandSelect.innerHTML = `<option value="">All Strands</option>` +
+                        strands.map(s => `<option value="${s}">${s}</option>`).join("");
+                    filterDiv.appendChild(strandSelect);
+
+                    const yearSelect = document.createElement("select");
+                    yearSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
+                    yearSelect.innerHTML = `
+                        <option value="">All Years</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                    `;
+                    filterDiv.appendChild(yearSelect);
+
+                    const semSelect = document.createElement("select");
+                    semSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
+                    semSelect.innerHTML = `
+                        <option value="">All Semesters</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    `;
+                    filterDiv.appendChild(semSelect);
+
+                    topControls.appendChild(filterDiv);
+
+                    strandSelect.addEventListener("change", filterSubjects);
+                    yearSelect.addEventListener("change", filterSubjects);
+                    semSelect.addEventListener("change", filterSubjects);
+
+                    function filterSubjects() {
+                        const strand = strandSelect.value.trim().toUpperCase();
+                        const year = yearSelect.value;
+                        const sem = semSelect.value;
+
+                        const filtered = subjects.filter(s => {
+                            const code = s.subcode?.trim() || "";
+                            const match = code.match(/^([A-Z ]+)(\d{3})$/i);
+                            if (!match) return false;
+
+                            const codeStrand = match[1].trim().toUpperCase();
+                            const codeDigits = match[2];
+                            const codeYearDigit = codeDigits[0];
+                            const codeSem = codeDigits[1];
+                            const codeYear = codeYearDigit === "1" ? "11" : "12";
+
+                            return (!strand || codeStrand === strand) &&
+                                (!year || codeYear === year) &&
+                                (!sem || codeSem === sem);
+                        });
+
+                        renderTable(filtered);
+                    }
+                }
+
+                fileModalContent.appendChild(topControls);
+
+                const table = document.createElement("table");
+                table.className = "w-full border border-gray-600 text-sm text-gray-200";
+                table.id = "subjects-table";
+                fileModalContent.appendChild(table);
+
+                function renderTable(list) {
+                    if (assignedLevel === "junior high") {
+                        table.innerHTML = `
+                        <thead class="bg-gray-700 text-white">
+                            <tr><th>Name</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            ${list.map(s => `
+                                <tr data-id="${s.subject_id}">
+                                    <td><input type="text" value="${s.name}" class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600" readonly></td>
+                                    <td class="text-center">
+                                        <button class="delete-btn bg-red-600 px-2 py-1 rounded hover:bg-red-500 text-white">Delete</button>
+                                    </td>
+                                </tr>`).join("")}
+                        </tbody>`;
+                    } else {
+                        table.innerHTML = `
+                        <thead class="bg-gray-700 text-white">
+                            <tr><th>Subcode</th><th>Name</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            ${list.map(s => `
+                                <tr data-id="${s.subject_id}">
+                                    <td><input type="text" value="${s.subcode}" class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600" readonly></td>
+                                    <td><input type="text" value="${s.name}" class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600" readonly></td>
+                                    <td class="text-center">
+                                        <button class="delete-btn bg-red-600 px-2 py-1 rounded hover:bg-red-500 text-white">Delete</button>
+                                    </td>
+                                </tr>`).join("")}
+                        </tbody>`;
+                    }
+
+                    table.querySelectorAll(".delete-btn").forEach(btn => {
+                        btn.addEventListener("click", async (e) => {
+                            const row = e.target.closest("tr");
+                            const subject_id = Number(row.dataset.id);
+                            const level = assignedLevel.toLowerCase();
+
+                            if (!confirm("Are you sure you want to delete this subject?")) return;
+
+                            row.innerHTML = `<td colspan="3" class="text-center text-yellow-400">Deleting...</td>`;
+
+                            try {
+                                const res = await fetch("../php/delete_subject.php", {
+                                    method: "POST",
+                                    credentials: "include",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ id: subject_id, level })
+                                });
+
+                                const text = await res.text();
+                                console.log("Raw response:", text);
+                                const data = JSON.parse(text);
+
+                                if (data.success) {
+                                    row.remove();
+                                } else {
+                                    alert("Failed to delete: " + data.message);
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert("Error deleting subject.");
+                            }
+                        });
+                    });
+                }
+
+                renderTable(subjects);
+
+                addBtn.addEventListener("click", () => {
+                    const newRow = document.createElement("tr");
+                    if (assignedLevel === "junior high") {
+                        newRow.innerHTML = `
+                            <td><input type="text" name="name" class="w-full px-2 py-1 rounded border border-gray-600 bg-gray-800 text-white"></td>
+                            <td class="text-center">
+                                <button class="save-new-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Save</button>
+                            </td>`;
+                    } else {
+                        newRow.innerHTML = `
+                            <td><input type="text" name="subcode" class="w-full px-2 py-1 rounded border border-gray-600 bg-gray-800 text-white"></td>
+                            <td><input type="text" name="name" class="w-full px-2 py-1 rounded border border-gray-600 bg-gray-800 text-white"></td>
+                            <td class="text-center">
+                                <button class="save-new-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Save</button>
+                            </td>`;
+                    }
+
+                    table.querySelector("tbody").appendChild(newRow);
+
+                    newRow.querySelector(".save-new-btn").addEventListener("click", async () => {
+                        const subcode = newRow.querySelector('input[name="subcode"]')?.value.trim();
+                        const name = newRow.querySelector('input[name="name"]').value.trim();
+
+                        if (!name || (assignedLevel === "senior high" && !subcode)) {
+                            return alert("All fields are required.");
+                        }
+
+                        try {
+                            const res = await fetch("../php/add_subject.php", {
+                                method: "POST",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ subcode, name, level: assignedLevel })
+                            });
+
+                            const text = await res.text();
+                            console.log("Raw add response:", text);
+                            const data = JSON.parse(text);
+
+                            if (data.success) {
+                                alert("Subject added!");
+                                subjects.push({ subject_id: data.id, subcode, name });
+                                renderTable(subjects);
+                            } else {
+                                alert("Failed to add: " + data.message);
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            alert("Failed to add subject.");
+                        }
+                    });
+                });
+
+            } catch (err) {
+                console.error(err);
+                alert("Error loading subjects.");
+            }
+        });
+    }
+
+    fileModalClose.addEventListener("click", () => fileModal.classList.add("hidden"));
+    window.addEventListener("click", e => { if (e.target === fileModal) fileModal.classList.add("hidden"); });
+});
+
+
+//file maintenance(teacher)
+const teacherBtn = document.getElementById("teacherBtn");
+
+teacherBtn.addEventListener("click", async () => {
+    const modal = document.getElementById("file-modal");
+    const modalContent = document.getElementById("file-modal-content");
+    modal.classList.remove("hidden");
+    modalContent.innerHTML = "<p class='text-gray-300'>Loading teachers...</p>";
+
+    try {
+        const res = await fetch("../php/fetch_teachers.php");
+        const data = await res.json();
+
+        if (!data.success) {
+            modalContent.innerHTML = "<p>Failed to load teachers.</p>";
+            return;
+        }
+
+        const teachers = data.teachers;
+
+        // Fetch subjects for dropdown
+        const subjRes = await fetch("../php/fetch_subjects.php");
+        const subjData = await subjRes.json();
+        const subjects = subjData.success ? subjData.subjects.map(s => s.name) : [];
+
+        modalContent.innerHTML = `
+            <table class="w-full border border-gray-600 text-sm text-gray-200">
+                <thead class="bg-gray-700 text-white">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Assigned Level</th>
+                        <th>Subjects</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${teachers.map(t => `
+                        <tr class="border-b border-gray-700">
+                            <td class="px-2 py-1">${t.teacher_id}</td>
+                            <td class="px-2 py-1">${t.firstname} ${t.middlename || ""} ${t.lastname}</td>
+                            <td class="px-2 py-1">${t.email}</td>
+                            <td class="px-2 py-1">${t.assigned_level}</td>
+                            <td class="px-2 py-1 subjects-cell">${t.subjects || ""}</td>
+                            <td class="px-2 py-1 text-center">
+                                <button class="edit-btn bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500 transition duration-200">
+                                    Edit
+                                </button>
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+
+        // --- Edit / Save button logic ---
+        modalContent.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                const row = btn.closest("tr");
+                const teacherId = row.children[0].textContent.trim();
+                const subjectCell = row.querySelector(".subjects-cell");
+
+                // --- Edit Mode ---
+                if (btn.textContent.trim() === "Edit") {
+                    btn.textContent = "Save";
+                    btn.classList.remove("bg-blue-600", "hover:bg-blue-500");
+                    btn.classList.add("bg-green-600", "hover:bg-green-500");
+
+                    // Create dropdown for selecting new subject
+                    const dropdown = document.createElement("select");
+                    dropdown.className = "mt-1 px-2 py-1 bg-gray-700 text-white rounded w-full";
+                    dropdown.innerHTML = `<option value="">-- Select Subject to Add --</option>` +
+                        subjects.map(s => `<option value="${s}">${s}</option>`).join("");
+
+                    // Remove any existing dropdown before adding new
+                    const existingDropdown = subjectCell.querySelector("select");
+                    if (existingDropdown) existingDropdown.remove();
+
+                    subjectCell.appendChild(dropdown);
+                    return; // stop here until Save is clicked
+                }
+
+                // --- Save Mode ---
+                if (btn.textContent.trim() === "Save") {
+                    const dropdown = subjectCell.querySelector("select");
+                    const selectedSubject = dropdown?.value?.trim();
+
+                    if (!selectedSubject) {
+                        alert("Please select a subject to add.");
+                        return;
+                    }
+
+                    // Get current subjects (ignore dropdown)
+                    const textOnly = Array.from(subjectCell.childNodes)
+                        .filter(n => n.nodeType === Node.TEXT_NODE)
+                        .map(n => n.textContent)
+                        .join("")
+                        .trim();
+
+                    const existingSubjects = textOnly
+                        .split(",")
+                        .map(s => s.trim())
+                        .filter(Boolean);
+
+                    if (existingSubjects.includes(selectedSubject)) {
+                        alert("This subject is already assigned to the teacher.");
+                        return;
+                    }
+
+                    const finalSubjects = [...existingSubjects, selectedSubject];
+
+                    const updateRes = await fetch("../php/update_teacher_info.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            teacher_id: teacherId,
+                            subjects: finalSubjects.join(", "),
+                        }),
+                    });
+
+                    const updateData = await updateRes.json();
+
+                    if (updateData.success) {
+                        alert("✅ Teacher updated successfully!");
+                        subjectCell.textContent = finalSubjects.join(", ");
+                    } else {
+                        alert("❌ Update failed: " + updateData.message);
+                    }
+
+                    // Reset button to Edit
+                    btn.textContent = "Edit";
+                    btn.classList.remove("bg-green-600", "hover:bg-green-500");
+                    btn.classList.add("bg-blue-600", "hover:bg-blue-500");
+                }
+            });
+        });
+
+    } catch (err) {
+        console.error(err);
+        modalContent.innerHTML = "<p>Error loading teachers.</p>";
+    }
+});
+// file maintenance(parent)
+const parentBtn = document.getElementById("parentBtn");
+
+parentBtn.addEventListener("click", async () => {
+    const modal = document.getElementById("file-modal");
+    const modalContent = document.getElementById("file-modal-content");
+
+    modal.classList.remove("hidden");
+    modalContent.innerHTML = "<p class='text-gray-300'>Loading parents...</p>";
+
+    try {
+        const res = await fetch("../php/fetch_parents.php");
+        const data = await res.json();
+
+        if (!data.success) {
+            modalContent.innerHTML = "<p>Failed to load parents.</p>";
+            return;
+        }
+
+        const parents = data.parents;
+
+        modalContent.innerHTML = `
+            <div class="overflow-auto h-[600px]">
+                <table class="w-full border border-gray-600 text-sm text-gray-200">
+                    <thead class="bg-gray-700 text-white sticky top-0">
+                        <tr>
+                            <th class="px-2 py-2">First Name</th>
+                            <th class="px-2 py-2">Last Name</th>
+                            <th class="px-2 py-2">IRN</th>
+                            <th class="px-2 py-2">Email</th>
+                            <th class="px-2 py-2">Password</th>
+                            <th class="px-2 py-2">Student</th>
+                            <th class="px-2 py-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${parents.map((p, index) => `
+                            <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                                <td class="px-2 py-1 text-center firstname-cell">${p.firstname || ""}</td>
+                                <td class="px-2 py-1 text-center lastname-cell">${p.lastname || ""}</td>
+                                <td class="px-2 py-1 text-center irn-cell">${p.lrn || ""}</td>
+                                <td class="px-2 py-1 text-center email-cell">${p.email || ""}</td>
+                                <td class="px-2 py-1 text-center password-cell">${p.password || ""}</td>
+                                <td class="px-2 py-1 text-center student-cell">${p.student || ""}</td>
+                                <td class="px-2 py-1 text-center">
+                                    <button class="edit-btn bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500 transition duration-200">
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // Add Edit → Save functionality for all columns
+        modalContent.querySelectorAll(".edit-btn").forEach((btn, index) => {
+            btn.addEventListener("click", async () => {
+                const row = btn.closest("tr");
+
+                const cells = {
+                    firstname: row.querySelector(".firstname-cell"),
+                    lastname: row.querySelector(".lastname-cell"),
+                    irn: row.querySelector(".irn-cell"),
+                    email: row.querySelector(".email-cell"),
+                    password: row.querySelector(".password-cell"),
+                    student: row.querySelector(".student-cell")
+                };
+
+                // --- Edit mode ---
+                if (btn.textContent.trim() === "Edit") {
+                    btn.textContent = "Save";
+                    btn.classList.remove("bg-blue-600", "hover:bg-blue-500");
+                    btn.classList.add("bg-green-600", "hover:bg-green-500");
+
+                    // Turn all cells into input fields
+                    for (const key in cells) {
+                        const value = cells[key].textContent.trim();
+                        cells[key].innerHTML = `<input type="text" class="w-full bg-gray-700 text-white px-1 py-0.5 rounded" value="${value}">`;
+                    }
+                    return;
+                }
+
+                // --- Save mode ---
+                const updatedData = {};
+                for (const key in cells) {
+                    updatedData[key] = cells[key].querySelector("input")?.value.trim() || "";
+                }
+
+                // Send updated data to PHP
+                const updateRes = await fetch("../php/update_parent_info.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        parent_email: parents[index].email, // identify parent by email or use parent_id
+                        ...updatedData
+                    }),
+                });
+
+                const updateData = await updateRes.json();
+
+                if (updateData.success) {
+                    alert("✅ Parent updated successfully!");
+                    for (const key in cells) {
+                        cells[key].textContent = updatedData[key] || updatedData[key] === "" ? updatedData[key] : updatedData[key];
+                    }
+                } else {
+                    alert("❌ Update failed: " + updateData.message);
+                }
+
+                // Switch button back to Edit
+                btn.textContent = "Edit";
+                btn.classList.remove("bg-green-600", "hover:bg-green-500");
+                btn.classList.add("bg-blue-600", "hover:bg-blue-500");
+            });
+        });
+
+    } catch (err) {
+        console.error(err);
+        modalContent.innerHTML = "<p>Error loading parents.</p>";
+    }
+});
+//file maintenance(schedule per section)
+const scheduleBtn = document.getElementById("scheduleBtn");
+
+scheduleBtn.addEventListener("click", async () => {
+    const modal = document.getElementById("file-modal");
+    const modalContent = document.getElementById("file-modal-content");
+
+    modal.classList.remove("hidden");
+    modalContent.innerHTML = "<p class='text-gray-300'>Loading sections...</p>";
+
+    try {
+        // Fetch sections for dropdown
+        const sectionRes = await fetch("../php/fetch_section.php");
+        const sections = await sectionRes.json(); // this is already an array
+
+        if (!sections || !Array.isArray(sections) || sections.length === 0) {
+            modalContent.innerHTML = "<p>No sections found.</p>";
+            return;
+        }
+
+        // Create section dropdown
+        const dropdown = document.createElement("select");
+        dropdown.className = "px-2 py-1 rounded bg-gray-700 text-white mb-4";
+        dropdown.innerHTML = `<option value="">-- Select Section --</option>` +
+            sections.map(s => `<option value="${s.section_id}">${s.section_name}</option>`).join("");
+
+        modalContent.innerHTML = "";
+        modalContent.appendChild(dropdown);
+
+
+        const scheduleDiv = document.createElement("div");
+        scheduleDiv.className = "overflow-auto h-[400px]";
+        modalContent.appendChild(scheduleDiv);
+
+        dropdown.addEventListener("change", async () => {
+            const sectionId = dropdown.value;
+            if (!sectionId) {
+                scheduleDiv.innerHTML = "<p class='text-gray-300'>Select a section to see the schedule.</p>";
+                return;
+            }
+
+            // Fetch schedule for selected section
+            const res = await fetch("../php/get_schedule_by_section.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ section_id: sectionId })
+            });
+            const data = await res.json();
+
+            if (data.status !== "success") {
+                scheduleDiv.innerHTML = `<p>${data.message}</p>`;
+                return;
+            }
+
+            const schedules = data.schedules;
+            if (schedules.length === 0) {
+                scheduleDiv.innerHTML = "<p>No schedules found for this section.</p>";
+                return;
+            }
+
+            // Build table: time as rows, days as columns
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const times = [...new Set(schedules.map(s => s.time_start + " - " + s.time_end))].sort();
+
+            let tableHTML = `
+                <table class="w-full border border-gray-600 text-sm text-gray-200">
+                    <thead class="bg-gray-700 text-white sticky top-0">
+                        <tr>
+                            <th class="px-2 py-2">Time</th>
+                            ${days.map(d => `<th class="px-2 py-2">${d}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            times.forEach(time => {
+                tableHTML += `<tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                    <td class="px-2 py-1 text-center font-semibold">${time}</td>`;
+                days.forEach(day => {
+                    const cell = schedules.find(s => (s.time_start + " - " + s.time_end) === time && s.day_of_week === day);
+                    if (cell) {
+                        tableHTML += `<td class="px-2 py-1 text-center">
+                            <div>${cell.subject_name}</div>
+                            <div class="text-gray-400 text-xs">${cell.teacher_name}</div>
+                        </td>`;
+                    } else {
+                        tableHTML += `<td class="px-2 py-1 text-center">-</td>`;
+                    }
+                });
+                tableHTML += `</tr>`;
+            });
+
+            tableHTML += `</tbody></table>`;
+            scheduleDiv.innerHTML = tableHTML;
+        });
+
+    } catch (err) {
+        console.error(err);
+        modalContent.innerHTML = "<p>Error loading schedule.</p>";
+    }
+});
+
+//file maintenanve(archive)
+document.addEventListener("DOMContentLoaded", () => {
+    const navItems = document.querySelectorAll(".nav-item");
+    const panes = document.querySelectorAll(".content-pane");
+    const paneTitle = document.getElementById("pane-title");
+    const archivedBtn = document.getElementById("archivedBtn");
+    let currentSectionId = null;
+
+    // --- Navigation ---
+    navItems.forEach(item => {
+        item.addEventListener("click", () => {
+            const targetPaneId = item.getAttribute("data-pane");
+            const targetPane = document.getElementById(targetPaneId);
+            panes.forEach(pane => pane.classList.add("hidden"));
+            if (targetPane) targetPane.classList.remove("hidden");
+            if (paneTitle) paneTitle.textContent = item.getAttribute("data-title") || "";
+        });
+    });
+
+    // --- Archived Button Click ---
+    if (archivedBtn) {
+        archivedBtn.addEventListener("click", async () => {
+            if (paneTitle) paneTitle.textContent = "Archived Sections";
+
+            const archivedModal = document.createElement("div");
+            archivedModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-40 overflow-auto";
+
+            archivedModal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-5xl relative flex flex-col">
+                    <h2 class="text-lg font-semibold mb-4">Archived Sections</h2>
+                    <div class="overflow-x-auto max-h-[60vh]">
+                        <table class="min-w-full border border-gray-300 text-sm rounded-lg">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="border px-4 py-2 text-left">Section</th>
+                                    <th class="border px-4 py-2 text-left">Year Level</th>
+                                    <th class="border px-4 py-2 text-left">Total Students</th>
+                                    <th class="border px-4 py-2 text-left">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="archived-sections-table-body">
+                                <tr><td colspan="4" class="text-center text-gray-500 py-2 border">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-end mt-4 gap-2">
+                        <button id="archived-close" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Close</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(archivedModal);
+
+            const tableBody = document.getElementById("archived-sections-table-body");
+            const closeBtn = document.getElementById("archived-close");
+
+            closeBtn.addEventListener("click", () => archivedModal.remove());
+
+            try {
+                const res = await fetch(`../php/fetch_sections.php?status=archived`);
+                const data = await res.json();
+
+                tableBody.innerHTML = "";
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-gray-500 py-2 border">No sections found.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(section => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="px-4 py-2 border">${section.section_name}</td>
+                        <td class="px-4 py-2 border">${section.grade_level || "N/A"}</td>
+                        <td class="px-4 py-2 border">${section.total_students || "0"}</td>
+                        <td class="px-4 py-2 border">
+                            <button 
+                                class="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 view-btn"
+                                data-id="${section.section_id}"
+                                data-name="${section.section_name}"
+                            >
+                                View Students
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                document.querySelectorAll(".view-btn").forEach(btn => {
+                    btn.addEventListener("click", async () => {
+                        currentSectionId = btn.dataset.id;
+                        const sectionName = btn.dataset.name;
+                        archivedModal.remove();
+                        await openStudentsModal(currentSectionId, sectionName);
+                    });
+                });
+
+            } catch (err) {
+                console.error("Error loading sections:", err);
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-2 border">Failed to load sections.</td></tr>`;
+            }
+        });
+    }
+
+    // --- Students Modal ---
+    async function openStudentsModal(sectionId, sectionName) {
+        const studentModal = document.createElement("div");
+        studentModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-50 overflow-auto";
+
+        studentModal.innerHTML = `
+            <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl relative flex flex-col">
+                <h2 class="text-lg font-semibold mb-4">Students in ${sectionName}</h2>
+                <div id="student-list-container" class="overflow-y-auto max-h-[60vh] border rounded"></div>
+                <div class="flex justify-end mt-4 gap-2">
+                    <button id="student-re-enroll-btn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Re-enroll</button>
+                    <button id="student-close-btn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(studentModal);
+
+        const studentListContainer = document.getElementById("student-list-container");
+        const closeBtn = document.getElementById("student-close-btn");
+        const reEnrollBtn = document.getElementById("student-re-enroll-btn");
+
+        closeBtn.addEventListener("click", () => studentModal.remove());
+        reEnrollBtn.style.display = "none";
+
+        try {
+            const res = await fetch(`../php/get_section_students.php?section_id=${encodeURIComponent(sectionId)}&section_name=${encodeURIComponent(sectionName)}`);
+            const data = await res.json();
+
+            studentListContainer.innerHTML = "";
+            if (!Array.isArray(data) || data.length === 0) {
+                studentListContainer.innerHTML = `<p class="text-gray-500">No students found.</p>`;
+                return;
+            }
+
+            const table = document.createElement("table");
+            table.className = "min-w-full divide-y divide-gray-200 border";
+            table.innerHTML = `
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2 text-center"><input type="checkbox" id="select-all" /></th>
+                        <th class="px-4 py-2 text-left">Student</th>
+                    </tr>
+                </thead>
+            `;
+            const tbody = document.createElement("tbody");
+
+            data.forEach(student => {
+                const row = document.createElement("tr");
+                if (student.failed) row.classList.add("bg-red-200");
+                row.innerHTML = `
+                    <td class="px-4 py-2 border text-center">
+                        <input type="checkbox" class="student-checkbox" data-student="${encodeURIComponent(student.student_name)}">
+                    </td>
+                    <td class="px-4 py-2 border">
+                        ${student.student_name} (${student.strand || "N/A"} - Grade ${student.grade_level || "N/A"})
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            table.appendChild(tbody);
+            studentListContainer.appendChild(table);
+
+            reEnrollBtn.style.display = "inline-block";
+
+            // --- Select All Checkbox ---
+            const selectAll = studentModal.querySelector("#select-all");
+            selectAll.addEventListener("change", e => {
+                const checked = e.target.checked;
+                studentModal.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = checked);
+            });
+
+            // --- Re-enroll Click ---
+            reEnrollBtn.onclick = async () => {
+                const selectedStudents = Array.from(studentListContainer.querySelectorAll(".student-checkbox:checked"))
+                    .map(cb => decodeURIComponent(cb.dataset.student));
+
+                if (selectedStudents.length === 0) {
+                    alert("Please select at least one student to re-enroll.");
+                    return;
+                }
+
+                let strands = [];
+                try {
+                    const res = await fetch("../php/get_strands.php");
+                    const result = await res.json();
+                    if (result.success && Array.isArray(result.data)) strands = result.data;
+                } catch (err) {
+                    console.error("Error loading strands:", err);
+                }
+
+                // --- Re-enroll Modal ---
+                const enrollModal = document.createElement("div");
+                enrollModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50";
+
+                enrollModal.innerHTML = `
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96 relative z-50">
+            <h2 class="text-lg font-semibold mb-4">Re-enroll Students</h2>
+            
+            <label class="block mb-2">Section Name</label>
+            <input type="text" id="new-section-name" class="w-full border p-2 rounded mb-4" placeholder="Enter new section name">
+
+            <label class="block mb-2">Grade Level</label>
+            <select id="grade-level" class="w-full border p-2 rounded mb-4">
+                <option value="11">11</option>
+                <option value="12">12</option>
+            </select>
+
+            <label class="block mb-2">Semester</label>
+            <select id="semester" class="w-full border p-2 rounded mb-4">
+                <option value="1">1st Semester</option>
+                <option value="2">2nd Semester</option>
+            </select>
+
+            <label class="block mb-2">Strand</label>
+            <select id="strand" class="w-full border p-2 rounded mb-4">
+                ${strands.map(s => `<option value="${s}">${s}</option>`).join("")}
+            </select>
+
+            <div class="flex justify-end gap-2">
+                <button id="cancel-enroll-modal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                <button id="confirm-enroll-modal" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
+            </div>
+        </div>
+    `;
+                document.body.appendChild(enrollModal);
+
+                enrollModal.querySelector("#cancel-enroll-modal").onclick = () => enrollModal.remove();
+
+                enrollModal.querySelector("#confirm-enroll-modal").onclick = async () => {
+                    const gradeLevel = Number(enrollModal.querySelector("#grade-level").value);
+                    const semester = Number(enrollModal.querySelector("#semester").value);
+                    const strand = enrollModal.querySelector("#strand").value;
+                    const newSectionName = enrollModal.querySelector("#new-section-name").value.trim();
+
+                    if (!newSectionName) {
+                        alert("Please enter a section name.");
+                        return;
+                    }
+
+                    const payload = {
+                        section_id: Number(sectionId),
+                        students: selectedStudents,
+                        grade_level: gradeLevel,
+                        semester: semester,
+                        strand: strand,
+                        new_section_name: newSectionName
+                    };
+
+                    console.log("Sending payload:", payload);
+
+                    try {
+                        const res = await fetch("../php/re_enroll_students.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const text = await res.text();
+                        let result;
+                        try { result = JSON.parse(text); } catch (err) {
+                            console.error("Invalid JSON from server:", text);
+                            alert("Server returned invalid JSON. Check console.");
+                            return;
+                        }
+
+                        if (result.success) {
+                            alert(result.message);
+                            enrollModal.remove();
+                            studentModal.remove();
+                        } else alert("❌ " + result.message);
+
+                    } catch (err) {
+                        console.error("Re-enroll error:", err);
+                        alert("Something went wrong during re-enroll.");
+                    }
+                };
+            };
+        } catch (err) {
+            console.error("Error loading students:", err);
+            studentListContainer.innerHTML = `<p class="text-red-500">Failed to load students.</p>`;
+        }
+    }
+});

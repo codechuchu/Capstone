@@ -46,26 +46,36 @@ try {
     $current_data = $result->fetch_assoc();
     $stmt->close();
 
-    // Validate subjects & get their IDs
+    // Get all valid subjects for flexible validation
+    $validSubjects = [];
+    $subjectQuery = $conn->query("SELECT subject_id, name FROM subjects");
+    while ($row = $subjectQuery->fetch_assoc()) {
+        $validSubjects[strtolower(trim($row['name']))] = $row['subject_id'];
+    }
+
+    // Validate subjects & map to IDs
     $subject_ids = [];
     if ($subjects !== null) {
         $subject_array = array_filter(array_map('trim', explode(',', $subjects)));
+
         foreach ($subject_array as $subj_name) {
-            $check_stmt = $conn->prepare("SELECT subject_id FROM subjects WHERE name = ?");
-            $check_stmt->bind_param("s", $subj_name);
-            $check_stmt->execute();
-            $check_result = $check_stmt->get_result();
-            if ($check_result->num_rows === 0) {
-                echo json_encode(['success' => false, 'message' => "Invalid subject: $subj_name"]);
-                exit;
+            $normalized = strtolower(trim(preg_replace('/\s+/', ' ', $subj_name)));
+
+            if (!isset($validSubjects[$normalized])) {
+                // Auto-add if subject not found
+                $insert_stmt = $conn->prepare("INSERT INTO subjects (name) VALUES (?)");
+                $insert_stmt->bind_param("s", $subj_name);
+                $insert_stmt->execute();
+                $new_id = $insert_stmt->insert_id;
+                $validSubjects[$normalized] = $new_id;
+                $insert_stmt->close();
             }
-            $row = $check_result->fetch_assoc();
-            $subject_ids[] = $row['subject_id']; // separate IDs for subject_id column
-            $check_stmt->close();
+
+            $subject_ids[] = $validSubjects[$normalized];
         }
     }
 
-    // Build update query dynamically
+    // Build dynamic update query
     $updates = [];
     $params = [];
     $types = "";
@@ -92,10 +102,9 @@ try {
     }
     if ($subjects !== null) {
         $updates[] = "subjects = ?";
-        $params[] = $subjects;
+        $params[] = implode(', ', $subject_array);
         $types .= "s";
 
-        // Also update subject_id column as comma-separated IDs
         $updates[] = "subject_id = ?";
         $params[] = implode(',', $subject_ids);
         $types .= "s";

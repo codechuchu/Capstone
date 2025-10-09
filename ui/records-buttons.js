@@ -107,23 +107,44 @@ document.addEventListener("DOMContentLoaded", () => {
             modalContent.appendChild(totalText);
 
             // PDF button click handler
-            pdfBtn.addEventListener("click", () => {
+            // Export PDF button click handler
+            pdfBtn.addEventListener("click", async () => {
                 const table = document.getElementById("records-table");
                 if (!table) {
                     alert("No table to export.");
                     return;
                 }
 
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+                try {
+                    // Fetch logged-in user info
+                    const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+                    const userData = await userRes.json();
 
-                doc.text("Student Records", 14, 16);
-                doc.autoTable({ html: "#records-table", startY: 20 });
+                    const preparedBy = (userData.success) ? `${userData.firstname} ${userData.lastname}` : "N/A";
+                    const gradeLevel = select.value ? `Grade ${select.value}` : "N/A";
+                    const date = new Date().toLocaleDateString();
 
-                // Open PDF in new tab
-                const pdfUrl = doc.output("bloburl");
-                window.open(pdfUrl, "_blank");
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: "landscape" });
+
+                    // Header
+                    doc.setFontSize(12);
+                    doc.text(`Grade Level: ${gradeLevel}`, 14, 16);
+                    doc.text(`Prepared By: ${preparedBy}`, 14, 24);
+                    doc.text(`Date: ${date}`, 14, 32);
+
+                    // Table
+                    doc.autoTable({ html: "#records-table", startY: 40 });
+
+                    // Open PDF in new tab
+                    window.open(doc.output("bloburl"), "_blank");
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Failed to generate PDF.");
+                }
             });
+
 
             // 3. On change -> fetch students
             select.addEventListener("change", async () => {
@@ -324,7 +345,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     //enrollment audit
-    const auditBtn = recordsButtons.querySelector("button:nth-child(3)"); // Audit is 3rd button
+    const auditBtn = recordsButtons.querySelector("button:nth-child(3)"); // Audit button
+
     if (auditBtn) {
         auditBtn.addEventListener("click", async () => {
             const modal = document.getElementById("records-modal");
@@ -352,137 +374,100 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const students = studentsData.students;
 
-                // 3. Create table
+                // 3. Dropdown for export
+                const exportDiv = document.createElement("div");
+                exportDiv.className = "flex items-center gap-2 mb-4";
+
+                const exportBtn = document.createElement("button");
+                exportBtn.className = "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500";
+                exportBtn.textContent = "Export PDF";
+
+                exportDiv.appendChild(exportBtn);
+                modalContent.appendChild(exportDiv);
+
+                // 4. Create table
                 const table = document.createElement("table");
                 table.className = "w-full border border-gray-600 text-sm text-gray-200";
                 table.id = "records-table";
 
-                // Table headers: firstname & lastname instead of concatenated name
                 table.innerHTML = `
-                    <thead class="bg-gray-700 text-white">
+                <thead class="bg-gray-700 text-white">
+                    <tr>
+                        <th class="px-3 py-2 border border-gray-600">First Name</th>
+                        <th class="px-3 py-2 border border-gray-600">Last Name</th>
+                        ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Strand</th>' : ''}
+                        <th class="px-3 py-2 border border-gray-600">Grade Level</th>
+                        ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Semester</th>' : ''}
+                        <th class="px-3 py-2 border border-gray-600">Barangay</th>
+                        <th class="px-3 py-2 border border-gray-600">Municipal/City</th>
+                        <th class="px-3 py-2 border border-gray-600">Province</th>
+                        <th class="px-3 py-2 border border-gray-600">Cellphone</th>
+                        <th class="px-3 py-2 border border-gray-600">Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${students.map(s => `
                         <tr>
-                            <th class="px-3 py-2 border border-gray-600">First Name</th>
-                            <th class="px-3 py-2 border border-gray-600">Last Name</th>
-                            ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Strand</th>' : ''}
-                            <th class="px-3 py-2 border border-gray-600">Grade Level</th>
-                            ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Semester</th>' : ''}
-                            <th class="px-3 py-2 border border-gray-600">Barangay</th>
-                            <th class="px-3 py-2 border border-gray-600">Municipal/City</th>
-                            <th class="px-3 py-2 border border-gray-600">Province</th>
-                            <th class="px-3 py-2 border border-gray-600">Cellphone</th>
-                            <th class="px-3 py-2 border border-gray-600">Email</th>
-                            <th class="px-3 py-2 border border-gray-600">Action</th>
+                            <td class="px-3 py-2 border border-gray-600">${s.firstname || ''}</td>
+                            <td class="px-3 py-2 border border-gray-600">${s.lastname || ''}</td>
+                            ${assignedLevel === 'senior high' ? `<td class="px-3 py-2 border border-gray-600">${s.strand || ''}</td>` : ''}
+                            <td class="px-3 py-2 border border-gray-600">${s.grade_level || ''}</td>
+                            ${assignedLevel === 'senior high' ? `<td class="px-3 py-2 border border-gray-600">${s.semester || ''}</td>` : ''}
+                            <td class="px-3 py-2 border border-gray-600">${s.barangay || ''}</td>
+                            <td class="px-3 py-2 border border-gray-600">${s.municipal_city || ''}</td>
+                            <td class="px-3 py-2 border border-gray-600">${s.province || ''}</td>
+                            <td class="px-3 py-2 border border-gray-600">${s.cellphone || ''}</td>
+                            <td class="px-3 py-2 border border-gray-600">${s.emailaddress || ''}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${students.map(s => `
-                            <tr data-id="${s.applicant_id}">
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="firstname" value="${s.firstname || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="lastname" value="${s.lastname || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                ${assignedLevel === 'senior high' ? `
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="strand" value="${s.strand || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>` : ''}
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="grade_level" value="${s.grade_level || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                ${assignedLevel === 'senior high' ? `
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="semester" value="${s.semester || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>` : ''}
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="barangay" value="${s.barangay || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="municipal_city" value="${s.municipal_city || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="province" value="${s.province || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="cellphone" value="${s.cellphone || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="emailaddress" value="${s.emailaddress || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600 text-center">
-                                    <button class="edit-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Edit</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                `;
+                    `).join('')}
+                </tbody>
+            `;
 
                 modalContent.appendChild(table);
 
-                // 4. Handle Edit/Save buttons (same as before, just make sure payload uses firstname & lastname)
-                table.querySelectorAll(".edit-btn").forEach(btn => {
-                    btn.addEventListener("click", async (e) => {
-                        const row = e.target.closest("tr");
-                        const inputs = row.querySelectorAll("input");
-                        const isEditing = e.target.textContent === "Save";
+                // 5. Export PDF
+                exportBtn.addEventListener("click", async () => {
+                    try {
+                        // Get logged-in user info
+                        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+                        const userData = await userRes.json();
+                        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname}` : "Admin";
 
-                        if (!isEditing) {
-                            inputs.forEach(inp => {
-                                inp.removeAttribute("readonly");
-                                inp.classList.remove("bg-gray-700", "text-gray-200");
-                                inp.classList.add("bg-white", "text-black");
-                            });
-                            e.target.textContent = "Save";
-                            e.target.classList.remove("bg-blue-600");
-                            e.target.classList.add("bg-green-600", "hover:bg-green-500");
-                        } else {
-                            const studentId = row.dataset.id;
-                            const payload = {
-                                applicant_id: studentId,
-                                level: assignedLevel,
-                                firstname: row.querySelector('input[name="firstname"]').value.trim(),
-                                lastname: row.querySelector('input[name="lastname"]').value.trim(),
-                                strand: assignedLevel === 'senior high' ? row.querySelector('input[name="strand"]').value.trim() : '',
-                                grade_level: row.querySelector('input[name="grade_level"]').value.trim(),
-                                semester: assignedLevel === 'senior high' ? row.querySelector('input[name="semester"]').value.trim() : '',
-                                barangay: row.querySelector('input[name="barangay"]').value.trim(),
-                                municipal_city: row.querySelector('input[name="municipal_city"]').value.trim(),
-                                province: row.querySelector('input[name="province"]').value.trim(),
-                                cellphone: row.querySelector('input[name="cellphone"]').value.trim(),
-                                emailaddress: row.querySelector('input[name="emailaddress"]').value.trim()
-                            };
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF({ orientation: "landscape" });
 
-                            // Basic validation
-                            if (!/^\d{11}$/.test(payload.cellphone)) return alert("Cellphone must be exactly 11 digits");
-                            if (!payload.emailaddress.includes("@") || !payload.emailaddress.includes(".com")) return alert("Email must contain '@' and end with '.com'");
+                        doc.setFontSize(12);
+                        doc.text(`Prepared by: ${preparedBy}`, 14, 16);
+                        doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 24);
 
-                            try {
-                                const res = await fetch("../php/update_student_info.php", {
-                                    method: "POST",
-                                    credentials: "include",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify(payload)
-                                });
-                                const data = await res.json();
-                                if (data.success) {
-                                    alert("Updated successfully!");
-                                    inputs.forEach(inp => {
-                                        inp.setAttribute("readonly", true);
-                                        inp.classList.remove("bg-white", "text-black");
-                                        inp.classList.add("bg-gray-700", "text-gray-200");
-                                    });
-                                    e.target.textContent = "Edit";
-                                    e.target.classList.remove("bg-green-600", "hover:bg-green-500");
-                                    e.target.classList.add("bg-blue-600", "hover:bg-blue-500");
-                                } else {
-                                    alert("Update failed: " + data.message);
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                alert("Failed to update student info");
-                            }
-                        }
-                    });
+                        // Build table for PDF
+                        const headers = ["First Name", "Last Name"];
+                        if (assignedLevel === 'senior high') headers.push("Strand");
+                        headers.push("Grade Level");
+                        if (assignedLevel === 'senior high') headers.push("Semester");
+                        headers.push("Barangay", "Municipal/City", "Province", "Cellphone", "Email");
+
+                        const bodyData = students.map(s => {
+                            const row = [s.firstname || '', s.lastname || ''];
+                            if (assignedLevel === 'senior high') row.push(s.strand || '');
+                            row.push(s.grade_level || '');
+                            if (assignedLevel === 'senior high') row.push(s.semester || '');
+                            row.push(s.barangay || '', s.municipal_city || '', s.province || '', s.cellphone || '', s.emailaddress || '');
+                            return row;
+                        });
+
+                        doc.autoTable({
+                            head: [headers],
+                            body: bodyData,
+                            startY: 32
+                        });
+
+                        window.open(doc.output("bloburl"), "_blank");
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error generating PDF.");
+                    }
                 });
 
             } catch (err) {
@@ -491,6 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
 
     // Example function to open edit modal
     function openEditStudentModal(studentId) {
@@ -818,7 +804,6 @@ document.addEventListener("DOMContentLoaded", () => {
             modal.classList.remove("hidden");
 
             try {
-                // ✅ Get assigned level
                 const levelRes = await fetch("../php/get_assigned_level.php", { credentials: "include" });
                 const levelData = await levelRes.json();
                 if (!levelData.success || !levelData.assigned_level) {
@@ -827,7 +812,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 const assignedLevel = levelData.assigned_level.toLowerCase();
 
-                // ✅ Fetch subjects
                 const subjectsRes = await fetch("../php/fetch_subjects.php", { credentials: "include" });
                 const subjectsData = await subjectsRes.json();
                 if (!subjectsData.success) {
@@ -836,17 +820,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 let subjects = subjectsData.subjects;
 
-                // --- Container for filters + add button ---
                 const topControls = document.createElement("div");
                 topControls.className = "flex justify-between items-center mb-4";
 
-                // ➕ Add Subject button
-                const addBtn = document.createElement("button");
-                addBtn.className = "bg-green-600 text-white px-3 py-1 rounded hover:bg-green-500";
-                addBtn.textContent = "Add Subject";
-                topControls.appendChild(addBtn);
+                // 📄 Export PDF button
+                const exportBtn = document.createElement("button");
+                exportBtn.className = "bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500";
+                exportBtn.textContent = "Export as PDF";
+                topControls.appendChild(exportBtn);
 
-                // ✅ Only show filters for SHS
+                let strandSelect, yearSelect, semSelect;
+
                 if (assignedLevel === "senior high") {
                     const strandsRes = await fetch("../php/get_strands.php", { credentials: "include" });
                     const strandsData = await strandsRes.json();
@@ -855,13 +839,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     const filterDiv = document.createElement("div");
                     filterDiv.className = "flex gap-2";
 
-                    const strandSelect = document.createElement("select");
+                    strandSelect = document.createElement("select");
                     strandSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
                     strandSelect.innerHTML = `<option value="">All Strands</option>` +
                         strands.map(s => `<option value="${s}">${s}</option>`).join("");
                     filterDiv.appendChild(strandSelect);
 
-                    const yearSelect = document.createElement("select");
+                    yearSelect = document.createElement("select");
                     yearSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
                     yearSelect.innerHTML = `
                         <option value="">All Years</option>
@@ -870,7 +854,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
                     filterDiv.appendChild(yearSelect);
 
-                    const semSelect = document.createElement("select");
+                    semSelect = document.createElement("select");
                     semSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
                     semSelect.innerHTML = `
                         <option value="">All Semesters</option>
@@ -922,164 +906,66 @@ document.addEventListener("DOMContentLoaded", () => {
                 function renderTable(list) {
                     if (assignedLevel === "junior high") {
                         table.innerHTML = `
-                        <thead class="bg-gray-700 text-white">
-                            <tr>
-                                <th>Name</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${list.map(s => `
-                                <tr data-id="${s.subject_id}"> <!-- ✅ use subject_id -->
-                                    <td><input type="text" value="${s.name}" 
-                                        class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600" readonly></td>
-                                    <td class="text-center">
-                                        <button class="delete-btn bg-red-600 px-2 py-1 rounded hover:bg-red-500 text-white">Delete</button>
-                                    </td>
+                            <thead class="bg-gray-700 text-white">
+                                <tr>
+                                    <th>Name</th>
                                 </tr>
-                            `).join("")}
-                        </tbody>
-                    `;
+                            </thead>
+                            <tbody>
+                                ${list.map(s => `
+                                    <tr>
+                                        <td class="px-2 py-1 border border-gray-600">${s.name}</td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        `;
                     } else {
                         table.innerHTML = `
-                        <thead class="bg-gray-700 text-white">
-                            <tr>
-                                <th>Subcode</th>
-                                <th>Name</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${list.map(s => `
-                                <tr data-id="${s.subject_id}"> <!-- ✅ SHS uses subject_id -->
-                                    <td><input type="text" value="${s.subcode}" 
-                                        class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600" readonly></td>
-                                    <td><input type="text" value="${s.name}" 
-                                        class="w-full bg-gray-800 text-white px-2 py-1 rounded border border-gray-600" readonly></td>
-                                    <td class="text-center">
-                                        <button class="delete-btn bg-red-600 px-2 py-1 rounded hover:bg-red-500 text-white">Delete</button>
-                                    </td>
+                            <thead class="bg-gray-700 text-white">
+                                <tr>
+                                    <th>Subcode</th>
+                                    <th>Name</th>
                                 </tr>
-                            `).join("")}
-                        </tbody>
-                    `;
+                            </thead>
+                            <tbody>
+                                ${list.map(s => `
+                                    <tr>
+                                        <td class="px-2 py-1 border border-gray-600">${s.subcode}</td>
+                                        <td class="px-2 py-1 border border-gray-600">${s.name}</td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        `;
                     }
-
-                    // Delete buttons
-                    table.querySelectorAll(".delete-btn").forEach(btn => {
-                        btn.addEventListener("click", async (e) => {
-                            const row = e.target.closest("tr");
-                            const subject_id = Number(row.dataset.id); // ✅ convert to number
-                            const level = assignedLevel.toLowerCase(); // ✅ lowercase for PHP
-
-                            if (!confirm("Are you sure you want to delete this subject?")) return;
-
-                            const originalHTML = row.innerHTML;
-                            row.innerHTML = `<td colspan="3" class="text-center text-yellow-400">Deleting...</td>`;
-
-                            try {
-                                const res = await fetch("../php/delete_subject.php", {
-                                    method: "POST",
-                                    credentials: "include",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ id: subject_id, level }) // ✅ send numeric id
-                                });
-
-                                if (!res.ok) throw new Error("Network error");
-
-                                const text = await res.text();
-                                console.log("Raw response from delete_subject.php:", text);
-
-                                let data;
-                                try {
-                                    data = JSON.parse(text);
-                                } catch (err) {
-                                    alert("Server did not return valid JSON:\n" + text);
-                                    row.innerHTML = originalHTML;
-                                    return;
-                                }
-
-                                if (data.success) {
-                                    row.remove();
-                                } else {
-                                    alert("Failed to delete: " + data.message);
-                                    row.innerHTML = originalHTML;
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                alert("Error deleting subject.");
-                                row.innerHTML = originalHTML;
-                            }
-                        });
-                    });
                 }
 
-                // Initial render
                 renderTable(subjects);
 
-                // --- Add subject ---
-                addBtn.addEventListener("click", () => {
-                    const newRow = document.createElement("tr");
-                    if (assignedLevel === "junior high") {
-                        newRow.innerHTML = `
-                        <td><input type="text" name="name" 
-                            class="w-full px-2 py-1 rounded border border-gray-600 bg-gray-800 text-white"></td>
-                        <td class="text-center">
-                            <button class="save-new-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Save</button>
-                        </td>
-                    `;
-                    } else {
-                        newRow.innerHTML = `
-                        <td><input type="text" name="subcode" 
-                            class="w-full px-2 py-1 rounded border border-gray-600 bg-gray-800 text-white"></td>
-                        <td><input type="text" name="name" 
-                            class="w-full px-2 py-1 rounded border border-gray-600 bg-gray-800 text-white"></td>
-                        <td class="text-center">
-                            <button class="save-new-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Save</button>
-                        </td>
-                    `;
+                // 📄 Export PDF in a NEW TAB
+                exportBtn.addEventListener("click", () => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+
+                    let title = "Subject List";
+
+                    if (assignedLevel === "senior high") {
+                        const strand = strandSelect?.value || "All Strands";
+                        const year = yearSelect?.value ? `Grade ${yearSelect.value}` : "All Years";
+                        const sem = semSelect?.value ? `Semester ${semSelect.value}` : "All Semesters";
+                        title = `Subjects - ${strand} | ${year} | ${sem}`;
                     }
-                    table.querySelector("tbody").appendChild(newRow);
 
-                    newRow.querySelector(".save-new-btn").addEventListener("click", async () => {
-                        const subcode = newRow.querySelector('input[name="subcode"]')?.value.trim();
-                        const name = newRow.querySelector('input[name="name"]').value.trim();
-
-                        if (!name || (assignedLevel === "senior high" && !subcode)) {
-                            return alert("All fields are required.");
-                        }
-
-                        try {
-                            const res = await fetch("../php/add_subject.php", {
-                                method: "POST",
-                                credentials: "include",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ subcode, name, level: assignedLevel.toLowerCase() })
-                            });
-
-                            const text = await res.text();
-                            console.log("Raw response from add_subject.php:", text);
-
-                            let data;
-                            try {
-                                data = JSON.parse(text);
-                            } catch (e) {
-                                alert("Server did not return valid JSON:\n" + text);
-                                return;
-                            }
-
-                            if (data.success) {
-                                alert("Subject added!");
-                                subjects.push({ subject_id: data.id, subcode, name });
-                                renderTable(subjects);
-                            } else {
-                                alert("Failed to add subject: " + data.message);
-                            }
-                        } catch (err) {
-                            console.error(err);
-                            alert("Failed to add subject");
-                        }
+                    doc.text(title, 14, 16);
+                    doc.autoTable({
+                        html: "#subjects-table",
+                        startY: 22,
+                        styles: { fontSize: 10 }
                     });
+
+                    // ✅ Open in new tab instead of auto-download
+                    const pdfBlob = doc.output("blob");
+                    const pdfURL = URL.createObjectURL(pdfBlob);
+                    window.open(pdfURL, "_blank");
                 });
 
             } catch (err) {
@@ -1089,9 +975,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+
     //classlist
     if (recordsButtons) {
-        const classListBtn = recordsButtons.querySelector("button:last-child"); // Class List button
+        const classListBtn = recordsButtons.querySelector("button:nth-child(7)");
         if (classListBtn) {
             classListBtn.addEventListener("click", async () => {
                 const modal = document.getElementById("records-modal");
@@ -1100,7 +987,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 modal.classList.remove("hidden");
     
                 try {
-                    // Fetch sections
                     const sectionsRes = await fetch("../php/fetch_section.php", { credentials: "include" });
                     const sectionsData = await sectionsRes.json();
     
@@ -1109,7 +995,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
     
-                    // Dropdown container
                     const dropdownDiv = document.createElement("div");
                     dropdownDiv.className = "flex items-center gap-2 mb-4";
     
@@ -1126,7 +1011,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     dropdownDiv.appendChild(exportBtn);
                     modalContent.appendChild(dropdownDiv);
     
-                    // PDF export
                     exportBtn.addEventListener("click", async () => {
                         const sectionId = sectionSelect.value;
                         if (!sectionId) return alert("Please select a section.");
@@ -1137,36 +1021,45 @@ document.addEventListener("DOMContentLoaded", () => {
     
                             if (!data.success) return alert(data.message || "Failed to fetch class list.");
     
-                            const { schoolYear, gradeLevel, section, adviser, strand, students, preparedBy, date } = data;
+                            const { schoolYear, gradeLevel, section, adviser, students, preparedBy, date } = data;
                             const { jsPDF } = window.jspdf;
-                            const doc = new jsPDF();
+                            const doc = new jsPDF('landscape');
     
-                            // Header
+                            // Header - side by side
                             doc.setFontSize(12);
                             doc.text(`School Year: ${schoolYear}`, 14, 16);
-                            doc.text(`Grade Level / Year: ${gradeLevel}`, 14, 24);
-                            doc.text(`Section: ${section}`, 14, 32);
-                            doc.text(`Adviser / Teacher(s): ${adviser || "N/A"}`, 14, 40);
-                            if (strand) doc.text(`Strand: ${strand}`, 14, 48);
+                            doc.text(`Grade Level: ${gradeLevel}`, 80, 16);
+                            doc.text(`Section: ${section}`, 140, 16);
+                            doc.text(`Adviser: ${adviser || "N/A"}`, 200, 16);
     
-                            // Table body
-                            const tableBody = (students && students.length > 0)
-                                ? students.map((s, index) => [
-                                    index + 1,
-                                    s.student_name || "",
-                                    s.gender || "",
-                                    s.birth_date || ""
-                                ])
-                                : [["No students found", "", "", ""]];
+                            // Separate students by gender
+                            const maleStudents = students.filter(s => s.gender?.toLowerCase() === 'male');
+                            const femaleStudents = students.filter(s => s.gender?.toLowerCase() === 'female');
+                            const maxRows = Math.max(maleStudents.length, femaleStudents.length);
+    
+                            // Combine male and female into one row
+                            const tableBody = [];
+                            for (let i = 0; i < maxRows; i++) {
+                                const male = maleStudents[i]?.student_name || "";
+                                const female = femaleStudents[i]?.student_name || "";
+                                tableBody.push([i + 1, male, i + 1, female]);
+                            }
     
                             doc.autoTable({
-                                head: [["No.", "Student Name", "Gender", "Birth Date"]],
+                                head: [["No.", "Male Student", "No.", "Female Student"]],
                                 body: tableBody,
-                                startY: 56
+                                startY: 24,
+                                styles: { fontSize: 10 },
+                                headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
+                                columnStyles: {
+                                    0: { halign: 'center', cellWidth: 10 },
+                                    1: { halign: 'left', cellWidth: 80 },
+                                    2: { halign: 'center', cellWidth: 10 },
+                                    3: { halign: 'left', cellWidth: 80 }
+                                }
                             });
     
-                            // Footer
-                            const finalY = doc.lastAutoTable.finalY || 56;
+                            const finalY = doc.lastAutoTable.finalY || 24;
                             doc.text(`Total Students: ${students.length}`, 14, finalY + 10);
                             doc.text(`Prepared by: ${preparedBy}`, 14, finalY + 18);
                             doc.text(`Date: ${date}`, 14, finalY + 26);
@@ -1187,7 +1080,180 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     
+    
 });
 
 
+// schedule per section
+const recordsButtons = document.getElementById("records-buttons");
+
+if (recordsButtons) {
+    const scheduleBtn = recordsButtons.querySelector("button:last-child"); // Schedule Per Section button
+
+    if (scheduleBtn) {
+        scheduleBtn.addEventListener("click", async () => {
+            const modal = document.getElementById("records-modal");
+            const modalContent = document.getElementById("records-modal-content");
+            modalContent.innerHTML = "";
+            modal.classList.remove("hidden");
+
+            modalContent.innerHTML = "<p class='text-gray-300'>Loading sections...</p>";
+
+            try {
+                const sectionsRes = await fetch("../php/fetch_section.php", { credentials: "include" });
+                const sectionsData = await sectionsRes.json();
+
+                if (!sectionsData || sectionsData.error) {
+                    modalContent.innerHTML = `<p>Failed to load sections: ${sectionsData?.error || "Unknown error"}</p>`;
+                    return;
+                }
+
+                // Dropdown container
+                const dropdownDiv = document.createElement("div");
+                dropdownDiv.className = "flex items-center gap-2 mb-4";
+
+                const sectionSelect = document.createElement("select");
+                sectionSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
+                sectionSelect.innerHTML = `<option value="">Select Section</option>` +
+                    sectionsData.map(s => `<option value="${s.section_id}">${s.section_name} (Grade ${s.grade_level})</option>`).join("");
+
+                const exportBtn = document.createElement("button");
+                exportBtn.className = "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500";
+                exportBtn.textContent = "Export PDF";
+
+                dropdownDiv.appendChild(sectionSelect);
+                dropdownDiv.appendChild(exportBtn);
+                modalContent.innerHTML = "";
+                modalContent.appendChild(dropdownDiv);
+
+                const scheduleDiv = document.createElement("div");
+                scheduleDiv.className = "overflow-auto h-[400px]";
+                modalContent.appendChild(scheduleDiv);
+
+                let currentSchedules = []; // store schedules for PDF
+
+                sectionSelect.addEventListener("change", async () => {
+                    const sectionId = sectionSelect.value;
+                    if (!sectionId) {
+                        scheduleDiv.innerHTML = "<p class='text-gray-300'>Select a section to see the schedule.</p>";
+                        return;
+                    }
+
+                    try {
+                        const res = await fetch("../php/get_schedule_by_section.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ section_id: sectionId })
+                        });
+                        const data = await res.json();
+
+                        if (data.status !== "success") {
+                            scheduleDiv.innerHTML = `<p>${data.message}</p>`;
+                            return;
+                        }
+
+                        currentSchedules = data.schedules; // store for PDF
+                        const schedules = currentSchedules;
+
+                        if (schedules.length === 0) {
+                            scheduleDiv.innerHTML = "<p>No schedules found for this section.</p>";
+                            return;
+                        }
+
+                        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                        const times = [...new Set(schedules.map(s => s.time_start + " - " + s.time_end))].sort();
+
+                        let tableHTML = `
+                            <table class="w-full border border-gray-600 text-sm text-gray-200">
+                                <thead class="bg-gray-700 text-white sticky top-0">
+                                    <tr>
+                                        <th class="px-2 py-2">Time</th>
+                                        ${days.map(d => `<th class="px-2 py-2">${d}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+
+                        times.forEach(time => {
+                            tableHTML += `<tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                                <td class="px-2 py-1 text-center font-semibold">${time}</td>`;
+                            days.forEach(day => {
+                                const cell = schedules.find(s => (s.time_start + " - " + s.time_end) === time && s.day_of_week === day);
+                                if (cell) {
+                                    tableHTML += `<td class="px-2 py-1 text-center">
+                                        <div>${cell.subject_name}</div>
+                                        <div class="text-gray-400 text-xs">${cell.teacher_name}</div>
+                                    </td>`;
+                                } else {
+                                    tableHTML += `<td class="px-2 py-1 text-center">-</td>`;
+                                }
+                            });
+                            tableHTML += `</tr>`;
+                        });
+
+                        tableHTML += `</tbody></table>`;
+                        scheduleDiv.innerHTML = tableHTML;
+
+                    } catch (err) {
+                        console.error(err);
+                        scheduleDiv.innerHTML = "<p>Error loading schedule.</p>";
+                    }
+                });
+
+                // Export PDF button
+                exportBtn.addEventListener("click", async () => {
+                    const sectionId = sectionSelect.value;
+                    if (!sectionId || currentSchedules.length === 0) return alert("Please select a section first.");
+
+                    try {
+                        // Fetch logged-in user info
+                        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+                        const userData = await userRes.json();
+                        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname}` : "Admin";
+
+                        const sectionName = sectionSelect.options[sectionSelect.selectedIndex]?.text || "";
+                        const currentDate = new Date().toLocaleDateString(); // Date Generated
+
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF({ orientation: "landscape" });
+
+                        doc.setFontSize(12);
+                        doc.text(`Section: ${sectionName}`, 14, 16);
+                        doc.text(`Prepared by: ${preparedBy}`, 14, 24);
+                        doc.text(`Date Generated: ${currentDate}`, 14, 32);
+
+                        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                        const times = [...new Set(currentSchedules.map(s => s.time_start + " - " + s.time_end))].sort();
+
+                        const bodyData = times.map(time => {
+                            return [
+                                time,
+                                ...days.map(day => {
+                                    const cell = currentSchedules.find(s => (s.time_start + " - " + s.time_end) === time && s.day_of_week === day);
+                                    return cell ? `${cell.subject_name}\n(${cell.teacher_name})` : "-";
+                                })
+                            ];
+                        });
+
+                        doc.autoTable({
+                            head: [["Time", ...days]],
+                            body: bodyData,
+                            startY: 40
+                        });
+
+                        window.open(doc.output("bloburl"), "_blank");
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error generating PDF.");
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                modalContent.innerHTML = `<p>Error loading sections.</p>`;
+            }
+        });
+    }
+}
 
