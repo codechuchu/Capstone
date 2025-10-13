@@ -5,7 +5,6 @@ header('Content-Type: application/json');
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// ✅ Load PHPMailer manually (no Composer)
 require __DIR__ . '/../PHPMailer-master/src/Exception.php';
 require __DIR__ . '/../PHPMailer-master/src/PHPMailer.php';
 require __DIR__ . '/../PHPMailer-master/src/SMTP.php';
@@ -29,6 +28,7 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
+    include_once __DIR__ . '/log_audit.php'; // Audit log functions
 
     $id = $_GET['id'] ?? null;
     if (!$id) {
@@ -55,13 +55,20 @@ try {
         exit;
     }
 
-    $studentId = $applicant['applicant_id']; // assuming LRN
+    $studentId = $applicant['applicant_id'];
     $email     = $applicant['emailaddress'];
-    $password  = $applicant['lastname'] . "123"; // plain password
+    $password  = $applicant['lastname'] . "123";
 
     // Insert into students table
     $insert = $pdo->prepare("INSERT INTO students (student_id, email, password) VALUES (?, ?, ?)");
     $insert->execute([$studentId, $email, $password]);
+
+    // Audit log: student added
+    $action = "Enrolled Student";
+    $details = "Student ID: $studentId added with email: $email";
+    $logConn = new mysqli($host, $user, $pass, $db);
+    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+    $logConn->close();
 
     // Fetch guardian info
     $guardianStmt = $pdo->prepare("SELECT firstname, lastname, email FROM $guardianTable WHERE applicant_id = ?");
@@ -79,67 +86,67 @@ try {
             "INSERT INTO parents (student_id, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)"
         );
         $insertParent->execute([$studentId, $guardianFirstName, $guardianLastName, $guardianEmail, $guardianPassword]);
+
+        // Audit log: parent added
+        $action = "Added Parent Account";
+        $details = "Parent email: $guardianEmail linked to Student ID: $studentId";
+        $logConn = new mysqli($host, $user, $pass, $db);
+        logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+        $logConn->close();
     }
 
     // Update applicant status
     $update = $pdo->prepare("UPDATE $applicantTable SET status = 'enrolled' WHERE applicant_id = ?");
     $update->execute([$id]);
 
-    // ✅ Send Email to applicant
-    $mail = new PHPMailer(true);
+    // Audit log: applicant status updated
+    $action = "Updated Applicant Status";
+    $details = "Applicant ID: $id status set to enrolled";
+    $logConn = new mysqli($host, $user, $pass, $db);
+    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+    $logConn->close();
 
+    // Send Email to applicant
+    $mail = new PHPMailer(true);
     try {
-        // SMTP settings
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'onionknight418@gmail.com';     // your Gmail
-        $mail->Password   = 'lmke ipfx oqnq zbpk';          // <-- Replace with Google App Password
+        $mail->Username   = 'onionknight418@gmail.com';
+        $mail->Password   = 'lmke ipfx oqnq zbpk';
         $mail->SMTPSecure = 'tls';
         $mail->Port       = 587;
 
-        // Recipients
         $mail->setFrom('onionknight418@gmail.com', 'Sulivan NHS');
-        $mail->addAddress($email); // applicant email from DB
+        $mail->addAddress($email);
+        if (!empty($guardian['email'])) $mail->addCC($guardian['email']);
 
-        if (!empty($guardian['email'])) {
-            $mail->addCC($guardian['email']); // also send to guardian if email exists
-        }
-
-        // Prepare student full name
         $studentName = $applicant['firstname'] . ' ' . $applicant['lastname'];
-        $portalURL = "https://sulivannhs.edu.ph/portal"; // replace with your actual portal URL
-        $passwordFormatted = strtolower($applicant['lastname']) . "." . $studentId; // lastname.lowercase + "." + LRN
+        $portalURL = "https://sulivannhs.edu.ph/portal";
+        $passwordFormatted = strtolower($applicant['lastname']) . "." . $studentId;
 
-        // Email Content
         $mail->isHTML(true);
         $mail->Subject = 'Enrollment Confirmation';
         $mail->Body    = "
             <p>Dear {$studentName},</p>
-
-            <p>We are pleased to inform you that you have been successfully enrolled at <b>Sulivan National High School</b> for the upcoming academic year.</p>
-
-            <p>You may now access your Student Portal to view your enrollment details, class schedule, and other important academic information.</p>
-
-            <p>📌 <b>Portal Login Details:</b></p>
-            <p>
-                Portal Link: <a href='{$portalURL}'>{$portalURL}</a><br>
-                Username: {$email}<br>
-                Password: {$passwordFormatted}
-            </p>
-
-            <p>🔐 For your security, please change your password upon first login.</p>
-
-            <p>If you have any questions or encounter any issues accessing your account, feel free to contact the school directly.</p>
-
-            <p>Thank you, and welcome to <b>Sulivan National High School</b>!</p>
-
-            <p>Best regards,<br>
-            Sulivan National High School</p>
+            <p>You have been successfully enrolled at <b>Sulivan National High School</b>.</p>
+            <p>Portal Login: <a href='{$portalURL}'>{$portalURL}</a><br>
+               Username: {$email}<br>
+               Password: {$passwordFormatted}</p>
+            <p>🔐 Please change your password upon first login.</p>
         ";
 
         $mail->send();
+
+        // Audit log: email sent
+        $action = "Sent Enrollment Email";
+        $details = "Email sent to student: $email (Guardian: {$guardian['email']})";
+        $logConn = new mysqli($host, $user, $pass, $db);
+        logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+        $logConn->close();
+
         echo json_encode(["success" => true, "email_sent" => true]);
+
     } catch (Exception $e) {
         echo json_encode(["success" => true, "email_sent" => false, "error" => $mail->ErrorInfo]);
     }

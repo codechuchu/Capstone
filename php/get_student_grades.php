@@ -25,19 +25,22 @@ try {
     }
 
     if ($assigned_level === "Junior High") {
-        // Junior High table
-        $stmt = $pdo->prepare("SELECT q1, q2, q3, q4, average 
-                               FROM studentgrade 
-                               WHERE student_id = ? AND section_id = ? AND subject_id = ?");
+        // Junior High
+        $stmt = $pdo->prepare("
+            SELECT q1, q2, q3, q4, average 
+            FROM studentgrade 
+            WHERE student_id = ? AND section_id = ? AND subject_id = ?
+        ");
         $stmt->execute([$student_id, $section_id, $subject_id]);
         $grades = $stmt->fetchAll();
 
     } elseif ($assigned_level === "Senior High") {
-        // Senior High table
-        $stmt = $pdo->prepare("SELECT first_sem_q1, first_sem_q2, first_sem_avg, 
-                                      second_sem_q3, second_sem_q4, second_sem_avg 
-                               FROM shs_studentgrade 
-                               WHERE student_id = ? AND section_id = ? AND subject_id = ?");
+        // Senior High (updated columns)
+        $stmt = $pdo->prepare("
+            SELECT q1_grade, q2_grade, final_grade, remarks 
+            FROM shs_studentgrade 
+            WHERE student_id = ? AND section_id = ? AND subject_id = ?
+        ");
         $stmt->execute([$student_id, $section_id, $subject_id]);
         $grades = $stmt->fetchAll();
     } else {
@@ -50,3 +53,4 @@ try {
 } catch (Throwable $e) {
     echo json_encode(["error" => $e->getMessage()]);
 }
+?>

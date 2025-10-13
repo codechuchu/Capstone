@@ -188,6 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+
+//fetch grade
 document.addEventListener("DOMContentLoaded", () => {
     const childSelect = document.getElementById('childSelect');
     const jhsPane = document.getElementById('jhs-grades-pane');
@@ -200,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // Create default option if empty
+    // Default option
     if (childSelect.options.length === 0) {
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
@@ -210,11 +212,11 @@ document.addEventListener("DOMContentLoaded", () => {
         childSelect.appendChild(defaultOption);
     }
 
-    // Fetch children from PHP
+    // Fetch children
     fetch('../php/check-lrn.php')
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success' && data.children.length > 0) {
+            if (data.status === 'success' && Array.isArray(data.children)) {
                 data.children.forEach(child => {
                     if (![...childSelect.options].some(opt => opt.value === child.lrn)) {
                         const option = document.createElement('option');
@@ -241,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
             childSelect.appendChild(option);
         });
 
-    // Handle child selection
+    // On child selection
     childSelect.addEventListener('change', () => {
         const lrn = childSelect.value;
         const level = childSelect.selectedOptions[0].dataset.level;
@@ -251,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`../php/get-grades.php?lrn=${encodeURIComponent(lrn)}&level=${encodeURIComponent(level)}`)
             .then(res => res.json())
             .then(data => {
-                // Hide both tables first
+                // Clear tables
                 jhsPane.classList.add('hidden');
                 shsPane.classList.add('hidden');
                 jhsTableBody.innerHTML = "";
@@ -263,38 +265,45 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (level === 'SHS') {
-                    if (data.grades.length === 0) {
-                        shsTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 text-sm text-gray-900">No grades found</td></tr>`;
+                    if (!data.grades || data.grades.length === 0) {
+                        shsTableBody.innerHTML = `<tr><td colspan="5" class="text-center">No grades found</td></tr>`;
                     } else {
                         data.grades.forEach(row => {
+                            const q1 = row.q1_grade ?? "";
+                            const q2 = row.q2_grade ?? "";
+                            const avg = row.final_grade ?? "";
+                            const teacher = row.encoded_by ?? "";
+
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.first_sem_q1 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.first_sem_q2 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.first_sem_avg || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.second_sem_q3 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.second_sem_q4 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.second_sem_avg || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.encoded_by || ''}</td>
-                            `;
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">${row.subject_name || ''}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">${q1}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">${q2}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">${avg}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">${teacher}</td>
+                        `;
+                        
                             shsTableBody.appendChild(tr);
                         });
                     }
                     shsPane.classList.remove('hidden');
                 } else {
-                    if (data.grades.length === 0) {
-                        jhsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-sm text-gray-900">No grades found</td></tr>`;
+                    if (!data.grades || data.grades.length === 0) {
+                        jhsTableBody.innerHTML = `<tr><td colspan="5" class="text-center">No grades found</td></tr>`;
                     } else {
                         data.grades.forEach(row => {
+                            const q1 = row.q1 ?? "";
+                            const q2 = row.q2 ?? "";
+                            const avg = row.average ?? "";
+                            const teacher = row.teacher_name ?? "";
+
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q3 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q4 || ''}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.teacher_name || ''}</td>
+                                <td>${row.subject_name || ''}</td>
+                                <td>${q1}</td>
+                                <td>${q2}</td>
+                                <td>${avg}</td>
+                                <td>${teacher}</td>
                             `;
                             jhsTableBody.appendChild(tr);
                         });
@@ -311,6 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+//banner
 document.addEventListener("DOMContentLoaded", () => {
     const homePane = document.getElementById("home-pane");
     const slideshowImage = document.getElementById("slideshowImage");

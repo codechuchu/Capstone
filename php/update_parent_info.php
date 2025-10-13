@@ -1,16 +1,13 @@
 <?php
+session_start();
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 header('Content-Type: application/json');
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "sulivannhs";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli("localhost", "root", "", "sulivannhs");
 if ($conn->connect_error) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed']);
     exit;
@@ -19,30 +16,34 @@ if ($conn->connect_error) {
 try {
     $data = json_decode(file_get_contents("php://input"), true);
 
-    $parent_email  = $data['parent_email'] ?? null; // identifier
+    $parent_email  = $data['parent_email'] ?? null;
     $firstname     = $data['firstname'] ?? null;
     $lastname      = $data['lastname'] ?? null;
-    $irn           = $data['irn'] ?? null;
+    $irn           = $data['lrn'] ?? null;
     $email         = $data['email'] ?? null;
     $password_val  = $data['password'] ?? null;
     $student_name  = $data['student'] ?? null;
+
+    // ✅ Use proper session data
+    $user_id  = $_SESSION['user_id'] ?? null;
+    $username = $_SESSION['username'] ?? $_SESSION['email'] ?? 'unknown';
+    $role     = $_SESSION['role'] ?? 'unknown';
 
     if (!$parent_email) {
         echo json_encode(['success' => false, 'message' => 'Parent identifier is required']);
         exit;
     }
 
-    // Verify student exists
     $student_id = null;
     if ($student_name) {
         $names = explode(' ', $student_name, 2);
         $first = $names[0];
         $last  = $names[1] ?? '';
-        
+
         $stmt = $conn->prepare("
             SELECT applicant_id FROM jhs_applicants WHERE firstname = ? AND lastname = ?
             UNION
-            SELECT applicant_id FROM shs_applicants WHERE firstname = ? AND lastname = ?
+            SELECT applicant_id FROM shs_applicant WHERE firstname = ? AND lastname = ?
         ");
         $stmt->bind_param("ssss", $first, $last, $first, $last);
         $stmt->execute();
@@ -57,7 +58,6 @@ try {
         $stmt->close();
     }
 
-    // Build update query dynamically
     $updates = [];
     $params = [];
     $types = "";
@@ -73,7 +73,7 @@ try {
         $types .= "s";
     }
     if ($irn !== null) {
-        $updates[] = "irn = ?";
+        $updates[] = "lrn = ?";
         $params[] = $irn;
         $types .= "s";
     }
@@ -106,6 +106,17 @@ try {
     $stmt->bind_param($types, ...$params);
 
     if ($stmt->execute()) {
+        $ip_address = $_SERVER['REMOTE_ADDR'];
+        $action = "Update Parent Info";
+        $details = "Updated parent record for email: $parent_email";
+
+        $audit_sql = "INSERT INTO audit_trail (user_id, username, role, action, details, ip_address, timestamp)
+                      VALUES (?, ?, ?, ?, ?, ?, NOW())";
+        $audit_stmt = $conn->prepare($audit_sql);
+        $audit_stmt->bind_param("isssss", $user_id, $username, $role, $action, $details, $ip_address);
+        $audit_stmt->execute();
+        $audit_stmt->close();
+
         echo json_encode(['success' => true, 'message' => 'Parent updated successfully']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Update failed: ' . $conn->error]);

@@ -35,3 +35,13 @@ Stack trace:
 #0 C:\xampp\htdocs\Capstone\php\re_enroll_students.php(48): mysqli->query('INSERT INTO sec...')
 #1 {main}
   thrown in C:\xampp\htdocs\Capstone\php\re_enroll_students.php on line 48
+[11-Oct-2025 15:22:50 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PDOStatement::bind_param() in C:\xampp\htdocs\Capstone\php\log_audit.php:12
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\assign_sections.php(135): logAction(Object(PDO), 3, 'shsadmin', 'admin', 'Created Section', 'Section ID: 48,...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\log_audit.php on line 12
+[11-Oct-2025 15:36:56 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PDOStatement::bind_param() in C:\xampp\htdocs\Capstone\php\log_audit.php:12
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\assign_sections.php(136): logAction(Object(PDO), 3, 'shsadmin', 'admin', 'Created Section', 'Section ID: 49,...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\log_audit.php on line 12

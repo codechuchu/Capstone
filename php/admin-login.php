@@ -1,11 +1,14 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Ensure cookies work for /capstone/ folder
 session_set_cookie_params([
-    'path' => '/capstone/',  // Make sure this matches your project folder
+    'path' => '/capstone/',
     'httponly' => true,
-    'secure' => false,       // set to true if using HTTPS
+    'secure' => false, // set to true if using HTTPS
     'samesite' => 'Lax'
-]);//up
+]);
 session_start();
 header('Content-Type: application/json');
 
@@ -16,6 +19,8 @@ if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "Database connection failed"]);
     exit();
 }
+
+include_once __DIR__ . '/log_audit.php';
 
 $email = $_POST['username'] ?? '';
 $pass  = $_POST['password'] ?? '';
@@ -28,7 +33,6 @@ $tables = [
 ];
 
 foreach ($tables as $table => $redirect) {
-    // Prepare SQL with assigned_level only for teachers and admin
     if ($table === "teachers" || $table === "admin") {
         $sql = "SELECT *, assigned_level FROM $table WHERE email = ? AND password = ?";
     } else {
@@ -68,7 +72,15 @@ foreach ($tables as $table => $redirect) {
 
         $_SESSION['role']  = $table;
         $_SESSION['email'] = $user['email'];
-        session_write_close(); // Save session data
+
+        // ✅ Fix: store username for audit trail usage
+        $_SESSION['username'] = $user['email']; // or $user['firstname'] . ' ' . $user['lastname'] if available
+
+        session_write_close();
+
+        // ✅ Log audit trail for successful login
+        $details = ucfirst($table) . " user logged in successfully.";
+        logAction($conn, $_SESSION['user_id'], $_SESSION['username'], $_SESSION['role'], "Login", $details);
 
         $response = [
             "success" => true,
@@ -77,13 +89,11 @@ foreach ($tables as $table => $redirect) {
             "user_id" => $_SESSION['user_id']
         ];
 
-        // Add assigned_level to response if available
         if (isset($_SESSION['assigned_level'])) {
             $response['assigned_level'] = $_SESSION['assigned_level'];
         }
 
         echo json_encode($response);
-
         $stmt->close();
         $conn->close();
         exit();
@@ -95,3 +105,4 @@ foreach ($tables as $table => $redirect) {
 $conn->close();
 echo json_encode(["success" => false, "message" => "Invalid username or password."]);
 exit();
+?>

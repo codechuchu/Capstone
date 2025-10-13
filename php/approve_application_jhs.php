@@ -41,6 +41,16 @@ try {
     $insert = $pdo->prepare("INSERT INTO students (student_id, email, password) VALUES (?, ?, ?)");
     $insert->execute([$studentId, $email, $password]);
 
+    // -----------------
+    // Audit log for student
+    include_once __DIR__ . '/log_audit.php';
+    $action = "Enrolled Student";
+    $details = "Student ID: $studentId added with email: $email";
+    $logConn = new mysqli($host, $user, $pass, $db);
+    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+    $logConn->close();
+    // -----------------
+
     // fetch guardian info from jhs_applicant_guardians
     $guardianStmt = $pdo->prepare("SELECT firstname, lastname, email FROM jhs_applicant_guardians WHERE applicant_id = ?");
     $guardianStmt->execute([$studentId]);
@@ -55,11 +65,29 @@ try {
         // insert into parents table
         $insertParent = $pdo->prepare("INSERT INTO parents (student_id, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)");
         $insertParent->execute([$studentId, $guardianFirstName, $guardianLastName, $guardianEmail, $guardianPassword]);
+
+        // -----------------
+        // Audit log for parent
+        $action = "Added Parent Account";
+        $details = "Parent email: $guardianEmail linked to Student ID: $studentId";
+        $logConn = new mysqli($host, $user, $pass, $db);
+        logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+        $logConn->close();
+        // -----------------
     }
 
     // update applicant status
     $update = $pdo->prepare("UPDATE jhs_applicants SET status = 'enrolled' WHERE applicant_id = ?");
     $update->execute([$id]);
+
+    // -----------------
+    // Audit log for applicant status
+    $action = "Updated Applicant Status";
+    $details = "Applicant ID: $id status set to enrolled";
+    $logConn = new mysqli($host, $user, $pass, $db);
+    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', $action, $details);
+    $logConn->close();
+    // -----------------
 
     echo json_encode(["success" => true]);
 

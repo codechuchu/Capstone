@@ -36,6 +36,17 @@ if ($assigned_level === "junior high") {
     $stmt->bind_param("s", $name);
 
     if ($stmt->execute()) {
+
+        // -----------------
+        // Audit log
+        include_once __DIR__ . '/log_audit.php';
+        $action = "Added JHS Subject";
+        $details = "Subject Name: $name";
+        $logConn = new mysqli("localhost", "root", "", "sulivannhs");
+        logAction($logConn, $_SESSION['user_id'], $_SESSION['email'], $_SESSION['role'], $action, $details);
+        $logConn->close();
+        // -----------------
+
         echo json_encode(["success" => true, "message" => "Subject added successfully (JHS)"]);
     } else {
         echo json_encode(["success" => false, "message" => "Failed to add subject"]);
@@ -78,14 +89,24 @@ if ($assigned_level === "senior high") {
 
     $row = $res->fetch_assoc();
     $strand_id = $row["strand_id"];
-
     $stmt->close();
 
-    // Insert into shs_subjects
+    // Insert into subjects
     $stmt = $conn->prepare("INSERT INTO subjects (strand_id, subcode, name) VALUES (?, ?, ?)");
     $stmt->bind_param("iss", $strand_id, $subcode, $name);
 
     if ($stmt->execute()) {
+
+        // -----------------
+        // Audit log
+        include_once __DIR__ . '/log_audit.php';
+        $action = "Added SHS Subject";
+        $details = "Strand: $strandName, Subcode: $subcode, Name: $name";
+        $logConn = new mysqli("localhost", "root", "", "sulivannhs");
+        logAction($logConn, $_SESSION['user_id'], $_SESSION['email'], $_SESSION['role'], $action, $details);
+        $logConn->close();
+        // -----------------
+
         echo json_encode(["success" => true, "message" => "Subject added successfully (SHS)"]);
     } else {
         echo json_encode(["success" => false, "message" => "Failed to add subject"]);
@@ -98,3 +119,4 @@ if ($assigned_level === "senior high") {
 
 echo json_encode(["success" => false, "message" => "Invalid assigned level"]);
 $conn->close();
+?>

@@ -281,6 +281,11 @@
                             class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
                             data-pane="master-list" data-title="Master List">Records</button>
                     </li>
+                    <li>
+                        <button
+                            class="nav-item block w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-200 ease-in-out"
+                            data-pane="audit-trail-pane" data-title="Audit">Audit Trail</button>
+                    </li>
                 </ul>
 
             </div>
@@ -768,6 +773,112 @@
                 <!-- Add more details and management options here -->
             </div>
 
+            <div id="audit-trail-pane" class="content-pane hidden p-6">
+
+                <!-- Filter Bar -->
+                <div class="flex flex-wrap items-center gap-4 mb-6">
+                    <!-- Date Range -->
+                    <div class="flex items-center gap-2">
+                        <label for="from-date" class="text-gray-700 text-sm font-medium">From:</label>
+                        <input type="date" id="from-date"
+                            class="border rounded px-3 py-1 text-sm focus:ring focus:ring-blue-300">
+                        <label for="to-date" class="text-gray-700 text-sm font-medium">To:</label>
+                        <input type="date" id="to-date"
+                            class="border rounded px-3 py-1 text-sm focus:ring focus:ring-blue-300">
+                    </div>
+
+                    <!-- Role Filter -->
+                    <div>
+                        <select id="role-filter"
+                            class="border rounded px-3 py-1 text-sm text-gray-700 focus:ring focus:ring-blue-300">
+                            <option value="">All Roles</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Student">Student</option>
+                            <option value="Parent">Parent</option>
+                        </select>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="flex items-center">
+                        <input type="text" id="search-audit" placeholder="Search..."
+                            class="border rounded-l px-3 py-1 text-sm w-52 focus:ring focus:ring-blue-300">
+                        <button id="search-btn"
+                            class="bg-blue-600 text-white px-3 py-1 rounded-r hover:bg-blue-700 text-sm">
+                            Search
+                        </button>
+                    </div>
+
+                    <!-- Export Dropdown -->
+                    <div class="relative z-20">
+                        <button id="export-audit"
+                            class="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm">
+                            Export
+                        </button>
+                        <div id="export-dropdown"
+                            class="absolute left-0 mt-1 bg-white border rounded shadow-md hidden z-30">
+                            <button id="export-excel"
+                                class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
+                            <button id="export-pdf"
+                                class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
+                        </div>
+                    </div>
+
+
+                    <!-- Refresh -->
+                    <button id="refresh-audit"
+                        class="ml-auto bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm">
+                        Refresh
+                    </button>
+                </div>
+
+                <!-- Audit Table -->
+                <div class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-200">
+                    <div class="max-h-[64vh] overflow-y-auto">
+                        <table class="min-w-full text-sm text-left text-gray-700">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3">User</th>
+                                    <th class="px-4 py-3">Role</th>
+                                    <th class="px-4 py-3">Action</th>
+                                    <th class="px-4 py-3">Date & Time</th>
+                                    <th class="px-4 py-3">IP Address</th>
+                                    <th class="px-4 py-3 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-table-body" class="divide-y divide-gray-200">
+                                <!-- Fetched audit data will appear here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Audit Details Modal -->
+                <div id="audit-modal"
+                    class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+                    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[80vh] overflow-hidden">
+                        <div class="flex justify-between items-center border-b pb-3 mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Audit Details</h3>
+                            <button id="close-audit-modal"
+                                class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+                        </div>
+
+                        <div id="audit-modal-content"
+                            class="text-gray-700 text-sm space-y-2 overflow-y-auto max-h-[60vh] pr-2">
+                            <p><strong>User:</strong> <span id="modal-user"></span></p>
+                            <p><strong>Role:</strong> <span id="modal-role"></span></p>
+                            <p><strong>Action:</strong> <span id="modal-action"></span></p>
+                            <p><strong>Date & Time:</strong> <span id="modal-datetime"></span></p>
+                            <p><strong>IP Address:</strong> <span id="modal-ip"></span></p>
+                            <p><strong>Details:</strong></p>
+                            <div id="modal-details" class="bg-gray-50 p-3 rounded border text-xs text-gray-600"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
             <div id="file-maintenance-pane" class="content-pane hidden p-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button id="sectionBtn"
@@ -805,7 +916,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <div id="section-container" class="mt-6 overflow-x-auto hidden">
                 <table class="min-w-full border border-gray-300 text-sm rounded-lg">
                     <thead class="bg-gray-100">
@@ -821,7 +932,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
 
 
             <div id="confirm-modal"
@@ -938,11 +1049,8 @@
                 window.location.href = "admin-login.html";
             });
     </script>
-
-
-
-
     <script src="admin.js"></script>
+
 </body>
 
 </html>

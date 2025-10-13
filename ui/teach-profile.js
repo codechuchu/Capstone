@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Toggle teacher panel
     teacherBtn.addEventListener('click', (e) => {
-        e.preventDefault();
+        e.preventDefault(); 
         teacherPanel.classList.toggle('hidden');
     });
 
@@ -133,7 +133,7 @@ function loadPendingApplications() {
                 </button>
                     </td>
                 `;
-                
+
                     tbody.appendChild(row);
                 });
             } else {
@@ -168,13 +168,13 @@ document.addEventListener("DOMContentLoaded", () => {
         item.addEventListener("click", () => {
             navItems.forEach(nav => nav.classList.remove("active"));
             panes.forEach(pane => pane.classList.add("hidden"));
-    
+
             item.classList.add("active");
             const targetPane = document.getElementById(item.dataset.pane);
             if (targetPane) targetPane.classList.remove('hidden');
             title.textContent = item.dataset.title || "";
 
-    
+
             if (item.dataset.pane === "pending-applications-pane") {
                 loadPendingApplications();
             } else if (item.dataset.pane === "enrolled-students-pane") {
@@ -194,15 +194,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     // Ensure Home shows no title on first load
-        if (document.querySelector(".nav-item.active")?.dataset.pane === "home-pane") {
-            title.textContent = "";
-        }
+    if (document.querySelector(".nav-item.active")?.dataset.pane === "home-pane") {
+        title.textContent = "";
+    }
 
 
     // ---- added logout handler (minimal, redirects to admin-login.html) ----
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
+        logoutBtn.addEventListener('click', function () {
             // optional: add a confirmation here if you want
             // if (confirm('Are you sure you want to log out?')) { ... }
             window.location.href = 'admin-login.html';
@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentYear = currentDate.getFullYear();
     let events = [];
 
-    const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     calendarBtn.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (let day = 1; day <= daysInMonth; day++) {
             const cell = document.createElement("div");
-            const dateStr = `${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             cell.textContent = day;
             cell.className = "p-2 border rounded cursor-default flex items-center justify-center";
 
@@ -395,17 +395,17 @@ function approveApplication() {
     fetch(`../php/approve_application.php?id=${currentApplicantId}`, {
         method: "POST"
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert("Applicant approved successfully!");
-            closeApplicationModal();
-            loadPendingApplications(); // refresh table
-        } else {
-            alert("Error: " + data.error);
-        }
-    })
-    .catch(err => alert("Request failed: " + err.message));
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Applicant approved successfully!");
+                closeApplicationModal();
+                loadPendingApplications(); // refresh table
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => alert("Request failed: " + err.message));
 }
 
 function closeApplicationModal() {
@@ -419,33 +419,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const studentsTitle = document.getElementById("students-title");
     const studentsTableBody = document.getElementById("students-table-body");
     const backBtn = document.getElementById("back-to-sections-btn");
-    const modal = document.getElementById("encode-grade-modal");
+    const attendanceBtn = document.getElementById("attendance-btn");
+
+    // ====== JHS Modal Elements ======
+    const jhsModal = document.getElementById("encode-grade-modal");
     const modalStudentName = document.getElementById("modal-student-name");
     const studentIdInput = document.getElementById("student-id");
     const sectionIdInput = document.getElementById("section-id");
     const subjectIdInput = document.getElementById("subject-id");
-    const closeModalBtn = document.getElementById("close-modal");
-    const encodeForm = document.getElementById("encode-grade-form");
-    const attendanceBtn = document.getElementById("attendance-btn");
+    const closeJhsBtn = document.getElementById("close-modal");
+    const jhsForm = document.getElementById("encode-grade-form");
+
+    // ====== SHS Modal Elements ======
+    const shsModal = document.getElementById("encode-shs-grade-modal");
+    const shsStudentName = document.getElementById("shs-modal-student-name");
+    const shsStudentIdInput = document.getElementById("shs-student-id");
+    const shsSectionIdInput = document.getElementById("shs-section-id");
+    const shsSubjectIdInput = document.getElementById("shs-subject-id");
+    const shsSubjectNameInput = document.getElementById("subject-name");
+    const closeShsBtn = document.getElementById("close-shs-modal");
+    const shsForm = document.getElementById("encode-shs-grade-form");
+
+    // Assume HTML has sections like <div id="jhs-fields" class="hidden"> for JHS inputs (q1-q4, average)
+    // and <div id="shs-fields"> for SHS inputs (q1_grade, q2_grade, final_grade, remarks)
+    // If not, add these divs around the respective inputs in your HTML and apply 'hidden' class to one by default.
 
     // Create attendance modal
     const attendanceModal = document.createElement("div");
     attendanceModal.id = "attendance-modal";
     attendanceModal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
     attendanceModal.innerHTML = `
-      <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-hidden">
-        <div class="p-4 border-b border-gray-200">
-          <h3 id="attendance-modal-title" class="text-lg font-semibold">Attendance</h3>
+        <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+            <h3 id="attendance-modal-title" class="text-lg font-semibold">Attendance</h3>
+            </div>
+            <div class="p-4 overflow-auto max-h-[60vh]">
+            <div id="attendance-table-container"></div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex justify-end space-x-2">
+            <button id="attendance-submit-btn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Submit</button>
+            <button id="attendance-cancel-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Cancel</button>
+            </div>
         </div>
-        <div class="p-4 overflow-auto max-h-[60vh]">
-          <div id="attendance-table-container"></div>
-        </div>
-        <div class="p-4 border-t border-gray-200 flex justify-end space-x-2">
-          <button id="attendance-submit-btn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Submit</button>
-          <button id="attendance-cancel-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Cancel</button>
-        </div>
-      </div>
-    `;
+        `;
     document.body.appendChild(attendanceModal);
 
     let currentSectionId = null;
@@ -491,15 +507,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 students.forEach(st => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                      <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
-                      <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
-                      <td class="px-6 py-4 text-sm text-gray-900">
-                        <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
-                      </td>
-                    `;
-                    tr.querySelector(".encode-btn").addEventListener("click", () => openModal(st.student_id, st.student_name, sectionId, subjectId));
+                            <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">
+                                <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
+                            </td>
+                        `;
+
+                    // ✅ Updated line — now includes subjectName
+                    tr.querySelector(".encode-btn").addEventListener("click", () =>
+                        openModal(st.student_id, st.student_name, sectionId, subjectId, subjectName)
+                    );
+
                     studentsTableBody.appendChild(tr);
                 });
+
                 studentsList.classList.remove("hidden");
             })
             .catch(err => console.error("Error fetching students:", err));
@@ -527,12 +549,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Map saved attendance (optional: you can ignore 0 status)
             const attendanceMap = {};
             savedAttendance.forEach(a => {
                 if (!attendanceMap[a.student_id]) attendanceMap[a.student_id] = {};
                 if (a.status === 1) attendanceMap[a.student_id][a.attendance_date] = 1;
-                if (a.status === 2) attendanceMap[a.student_id][a.attendance_date] = 2; // 2 = X
+                if (a.status === 2) attendanceMap[a.student_id][a.attendance_date] = 2;
             });
 
             const dates = [];
@@ -553,14 +574,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 tableHTML += `<tr data-student-id="${student.student_id}">`;
                 tableHTML += `<td class="border border-gray-300 px-4 py-2">${student.student_name}</td>`;
                 dates.forEach(date => {
-                    // Start blank by default
                     let present = attendanceMap[student.student_id]?.[formatDate(date)] === 1;
                     let absent = attendanceMap[student.student_id]?.[formatDate(date)] === 2;
                     let cellContent = present ? "✓" : absent ? "X" : "";
                     let dataChecked = present ? "true" : absent ? "x" : "false";
                     tableHTML += `<td class="border border-gray-300 px-4 py-2 text-center cursor-pointer hover:bg-gray-50 ${cellContent ? (present ? 'bg-green-100' : 'bg-red-100') : ''}" 
-                                   data-date="${formatDate(date)}" data-checked="${dataChecked}">
-                                   ${cellContent}</td>`;
+                                    data-date="${formatDate(date)}" data-checked="${dataChecked}">
+                                    ${cellContent}</td>`;
                 });
                 tableHTML += `</tr>`;
             });
@@ -569,7 +589,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("attendance-table-container").innerHTML = tableHTML;
             attendanceModal.classList.remove("hidden");
 
-            // Toggle click: blank → ✓ → X → blank
             document.querySelectorAll("#attendance-table-container td[data-date]").forEach(cell => {
                 cell.addEventListener("click", () => {
                     let state = cell.getAttribute("data-checked");
@@ -603,8 +622,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const studentId = tr.getAttribute("data-student-id");
             tr.querySelectorAll("td[data-date]").forEach(td => {
                 const state = td.getAttribute("data-checked");
-                if (state === "false") return; // skip blank
-                let present = state === "true" ? 1 : 2; // 1 = ✓, 2 = X
+                if (state === "false") return;
+                let present = state === "true" ? 1 : 2;
                 attendanceData.push({
                     student_id: studentId,
                     date: td.getAttribute("data-date"),
@@ -619,91 +638,222 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({ section_id: currentSectionId, attendance: attendanceData }),
             credentials: "include"
         })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message || "Attendance saved successfully!");
-            attendanceModal.classList.add("hidden");
-        })
-        .catch(err => { console.error("Error saving attendance:", err); alert("Failed to save attendance."); });
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message || "Attendance saved successfully!");
+                attendanceModal.classList.add("hidden");
+            })
+            .catch(err => { console.error("Error saving attendance:", err); alert("Failed to save attendance."); });
     });
 
     document.getElementById("attendance-cancel-btn").addEventListener("click", () => attendanceModal.classList.add("hidden"));
     attendanceModal.addEventListener("click", e => { if (e.target === attendanceModal) attendanceModal.classList.add("hidden"); });
     if (attendanceBtn) attendanceBtn.addEventListener("click", showAttendanceModal);
 
-    // JHS/SHS grade modals
-    function openModal(studentId, studentName, sectionId, subjectId) {
+    // Grade modal
+    function openModal(studentId, studentName, sectionId, subjectId, subjectName) {
         fetch("../php/get_assigned_level.php", { credentials: "include" })
             .then(res => res.json())
             .then(data => {
-                if (!data.success) { alert("No assigned level detected. Please log in again."); return; }
+                if (!data.success) {
+                    alert("No assigned level detected. Please log in again.");
+                    return;
+                }
+
                 const assignedLevel = data.assigned_level;
 
+                // --- Hide both modals ---
+                const jhsModal = document.getElementById("encode-grade-modal");
+                const shsModal = document.getElementById("encode-shs-grade-modal");
+                if (jhsModal) jhsModal.classList.add("hidden");
+                if (shsModal) shsModal.classList.add("hidden");
+
                 if (assignedLevel === "Junior High") {
+                    // ======== JHS MODAL ========
+                    const modalStudentName = document.getElementById("modal-student-name");
+                    const studentIdInput = document.getElementById("student-id");
+                    const sectionIdInput = document.getElementById("section-id");
+                    const subjectIdInput = document.getElementById("subject-id");
+
+                    modalStudentName.textContent = `Encode JHS Grade for ${studentName}`;
                     studentIdInput.value = studentId;
                     sectionIdInput.value = sectionId;
                     subjectIdInput.value = subjectId;
-                    modalStudentName.textContent = `Encode JHS Grade for ${studentName}`;
-                    encodeForm.q1.value = encodeForm.q2.value = encodeForm.q3.value = encodeForm.q4.value = '';
-                    document.getElementById("average").value = '';
-                    const q1Input = encodeForm.q1, q2Input = encodeForm.q2, q3Input = encodeForm.q3, q4Input = encodeForm.q4, avgInput = document.getElementById("average");
+
+                    const q1 = document.getElementById("q1");
+                    const q2 = document.getElementById("q2");
+                    const q3 = document.getElementById("q3");
+                    const q4 = document.getElementById("q4");
+                    const avg = document.getElementById("average");
+
+                    [q1, q2, q3, q4].forEach(i => (i.value = ""));
+                    avg.value = "";
+
                     function computeAverage() {
-                        const values = [q1Input,q2Input,q3Input,q4Input].map(i => parseFloat(i.value)).filter(v=>!isNaN(v));
-                        avgInput.value = values.length===4 ? (values.reduce((a,b)=>a+b,0)/4).toFixed(2) : '';
+                        const vals = [q1, q2, q3, q4]
+                            .map(i => parseFloat(i.value))
+                            .filter(v => !isNaN(v));
+                        avg.value = vals.length === 4 ? (vals.reduce((a, b) => a + b, 0) / 4).toFixed(2) : "";
                     }
-                    [q1Input,q2Input,q3Input,q4Input].forEach(i=>i.addEventListener("input",computeAverage));
-                    fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`, { credentials: "include" })
-                        .then(res=>res.json())
-                        .then(data=>{ if(!data.error && data.length>0){ q1Input.value=data[0].q1||''; q2Input.value=data[0].q2||''; q3Input.value=data[0].q3||''; q4Input.value=data[0].q4||''; computeAverage(); }})
-                        .catch(err=>console.error("Error fetching JHS grades:", err));
-                    modal.classList.remove("hidden");
-                } else if (assignedLevel === "Senior High") {
-                    document.getElementById("shs-student-id").value = studentId;
-                    document.getElementById("shs-section-id").value = sectionId;
-                    document.getElementById("shs-subject-id").value = subjectId;
-                    document.getElementById("shs-modal-student-name").textContent = `Encode SHS Grade for ${studentName}`;
-                    const q1=document.getElementById("first-sem-q1"),q2=document.getElementById("first-sem-q2"),avg1=document.getElementById("first-sem-avg");
-                    const q3=document.getElementById("second-sem-q3"),q4=document.getElementById("second-sem-q4"),avg2=document.getElementById("second-sem-avg");
-                    q1.value=q2.value=avg1.value=q3.value=q4.value=avg2.value='';
-                    [q1,q2].forEach(i=>i.addEventListener("input",()=>{avg1.value=(q1.value && q2.value)?((parseFloat(q1.value)+parseFloat(q2.value))/2).toFixed(2):'';}));
-                    [q3,q4].forEach(i=>i.addEventListener("input",()=>{avg2.value=(q3.value && q4.value)?((parseFloat(q3.value)+parseFloat(q4.value))/2).toFixed(2):'';}));
-                    fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`, { credentials: "include" })
-                        .then(res=>res.json())
-                        .then(data=>{ if(!data.error && data.length>0){ q1.value=data[0].first_sem_q1||''; q2.value=data[0].first_sem_q2||''; avg1.value=data[0].first_sem_avg||''; q3.value=data[0].second_sem_q3||''; q4.value=data[0].second_sem_q4||''; avg2.value=data[0].second_sem_avg||''; }}).catch(err=>console.error("Error fetching SHS grades:",err));
-                    document.getElementById("encode-shs-grade-modal").classList.remove("hidden");
-                } else { alert("Unknown assigned level: "+assignedLevel); }
+                    [q1, q2, q3, q4].forEach(i => i.addEventListener("input", computeAverage));
+
+                    fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (Array.isArray(data) && data.length > 0) {
+                                q1.value = data[0].q1 || "";
+                                q2.value = data[0].q2 || "";
+                                q3.value = data[0].q3 || "";
+                                q4.value = data[0].q4 || "";
+                                computeAverage();
+                            }
+                        });
+
+                    jhsModal.classList.remove("hidden");
+                }
+
+                else if (assignedLevel === "Senior High") {
+                    // ======== SHS MODAL ========
+                    const modalStudentName = document.getElementById("shs-modal-student-name");
+                    const studentIdInput = document.getElementById("shs-student-id");
+                    const sectionIdInput = document.getElementById("shs-section-id");
+                    const subjectIdInput = document.getElementById("shs-subject-id");
+                    const subjectNameInput = document.getElementById("subject-name");
+                    const closeShsModal = document.getElementById("close-shs-modal");
+
+                    modalStudentName.textContent = `Encode SHS Grade for ${studentName}`;
+                    studentIdInput.value = studentId;
+                    sectionIdInput.value = sectionId;
+                    subjectIdInput.value = subjectId;
+
+                    // ✅ Auto-populate subject name & make readonly
+                    subjectNameInput.value = subjectName || "";
+                    subjectNameInput.readOnly = true;
+
+                    const q1 = document.getElementById("q1-grade");
+                    const q2 = document.getElementById("q2-grade");
+                    const finalGrade = document.getElementById("final-grade");
+                    const remarks = document.getElementById("remarks");
+
+                    [q1, q2, finalGrade, remarks].forEach(i => (i.value = ""));
+
+                    function computeFinal() {
+                        const a = parseFloat(q1.value);
+                        const b = parseFloat(q2.value);
+                    
+                        // Only compute if BOTH grades are numbers
+                        if (!isNaN(a) && !isNaN(b)) {
+                            const avg = ((a + b) / 2).toFixed(2);
+                            finalGrade.value = avg;
+                            remarks.value = avg >= 75 ? "Passed" : "Failed";
+                        } else {
+                            finalGrade.value = ""; // Keep empty if incomplete
+                            remarks.value = "";    // Keep empty if incomplete
+                        }
+                    }
+                    
+                    q1.addEventListener("input", computeFinal);
+                    q2.addEventListener("input", computeFinal);
+
+                    fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            q1.value = data[0].q1_grade || data[0].first_sem_q1 || "";
+                            q2.value = data[0].q2_grade || data[0].first_sem_q2 || "";
+                    
+                            // Only set finalGrade if BOTH q1 and q2 exist
+                            if (q1.value !== "" && q2.value !== "") {
+                                const avg = ((parseFloat(q1.value) + parseFloat(q2.value)) / 2).toFixed(2);
+                                finalGrade.value = avg;
+                                remarks.value = avg >= 75 ? "Passed" : "Failed";
+                            } else {
+                                finalGrade.value = "";
+                                remarks.value = "";
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Error fetching SHS grades:", err));
+                    
+
+                    shsModal.classList.remove("hidden");
+
+                    // ✅ Cancel button now closes modal
+                    closeShsModal.addEventListener("click", () => {
+                        shsModal.classList.add("hidden");
+                    });
+                }
             })
-            .catch(err=>console.error("Error checking assigned level:", err));
+            .catch(err => {
+                console.error("Error fetching assigned level:", err);
+                alert("Failed to open grade modal.");
+            });
     }
 
+// Close modal buttons
+
+if (closeJhsBtn) {
+    closeJhsBtn.addEventListener("click", () => jhsModal.classList.add("hidden"));
+}
+
+if (closeShsBtn) {
+    closeShsBtn.addEventListener("click", () => shsModal.classList.add("hidden"));
+}
+
+
+    // === SAVE JHS GRADES ===
+    if (jhsForm) {
+        jhsForm.addEventListener("submit", e => {
+            e.preventDefault();
+
+            const formData = new FormData(jhsForm);
+            fetch("../php/save_grades.php", {
+                method: "POST",
+                body: formData,
+                credentials: "include"
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message || "JHS grade saved successfully!");
+                    jhsModal.classList.add("hidden");
+                })
+                .catch(err => {
+                    console.error("Error saving JHS grade:", err);
+                    alert("Failed to save JHS grade.");
+                });
+        });
+    }
+
+    // === SAVE SHS GRADES ===
+    if (shsForm) {
+        shsForm.addEventListener("submit", e => {
+            e.preventDefault();
+
+            const formData = new FormData(shsForm);
+            fetch("../php/save_grades.php", {
+                method: "POST",
+                body: formData,
+                credentials: "include"
+            })  
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message || "SHS grade saved successfully!");
+                    shsModal.classList.add("hidden");
+                })
+                .catch(err => {
+                    console.error("Error saving SHS grade:", err);
+                    alert("Failed to save SHS grade.");
+                });
+        });
+    }
+
+
+    // Go back to sections
     backBtn.addEventListener("click", () => {
-        studentsList.classList.add("hidden");
         sectionsContainer.classList.remove("hidden");
+        studentsList.classList.add("hidden");
         backBtn.classList.add("hidden");
         if (attendanceBtn) attendanceBtn.classList.add("hidden");
-    });
-
-    if (closeModalBtn) closeModalBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    const closeShsModalBtn = document.getElementById("close-shs-modal");
-    if (closeShsModalBtn) closeShsModalBtn.addEventListener("click", () => document.getElementById("encode-shs-grade-modal").classList.add("hidden"));
-
-    encodeForm.addEventListener("submit", e => {
-        e.preventDefault();
-        const formData = new FormData(encodeForm);
-        fetch("../php/save_grades.php", { method: "POST", body: formData })
-            .then(res=>res.json())
-            .then(data=>{ alert(data.message); if(data.status==="success"){ encodeForm.reset(); modal.classList.add("hidden"); } })
-            .catch(err=>console.error("Error saving JHS grades:",err));
-    });
-
-    const shsForm = document.getElementById("encode-shs-grade-form");
-    if(shsForm) shsForm.addEventListener("submit", e=>{
-        e.preventDefault();
-        const formData = new FormData(shsForm);
-        fetch("../php/save_grades.php",{method:"POST",body:formData})
-            .then(res=>res.json())
-            .then(data=>{ alert(data.message); if(data.status==="success"){ shsForm.reset(); document.getElementById("encode-shs-grade-modal").classList.add("hidden"); } })
-            .catch(err=>console.error("Error saving SHS grades:",err));
     });
 });
 
@@ -821,9 +971,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Apply restrictions
     const digitFields = [
-        {id: "lrn", max: 12},
-        {id: "cellphone", max: 11},
-        {id: "gCellphone", max: 11}
+        { id: "lrn", max: 12 },
+        { id: "cellphone", max: 11 },
+        { id: "gCellphone", max: 11 }
     ];
     digitFields.forEach(f => {
         let el = document.getElementById(f.id);
@@ -1028,19 +1178,19 @@ document.addEventListener("DOMContentLoaded", function () {
             method: "POST",
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                alert("✅ " + data.message);
-                form.querySelectorAll("input, select").forEach(el => el.value = "");
-            } else {
-                alert("❌ " + data.message);
-            }
-        })
-        .catch(err => {
-            console.error("Error:", err);
-            alert("⚠️ Something went wrong. Please try again.");
-        });
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("✅ " + data.message);
+                    form.querySelectorAll("input, select").forEach(el => el.value = "");
+                } else {
+                    alert("❌ " + data.message);
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                alert("⚠️ Something went wrong. Please try again.");
+            });
     });
 });
 
@@ -1166,7 +1316,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </td>
                 `;
-                
+
                 tbody.appendChild(tr);
             });
 
@@ -1256,11 +1406,11 @@ async function loadTeacherSchedule() {
     tableContainer.innerHTML = '<p class="text-gray-600">Loading schedule...</p>';
 
     try {
-        const response = await fetch('/capstone/php/get_teacher_schedule.php', {
+        const response = await fetch('../php/get_teacher_schedule.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             credentials: 'include'
-        });        
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -1369,37 +1519,37 @@ async function loadTeacherSchedule() {
 }
 
 // Navigation handler for pane buttons (unchanged)
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Find all navigation buttons with data-pane attribute
     const navButtons = document.querySelectorAll('button[data-pane]');
-    
+
     navButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const targetPaneId = this.getAttribute('data-pane');
             const paneTitle = this.getAttribute('data-title') || 'Untitled';
-            
+
             // Hide all content panes
             const allPanes = document.querySelectorAll('.content-pane');
             allPanes.forEach(pane => {
                 pane.classList.add('hidden');
             });
-            
+
             // Show the target pane
             const targetPane = document.getElementById(targetPaneId);
             if (targetPane) {
                 targetPane.classList.remove('hidden');
-                
+
                 // Update page title (optional: assuming you have a <h2 id="pane-title"> or similar)
                 const titleElement = document.getElementById('pane-title');  // Adjust ID if needed
                 if (titleElement) {
                     titleElement.textContent = paneTitle;
                 }
-                
+
                 // If it's the class schedules pane, load the schedule data
                 if (targetPaneId === 'class-schedules-pane') {
                     loadTeacherSchedule();
                 }
-                
+
                 // Optional: Add active class to button for visual feedback
                 navButtons.forEach(btn => btn.classList.remove('bg-gray-700', 'text-white'));
                 this.classList.add('bg-gray-700', 'text-white');

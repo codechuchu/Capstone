@@ -3480,11 +3480,13 @@ parentBtn.addEventListener("click", async () => {
                 const updateRes = await fetch("../php/update_parent_info.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    credentials: "include", // ✅ ensures session cookies are sent
                     body: JSON.stringify({
                         parent_email: parents[index].email, // identify parent by email or use parent_id
                         ...updatedData
                     }),
                 });
+                
 
                 const updateData = await updateRes.json();
 
@@ -3899,4 +3901,185 @@ document.addEventListener("DOMContentLoaded", () => {
             studentListContainer.innerHTML = `<p class="text-red-500">Failed to load students.</p>`;
         }
     }
+});
+
+//audit trail
+document.addEventListener("DOMContentLoaded", () => {
+    const tableBody = document.getElementById("audit-table-body");
+    const refreshBtn = document.getElementById("refresh-audit");
+    const searchInput = document.getElementById("search-audit");
+    const roleFilter = document.getElementById("role-filter");
+    const fromDate = document.getElementById("from-date");
+    const toDate = document.getElementById("to-date");
+
+    const exportBtn = document.getElementById("export-audit");
+    const exportDropdown = document.getElementById("export-dropdown");
+    const pdfBtn = document.getElementById("export-pdf");
+    const excelBtn = document.getElementById("export-excel");
+
+    const modal = document.getElementById("audit-modal");
+    const closeModal = document.getElementById("close-audit-modal");
+    const modalUser = document.getElementById("modal-user");
+    const modalRole = document.getElementById("modal-role");
+    const modalAction = document.getElementById("modal-action");
+    const modalDateTime = document.getElementById("modal-datetime");
+    const modalIP = document.getElementById("modal-ip");
+    const modalDetails = document.getElementById("modal-details");
+
+    let allData = [];
+    let currentData = [];
+
+    async function fetchAudits() {
+        try {
+            const response = await fetch(`../php/fetch_audit.php`);
+            const res = await response.json();
+            allData = Array.isArray(res.data) ? res.data : [];
+            applyFilters();
+        } catch (err) {
+            console.error("Error fetching audits:", err);
+        }
+    }
+
+    function applyFilters() {
+        const searchVal = searchInput.value.toLowerCase().trim();
+        const selectedRole = roleFilter.value.toLowerCase().trim();
+        const fromVal = fromDate.value ? new Date(fromDate.value) : null;
+        const toVal = toDate.value ? new Date(toDate.value) : null;
+    
+        currentData = allData.filter(audit => {
+            const auditDate = new Date(audit.timestamp);
+            const auditRole = audit.role.toLowerCase().trim();
+    
+            const matchSearch =
+                audit.username.toLowerCase().includes(searchVal) ||
+                audit.action.toLowerCase().includes(searchVal);
+    
+            // Allow flexible role matching
+            const matchRole =
+                selectedRole === "" ||
+                auditRole.includes(selectedRole) ||
+                (selectedRole.endsWith("s") && auditRole.includes(selectedRole.slice(0, -1))) ||
+                (auditRole.endsWith("s") && auditRole.includes(selectedRole));
+    
+            const matchFrom = !fromVal || auditDate >= fromVal;
+            const matchTo = !toVal || auditDate <= toVal;
+    
+            return matchSearch && matchRole && matchFrom && matchTo;
+        });
+    
+        renderTable();
+    }
+    
+
+    function renderTable() {
+        tableBody.innerHTML = "";
+        if (currentData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No audit records found.</td></tr>`;
+            return;
+        }
+
+        currentData.forEach((audit, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="px-4 py-3">${audit.username}</td>
+                <td class="px-4 py-3">${audit.role}</td>
+                <td class="px-4 py-3">${audit.action}</td>
+                <td class="px-4 py-3">${audit.timestamp}</td>
+                <td class="px-4 py-3">${audit.ip_address}</td>
+                <td class="px-4 py-3 text-center">
+                    <button class="view-btn text-blue-600 hover:underline text-sm" data-index="${index}">
+                        View
+                    </button>
+                </td>`;
+            tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll(".view-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const audit = currentData[btn.dataset.index];
+                modalUser.textContent = audit.username;
+                modalRole.textContent = audit.role;
+                modalAction.textContent = audit.action;
+                modalDateTime.textContent = audit.timestamp;
+                modalIP.textContent = audit.ip_address;
+                modalDetails.textContent = audit.details;
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            });
+        });
+    }
+
+    function downloadExcel() {
+        let csv = "User,Role,Action,Date & Time,IP Address,Details\n";
+        currentData.forEach(audit => {
+            const dateObj = new Date(audit.timestamp);
+            const formatted = dateObj.toLocaleString('en-US', { hour12: false });
+            csv += `"${audit.username}","${audit.role}","${audit.action}","${formatted}","${audit.ip_address}","${audit.details}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "audit_log.csv";
+        link.click();
+    }
+
+    function openPDF() {
+        if (!currentData.length) return;
+    
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+    
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Sulivan National High School", 105, 10, { align: "center" });
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", 105, 16, { align: "center" });
+    
+        const preparedBy = window.currentAdminName || "Admin";
+        const exportDate = new Date().toLocaleString('en-US', { hour12: false });
+        doc.setFontSize(10);
+        doc.text(`Prepared By: ${preparedBy}`, 14, 24);
+        doc.text(`Date: ${exportDate}`, 150, 24, { align: "right" });
+    
+        const bodyData = currentData.map(audit => {
+            const dateObj = new Date(audit.timestamp);
+            const formattedDate = dateObj.toLocaleString('en-US', { hour12: false });
+            return [
+                audit.username,
+                audit.role,
+                audit.action,
+                audit.details,
+                formattedDate
+            ];
+        });
+    
+        doc.autoTable({
+            startY: 30,
+            head: [['User', 'Role', 'Action', 'Details', 'Date & Time']],
+            body: bodyData,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [52, 58, 64], textColor: 255 },
+        });
+    
+        const pdfBlob = doc.output('bloburl');
+        window.open(pdfBlob, '_blank');
+    }
+
+    exportBtn.addEventListener("click", () => exportDropdown.classList.toggle("hidden"));
+    excelBtn.addEventListener("click", downloadExcel);
+    pdfBtn.addEventListener("click", openPDF);
+
+    refreshBtn.addEventListener("click", fetchAudits);
+    searchInput.addEventListener("input", applyFilters);
+    roleFilter.addEventListener("change", applyFilters);
+    fromDate.addEventListener("change", applyFilters);
+    toDate.addEventListener("change", applyFilters);
+    closeModal.addEventListener("click", () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    });
+
+    fetchAudits();
 });

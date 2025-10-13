@@ -10,6 +10,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
+// Include audit logging
+include_once __DIR__ . '/log_audit.php';
+
 $host = 'localhost';
 $db   = 'sulivannhs';
 $user = 'root';
@@ -35,7 +38,6 @@ try {
 
     // Prepared statements
     $stmtUpdate = $pdo->prepare("UPDATE shs_applicant SET section_id = :section_id WHERE applicant_id = :student_id");
-
     $stmtFetchStudent = $pdo->prepare("
         SELECT applicant_id AS student_id,
                CONCAT(firstname, ' ', lastname) AS student_name,
@@ -45,11 +47,13 @@ try {
         WHERE applicant_id = :student_id
         LIMIT 1
     ");
-
     $stmtInsert = $pdo->prepare("
         INSERT INTO section (section_id, student_name, strand, grade_level, student_id)
         VALUES (:section_id, :student_name, :strand, :grade_level, :student_id)
     ");
+
+    // Temporary mysqli connection for audit logging
+    $conn = new mysqli($host, $user, $pass, $db);
 
     foreach ($student_ids as $sid) {
         // Update applicant table
@@ -72,6 +76,12 @@ try {
                     ':grade_level'  => $student['grade_level'],
                     ':student_id'   => $student['student_id']
                 ]);
+
+                // ✅ Log audit for each student
+                $action = "Assigned Student to Section";
+                $details = "Student: {$student['student_name']} (ID: {$student['student_id']}) assigned to Section ID: $section_id";
+                logAction($conn, $_SESSION['user_id'], $_SESSION['email'], $_SESSION['role'], $action, $details);
+
             } catch (PDOException $dup) {
                 // Ignore duplicate insert errors
             }
@@ -89,9 +99,10 @@ try {
         ':section_id' => $section_id
     ]);
 
+    $conn->close();
+
     echo json_encode(["success" => true, "new_total" => $row['total']]);
 
 } catch (PDOException $e) {
-    // don’t leak DB info
     echo json_encode(["success" => false, "error" => "Database error"]);
 }

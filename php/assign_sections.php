@@ -31,7 +31,7 @@ $data = json_decode(file_get_contents("php://input"), true);
 $grade  = trim($data['grade'] ?? '');
 $strand = trim($data['strand'] ?? '');
 $customSectionName = trim($data['section_name'] ?? '');
-$force = $data['force'] ?? false; // NEW flag from frontend
+$force = $data['force'] ?? false; 
 
 $assigned_level = strtolower($_SESSION['assigned_level']);
 
@@ -116,10 +116,9 @@ $pdo->prepare("
 ")->execute([$sectionName, $strand, $strandId, $grade, ucfirst($assigned_level)]);
 
 $sectionId = $pdo->lastInsertId();
-
 $sectionStudentCount = 0;
 
-// Assign up to 40 students, or fewer if force is true
+// Assign students
 while ($currentIndex < $totalStudents && $sectionStudentCount < $studentsPerSection) {
     $student = $students[$currentIndex];
 
@@ -144,4 +143,24 @@ while ($currentIndex < $totalStudents && $sectionStudentCount < $studentsPerSect
 $pdo->prepare("UPDATE sections_list SET total_students = ? WHERE section_id = ?")
     ->execute([$sectionStudentCount, $sectionId]);
 
+// ======================
+// ✅ AUDIT LOG
+// ======================
+$logSql = "
+    INSERT INTO audit_trail (user_id, username, role, action, details, ip_address, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?, NOW())
+";
+
+$userId   = $_SESSION['user_id'] ?? null;
+$username = $_SESSION['username'] ?? 'unknown';
+$role     = $_SESSION['role'] ?? 'unknown';
+$action   = "Section Created";
+$details  = "Created section '$sectionName' with $sectionStudentCount student(s), grade $grade, strand " . ($strand ?? "N/A");
+
+$ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+$stmt = $pdo->prepare($logSql);
+$stmt->execute([$userId, $username, $role, $action, $details, $ipAddress]);
+
 echo json_encode(["success" => true, "message" => "Section created with custom name."]);
+?>

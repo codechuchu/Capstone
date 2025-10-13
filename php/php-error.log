@@ -58,3 +58,8 @@ Stack trace:
 #0 C:\xampp\htdocs\Capstone\php\get-todays-schedule.php(37): mysqli->prepare('SELECT student_...')
 #1 {main}
   thrown in C:\xampp\htdocs\Capstone\php\get-todays-schedule.php on line 37
+[11-Oct-2025 15:47:09 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PDOStatement::bind_param() in C:\xampp\htdocs\Capstone\php\log_audit.php:12
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\assign_sections.php(143): logAction(Object(PDO), 3, 'shsadmin', 'admin', 'Created Section', 'Section ID: 52,...')
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\log_audit.php on line 12

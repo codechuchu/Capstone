@@ -353,45 +353,35 @@
                             <input type="hidden" id="shs-section-id" name="section_id">
                             <input type="hidden" id="shs-subject-id" name="subject_id">
 
-                            <!-- 1st Semester -->
+                            <!-- Grade Encoding -->
                             <div class="border p-3 rounded">
-                                <h4 class="text-sm font-semibold mb-2">1st Semester</h4>
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-2">
                                     <div>
-                                        <label class="block text-sm font-medium">1st Quarter</label>
-                                        <input type="number" step="0.01" id="first-sem-q1" name="first_sem_q1"
-                                            class="w-full border rounded px-2 py-1">
+                                        <label class="block text-sm font-medium">Subject</label>
+                                        <input type="text" id="subject-name" name="subject_name"
+                                            class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
+                                      </div>
+                                      
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-sm font-medium">Q1 Grade</label>
+                                            <input type="number" step="0.01" id="q1-grade" name="q1_grade"
+                                                class="w-full border rounded px-2 py-1">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium">Q2 Grade</label>
+                                            <input type="number" step="0.01" id="q2-grade" name="q2_grade"
+                                                class="w-full border rounded px-2 py-1">
+                                        </div>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium">2nd Quarter</label>
-                                        <input type="number" step="0.01" id="first-sem-q2" name="first_sem_q2"
-                                            class="w-full border rounded px-2 py-1">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-sm font-medium">1st Sem Average</label>
-                                        <input type="number" step="0.01" id="first-sem-avg" name="first_sem_avg"
+                                        <label class="block text-sm font-medium">Final Grade</label>
+                                        <input type="number" step="0.01" id="final-grade" name="final_grade"
                                             class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- 2nd Semester -->
-                            <div class="border p-3 rounded">
-                                <h4 class="text-sm font-semibold mb-2">2nd Semester</h4>
-                                <div class="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label class="block text-sm font-medium">3rd Quarter</label>
-                                        <input type="number" step="0.01" id="second-sem-q3" name="second_sem_q3"
-                                            class="w-full border rounded px-2 py-1">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium">4th Quarter</label>
-                                        <input type="number" step="0.01" id="second-sem-q4" name="second_sem_q4"
-                                            class="w-full border rounded px-2 py-1">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-sm font-medium">2nd Sem Average</label>
-                                        <input type="number" step="0.01" id="second-sem-avg" name="second_sem_avg"
+                                        <label class="block text-sm font-medium">Remarks</label>
+                                        <input type="text" id="remarks" name="remarks"
                                             class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
                                     </div>
                                 </div>
@@ -406,8 +396,6 @@
                         </form>
                     </div>
                 </div>
-
-
             </div>
 
 
@@ -792,7 +780,7 @@
 
 
     <!-- Link to external JavaScript file -->
-    <script src="teach-profile.js" defer></script>
+    <script src="teach-profile.js" defer></script>  
 </body>
 
 </html>

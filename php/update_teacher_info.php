@@ -6,12 +6,7 @@ error_reporting(E_ALL);
 session_start();
 header('Content-Type: application/json');
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "sulivannhs";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli("localhost", "root", "", "sulivannhs");
 if ($conn->connect_error) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed']);
     exit;
@@ -25,7 +20,7 @@ try {
     $middle_name    = $data['middle_name'] ?? null;
     $last_name      = $data['last_name'] ?? null;
     $assigned_level = $data['assigned_level'] ?? null;
-    $subjects       = $data['subjects'] ?? null; // comma-separated subject names
+    $subjects       = $data['subjects'] ?? null;
     $email          = $data['email'] ?? null;
     $password_val   = $data['password'] ?? null;
 
@@ -46,23 +41,20 @@ try {
     $current_data = $result->fetch_assoc();
     $stmt->close();
 
-    // Get all valid subjects for flexible validation
+    // Get all valid subjects
     $validSubjects = [];
     $subjectQuery = $conn->query("SELECT subject_id, name FROM subjects");
     while ($row = $subjectQuery->fetch_assoc()) {
         $validSubjects[strtolower(trim($row['name']))] = $row['subject_id'];
     }
 
-    // Validate subjects & map to IDs
     $subject_ids = [];
     if ($subjects !== null) {
         $subject_array = array_filter(array_map('trim', explode(',', $subjects)));
-
         foreach ($subject_array as $subj_name) {
             $normalized = strtolower(trim(preg_replace('/\s+/', ' ', $subj_name)));
 
             if (!isset($validSubjects[$normalized])) {
-                // Auto-add if subject not found
                 $insert_stmt = $conn->prepare("INSERT INTO subjects (name) VALUES (?)");
                 $insert_stmt->bind_param("s", $subj_name);
                 $insert_stmt->execute();
@@ -75,7 +67,7 @@ try {
         }
     }
 
-    // Build dynamic update query
+    // Build update query
     $updates = [];
     $params = [];
     $types = "";
@@ -134,12 +126,30 @@ try {
 
     if ($stmt->execute()) {
         echo json_encode(['success' => true, 'message' => 'Teacher info updated successfully']);
+
+        // ✅ AUDIT TRAIL SECTION
+        if (isset($_SESSION['user_id'], $_SESSION['username'], $_SESSION['role'])) {
+            $user_id  = $_SESSION['user_id'];
+            $username = $_SESSION['username'];
+            $role     = $_SESSION['role'];
+            $ip       = $_SERVER['REMOTE_ADDR'];
+
+            $action  = "Update Teacher Info";
+            $details = "Updated teacher ID #$teacher_id (" . $current_data['firstname'] . " " . $current_data['lastname'] . ")";
+
+            $audit = $conn->prepare("INSERT INTO audit_trail (user_id, username, role, action, details, ip_address) VALUES (?, ?, ?, ?, ?, ?)");
+            $audit->bind_param("isssss", $user_id, $username, $role, $action, $details, $ip);
+            $audit->execute();
+            $audit->close();
+        }
+
     } else {
         echo json_encode(['success' => false, 'message' => 'Update failed: ' . $conn->error]);
     }
 
     $stmt->close();
     $conn->close();
+
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'PHP error: ' . $e->getMessage()]);
     exit;
