@@ -23,8 +23,8 @@ try {
         exit;
     }
 
-    // Get section_id
-    $stmt = $pdo->prepare("SELECT section_id FROM sections_list WHERE section_name = ?");
+    // Case-insensitive search for the section
+    $stmt = $pdo->prepare("SELECT section_id FROM sections_list WHERE LOWER(section_name) = LOWER(?)");
     $stmt->execute([$sectionName]);
     $section = $stmt->fetch();
 
@@ -44,23 +44,6 @@ try {
     ");
     $stmt->execute([$sectionId]);
     $students = $stmt->fetchAll();
-
-    // 🔴 For each student, also fetch their grades
-    foreach ($students as &$student) {
-        $gradesStmt = $pdo->prepare("SELECT average FROM studentgrade WHERE student_id = ?");
-        $gradesStmt->execute([$student['student_id']]);
-        $grades = $gradesStmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $student['grades'] = $grades;
-        $student['failed'] = false;
-
-        foreach ($grades as $avg) {
-            if ($avg < 75) {
-                $student['failed'] = true;
-                break;
-            }
-        }
-    }
 
     echo json_encode($students);
 

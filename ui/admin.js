@@ -115,50 +115,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-
-
-// Function to handle viewing enrolled student details
-function viewEnrolledStudentDetails(buttonElement) {
-    // Get the parent row of the clicked button
-    const row = buttonElement.closest('tr');
-    if (row) {
-        // Extract data from the row cells using data attributes
-        const strand = row.querySelector('[data-strand]').dataset.strand;
-        const name = row.querySelector('[data-name]').dataset.name;
-        const contact = row.querySelector('[data-contact]').dataset.contact;
-        const email = row.querySelector('[data-email]').dataset.email;
-
-        // Get references to the detail elements in the enrolled-student-details-pane
-        const detailStrand = document.getElementById('enrolled-detail-strand');
-        const detailName = document.getElementById('enrolled-detail-name');
-        const detailContact = document.getElementById('enrolled-detail-contact');
-        const detailEmail = document.getElementById('enrolled-detail-email');
-
-        // Populate the detail elements with data
-        detailStrand.textContent = strand;
-        detailName.textContent = name;
-        detailContact.textContent = contact;
-        detailEmail.textContent = email;
-
-        // Hide all content panes
-        const panes = document.querySelectorAll(".content-pane");
-        panes.forEach(pane => pane.classList.add('hidden'));
-
-        // Show the enrolled student details pane
-        const enrolledStudentDetailsPane = document.getElementById('enrolled-student-details-pane');
-        enrolledStudentDetailsPane.classList.remove('hidden');
-
-        // Update the page title
-        document.getElementById('page-title').textContent = 'Enrolled Student Details';
-
-        // Remove active class from all nav items in the sidebar
-        const navItems = document.querySelectorAll(".nav-item");
-        navItems.forEach(nav => nav.classList.remove("active"));
-    }
-}
-
-
-
 document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll(".nav-item");
     const panes = document.querySelectorAll(".content-pane");
@@ -1605,9 +1561,56 @@ function approveApplication() {
         .catch(err => alert("Request failed: " + err.message));
 }
 
+function denyApplication() {
+    if (!currentApplicantId) {
+        alert("No applicant selected.");
+        return;
+    }
+    document.getElementById("declineModal").classList.remove("hidden");
+}
+
+function closeDeclineModal() {
+    document.getElementById("declineModal").classList.add("hidden");
+    document.getElementById("declineReason").value = "";
+}
+
+function submitDecline() {
+    const reason = document.getElementById("declineReason").value.trim();
+
+    if (!reason) {
+        alert("Please enter a reason for declining this application.");
+        return;
+    }
+
+    fetch("../php/decline_applicant.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            applicant_id: currentApplicantId,
+            reason: reason
+        })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Application has been declined successfully.");
+                closeDeclineModal();
+                closeApplicationModal();
+                loadPendingApplications(); // refresh table
+            } else {
+                alert("Error: " + (data.error || "Unable to decline applicant."));
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("Something went wrong while declining the applicant.");
+        });
+}
+
 function closeApplicationModal() {
     document.getElementById("applicationModal").classList.add("hidden");
 }
+
 
 function loadTeachers() {
     const tbody = document.getElementById('teachers-list-body');
@@ -2858,6 +2861,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const students = studentsData.students;
 
+                // --- Search bar container ---
+                const searchContainer = document.createElement("div");
+                searchContainer.className = "flex items-center gap-2 mb-3";
+                searchContainer.innerHTML = `
+                    <input type="text" id="searchInput" placeholder="Search student..." 
+                        class="flex-1 px-3 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-blue-500">
+                    <button id="searchBtn" 
+                        class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Search</button>
+                    <button id="resetBtn" 
+                        class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded">Reset</button>
+                `;
+                fileModalContent.appendChild(searchContainer);
+
                 const table = document.createElement("table");
                 table.className = "w-full border border-gray-600 text-sm text-gray-200";
                 table.id = "student-table";
@@ -2881,38 +2897,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     <tbody>
                         ${students.map(s => `
                             <tr data-id="${s.applicant_id}">
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="firstname" value="${s.firstname || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="lastname" value="${s.lastname || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                ${assignedLevel === 'senior high' ? `
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="strand" value="${s.strand || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>` : ''}
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="grade_level" value="${s.grade_level || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                ${assignedLevel === 'senior high' ? `
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="semester" value="${s.semester || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>` : ''}
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="barangay" value="${s.barangay || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="municipal_city" value="${s.municipal_city || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="province" value="${s.province || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="cellphone" value="${s.cellphone || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
-                                <td class="px-3 py-2 border border-gray-600">
-                                    <input type="text" name="emailaddress" value="${s.emailaddress || ''}" class="w-full bg-gray-700 text-gray-200 px-2 py-1 rounded" readonly>
-                                </td>
+                                <td class="px-3 py-2 border border-gray-600">${s.firstname || ''}</td>
+                                <td class="px-3 py-2 border border-gray-600">${s.lastname || ''}</td>
+                                ${assignedLevel === 'senior high' ? `<td class="px-3 py-2 border border-gray-600">${s.strand || ''}</td>` : ''}
+                                <td class="px-3 py-2 border border-gray-600">${s.grade_level || ''}</td>
+                                ${assignedLevel === 'senior high' ? `<td class="px-3 py-2 border border-gray-600">${s.semester || ''}</td>` : ''}
+                                <td class="px-3 py-2 border border-gray-600">${s.barangay || ''}</td>
+                                <td class="px-3 py-2 border border-gray-600">${s.municipal_city || ''}</td>
+                                <td class="px-3 py-2 border border-gray-600">${s.province || ''}</td>
+                                <td class="px-3 py-2 border border-gray-600">${s.cellphone || ''}</td>
+                                <td class="px-3 py-2 border border-gray-600">${s.emailaddress || ''}</td>
                                 <td class="px-3 py-2 border border-gray-600 text-center">
                                     <button class="edit-btn bg-blue-600 px-2 py-1 rounded hover:bg-blue-500 text-white">Edit</button>
                                 </td>
@@ -2920,73 +2914,33 @@ document.addEventListener("DOMContentLoaded", () => {
                         `).join("")}
                     </tbody>
                 `;
-
                 fileModalContent.appendChild(table);
 
-                table.querySelectorAll(".edit-btn").forEach(btn => {
-                    btn.addEventListener("click", async (e) => {
-                        const row = e.target.closest("tr");
-                        const inputs = row.querySelectorAll("input");
-                        const isEditing = e.target.textContent === "Save";
+                // --- Search logic ---
+                const searchInput = document.getElementById("searchInput");
+                const searchBtn = document.getElementById("searchBtn");
+                const resetBtn = document.getElementById("resetBtn");
 
-                        if (!isEditing) {
-                            inputs.forEach(inp => {
-                                inp.removeAttribute("readonly");
-                                inp.classList.remove("bg-gray-700", "text-gray-200");
-                                inp.classList.add("bg-white", "text-black");
-                            });
-                            e.target.textContent = "Save";
-                            e.target.classList.remove("bg-blue-600");
-                            e.target.classList.add("bg-green-600", "hover:bg-green-500");
-                        } else {
-                            const studentId = row.dataset.id;
-                            const payload = {
-                                applicant_id: studentId,
-                                level: assignedLevel,
-                                firstname: row.querySelector('input[name="firstname"]').value.trim(),
-                                lastname: row.querySelector('input[name="lastname"]').value.trim(),
-                                strand: assignedLevel === 'senior high' ? row.querySelector('input[name="strand"]').value.trim() : '',
-                                grade_level: row.querySelector('input[name="grade_level"]').value.trim(),
-                                semester: assignedLevel === 'senior high' ? row.querySelector('input[name="semester"]').value.trim() : '',
-                                barangay: row.querySelector('input[name="barangay"]').value.trim(),
-                                municipal_city: row.querySelector('input[name="municipal_city"]').value.trim(),
-                                province: row.querySelector('input[name="province"]').value.trim(),
-                                cellphone: row.querySelector('input[name="cellphone"]').value.trim(),
-                                emailaddress: row.querySelector('input[name="emailaddress"]').value.trim()
-                            };
+                const filterTable = () => {
+                    const query = searchInput.value.toLowerCase().trim();
+                    const rows = table.querySelectorAll("tbody tr");
 
-                            if (!/^\d{11}$/.test(payload.cellphone)) return alert("Cellphone must be exactly 11 digits");
-                            if (!payload.emailaddress.includes("@") || !payload.emailaddress.includes(".com")) return alert("Email must contain '@' and end with '.com'");
-
-                            try {
-                                const res = await fetch("../php/update_student_info.php", {
-                                    method: "POST",
-                                    credentials: "include",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify(payload)
-                                });
-                                const data = await res.json();
-
-                                if (data.success) {
-                                    alert("Updated successfully!");
-                                    inputs.forEach(inp => {
-                                        inp.setAttribute("readonly", true);
-                                        inp.classList.remove("bg-white", "text-black");
-                                        inp.classList.add("bg-gray-700", "text-gray-200");
-                                    });
-                                    e.target.textContent = "Edit";
-                                    e.target.classList.remove("bg-green-600", "hover:bg-green-500");
-                                    e.target.classList.add("bg-blue-600", "hover:bg-blue-500");
-                                } else {
-                                    alert("Update failed: " + data.message);
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                alert("Failed to update student info");
-                            }
-                        }
+                    rows.forEach(row => {
+                        const rowText = row.textContent.toLowerCase();
+                        row.style.display = rowText.includes(query) ? "" : "none";
                     });
+                };
+
+                searchBtn.addEventListener("click", filterTable);
+                searchInput.addEventListener("keypress", e => {
+                    if (e.key === "Enter") filterTable();
                 });
+                resetBtn.addEventListener("click", () => {
+                    searchInput.value = "";
+                    const rows = table.querySelectorAll("tbody tr");
+                    rows.forEach(row => row.style.display = "");
+                });
+
             } catch (err) {
                 console.error(err);
                 alert("Error loading student data.");
@@ -2997,6 +2951,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fileModalClose.addEventListener("click", () => fileModal.classList.add("hidden"));
     window.addEventListener("click", e => { if (e.target === fileModal) fileModal.classList.add("hidden"); });
 });
+
 
 //file maintenance(subjects)
 document.addEventListener("DOMContentLoaded", () => {
@@ -3268,124 +3223,164 @@ teacherBtn.addEventListener("click", async () => {
         const subjData = await subjRes.json();
         const subjects = subjData.success ? subjData.subjects.map(s => s.name) : [];
 
+        // Search bar + table wrapper
         modalContent.innerHTML = `
-            <table class="w-full border border-gray-600 text-sm text-gray-200">
-                <thead class="bg-gray-700 text-white">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Assigned Level</th>
-                        <th>Subjects</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${teachers.map(t => `
-                        <tr class="border-b border-gray-700">
-                            <td class="px-2 py-1">${t.teacher_id}</td>
-                            <td class="px-2 py-1">${t.firstname} ${t.middlename || ""} ${t.lastname}</td>
-                            <td class="px-2 py-1">${t.email}</td>
-                            <td class="px-2 py-1">${t.assigned_level}</td>
-                            <td class="px-2 py-1 subjects-cell">${t.subjects || ""}</td>
-                            <td class="px-2 py-1 text-center">
-                                <button class="edit-btn bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500 transition duration-200">
-                                    Edit
-                                </button>
-                            </td>
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
+            <div class="mb-3 flex justify-between items-center">
+                <input 
+                    type="text" 
+                    id="teacherSearch" 
+                    placeholder="Search teacher..." 
+                    class="px-3 py-2 w-1/3 bg-gray-800 text-gray-200 rounded border border-gray-600 focus:outline-none focus:ring focus:ring-blue-500"
+                >
+            </div>
+
+            <div id="teacherTableWrapper">
+                ${renderTeacherTable(teachers, subjects)}
+            </div>
         `;
 
-        // --- Edit / Save button logic ---
-        modalContent.querySelectorAll(".edit-btn").forEach((btn) => {
-            btn.addEventListener("click", async () => {
-                const row = btn.closest("tr");
-                const teacherId = row.children[0].textContent.trim();
-                const subjectCell = row.querySelector(".subjects-cell");
+        const searchInput = document.getElementById("teacherSearch");
+        const tableWrapper = document.getElementById("teacherTableWrapper");
 
-                // --- Edit Mode ---
-                if (btn.textContent.trim() === "Edit") {
-                    btn.textContent = "Save";
-                    btn.classList.remove("bg-blue-600", "hover:bg-blue-500");
-                    btn.classList.add("bg-green-600", "hover:bg-green-500");
-
-                    // Create dropdown for selecting new subject
-                    const dropdown = document.createElement("select");
-                    dropdown.className = "mt-1 px-2 py-1 bg-gray-700 text-white rounded w-full";
-                    dropdown.innerHTML = `<option value="">-- Select Subject to Add --</option>` +
-                        subjects.map(s => `<option value="${s}">${s}</option>`).join("");
-
-                    // Remove any existing dropdown before adding new
-                    const existingDropdown = subjectCell.querySelector("select");
-                    if (existingDropdown) existingDropdown.remove();
-
-                    subjectCell.appendChild(dropdown);
-                    return; // stop here until Save is clicked
-                }
-
-                // --- Save Mode ---
-                if (btn.textContent.trim() === "Save") {
-                    const dropdown = subjectCell.querySelector("select");
-                    const selectedSubject = dropdown?.value?.trim();
-
-                    if (!selectedSubject) {
-                        alert("Please select a subject to add.");
-                        return;
-                    }
-
-                    // Get current subjects (ignore dropdown)
-                    const textOnly = Array.from(subjectCell.childNodes)
-                        .filter(n => n.nodeType === Node.TEXT_NODE)
-                        .map(n => n.textContent)
-                        .join("")
-                        .trim();
-
-                    const existingSubjects = textOnly
-                        .split(",")
-                        .map(s => s.trim())
-                        .filter(Boolean);
-
-                    if (existingSubjects.includes(selectedSubject)) {
-                        alert("This subject is already assigned to the teacher.");
-                        return;
-                    }
-
-                    const finalSubjects = [...existingSubjects, selectedSubject];
-
-                    const updateRes = await fetch("../php/update_teacher_info.php", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            teacher_id: teacherId,
-                            subjects: finalSubjects.join(", "),
-                        }),
-                    });
-
-                    const updateData = await updateRes.json();
-
-                    if (updateData.success) {
-                        alert("✅ Teacher updated successfully!");
-                        subjectCell.textContent = finalSubjects.join(", ");
-                    } else {
-                        alert("❌ Update failed: " + updateData.message);
-                    }
-
-                    // Reset button to Edit
-                    btn.textContent = "Edit";
-                    btn.classList.remove("bg-green-600", "hover:bg-green-500");
-                    btn.classList.add("bg-blue-600", "hover:bg-blue-500");
-                }
-            });
+        // --- Live search filter ---
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.toLowerCase();
+            const filtered = teachers.filter(t =>
+                `${t.firstname} ${t.lastname}`.toLowerCase().includes(query) ||
+                t.email.toLowerCase().includes(query) ||
+                (t.assigned_level || "").toLowerCase().includes(query)
+            );
+            tableWrapper.innerHTML = renderTeacherTable(filtered, subjects);
+            attachEditHandlers();
         });
+
+        // Attach edit/save logic initially
+        attachEditHandlers();
+
+        // Function to render table HTML
+        function renderTeacherTable(list, subjects) {
+            if (list.length === 0) {
+                return `<p class="text-gray-400 mt-3">No teachers found.</p>`;
+            }
+            return `
+                <table class="w-full border border-gray-600 text-sm text-gray-200">
+                    <thead class="bg-gray-700 text-white">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Assigned Level</th>
+                            <th>Subjects</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${list.map(t => `
+                            <tr class="border-b border-gray-700">
+                                <td class="px-2 py-1">${t.teacher_id}</td>
+                                <td class="px-2 py-1">${t.firstname} ${t.middlename || ""} ${t.lastname}</td>
+                                <td class="px-2 py-1">${t.email}</td>
+                                <td class="px-2 py-1">${t.assigned_level}</td>
+                                <td class="px-2 py-1 subjects-cell">${t.subjects || ""}</td>
+                                <td class="px-2 py-1 text-center">
+                                    <button class="edit-btn bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500 transition duration-200">
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Function to reattach edit/save logic
+        function attachEditHandlers() {
+            modalContent.querySelectorAll(".edit-btn").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const row = btn.closest("tr");
+                    const teacherId = row.children[0].textContent.trim();
+                    const subjectCell = row.querySelector(".subjects-cell");
+
+                    // --- Edit Mode ---
+                    if (btn.textContent.trim() === "Edit") {
+                        btn.textContent = "Save";
+                        btn.classList.remove("bg-blue-600", "hover:bg-blue-500");
+                        btn.classList.add("bg-green-600", "hover:bg-green-500");
+
+                        const dropdown = document.createElement("select");
+                        dropdown.className = "mt-1 px-2 py-1 bg-gray-700 text-white rounded w-full";
+                        dropdown.innerHTML = `<option value="">-- Select Subject to Add --</option>` +
+                            subjects.map(s => `<option value="${s}">${s}</option>`).join("");
+
+                        const existingDropdown = subjectCell.querySelector("select");
+                        if (existingDropdown) existingDropdown.remove();
+
+                        subjectCell.appendChild(dropdown);
+                        return;
+                    }
+
+                    // --- Save Mode ---
+                    if (btn.textContent.trim() === "Save") {
+                        const dropdown = subjectCell.querySelector("select");
+                        const selectedSubject = dropdown?.value?.trim();
+
+                        if (!selectedSubject) {
+                            alert("Please select a subject to add.");
+                            return;
+                        }
+
+                        const textOnly = Array.from(subjectCell.childNodes)
+                            .filter(n => n.nodeType === Node.TEXT_NODE)
+                            .map(n => n.textContent)
+                            .join("")
+                            .trim();
+
+                        const existingSubjects = textOnly
+                            .split(",")
+                            .map(s => s.trim())
+                            .filter(Boolean);
+
+                        if (existingSubjects.includes(selectedSubject)) {
+                            alert("This subject is already assigned to the teacher.");
+                            return;
+                        }
+
+                        const finalSubjects = [...existingSubjects, selectedSubject];
+
+                        const updateRes = await fetch("../php/update_teacher_info.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                teacher_id: teacherId,
+                                subjects: finalSubjects.join(", "),
+                            }),
+                        });
+
+                        const updateData = await updateRes.json();
+
+                        if (updateData.success) {
+                            alert("✅ Teacher updated successfully!");
+                            subjectCell.textContent = finalSubjects.join(", ");
+                        } else {
+                            alert("❌ Update failed: " + updateData.message);
+                        }
+
+                        btn.textContent = "Edit";
+                        btn.classList.remove("bg-green-600", "hover:bg-green-500");
+                        btn.classList.add("bg-blue-600", "hover:bg-blue-500");
+                    }
+                });
+            });
+        }
 
     } catch (err) {
         console.error(err);
         modalContent.innerHTML = "<p>Error loading teachers.</p>";
     }
 });
+
+
 // file maintenance(parent)
 const parentBtn = document.getElementById("parentBtn");
 

@@ -34,7 +34,9 @@
                 <a href="#about">About</a>
 
                 <div class="track-status">
-                    <input type="text" id="lrnInput" placeholder="Enter LRN" />
+                    <input type="text" id="lrnInput" placeholder="Enter LRN" maxlength="12" pattern="\d{12}"
+                        inputmode="numeric" />
+
                     <button class="search-btn">🔍</button> <!-- Fixed: No leading dot, proper class -->
                     <div id="popup" class="popup hidden"></div>
                 </div>

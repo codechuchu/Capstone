@@ -486,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // demographic reports
-    const demographicsBtn = recordsButtons.querySelector("button:nth-child(4)"); // Adjust if needed
+    const demographicsBtn = recordsButtons.querySelector("button:nth-child(4)");
     if (demographicsBtn) {
         demographicsBtn.addEventListener("click", async () => {
             const modal = document.getElementById("records-modal");
@@ -495,13 +495,11 @@ document.addEventListener("DOMContentLoaded", () => {
             modal.classList.remove("hidden");
 
             try {
-                // 1. Get assigned level
                 const loginRes = await fetch("../php/get_assigned_level.php", { method: "GET", credentials: "include" });
                 const loginData = await loginRes.json();
                 if (!loginData.success || !loginData.assigned_level) return alert("Unable to determine assigned level.");
                 const assignedLevel = loginData.assigned_level;
 
-                // 2. Fetch student demographics
                 const demoRes = await fetch(`../php/get_student_demographics.php?level=${encodeURIComponent(assignedLevel)}`, { credentials: "include" });
                 const demographics = await demoRes.json();
                 if (demographics.error) {
@@ -509,48 +507,194 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                // 3. Build modal depending on level
+                // --- Single dropdown creator ---
+                const createDropdown = (label, listOrObject) => {
+                    if (!Array.isArray(listOrObject)) return "";
+                    const listHTML = listOrObject.length
+                        ? listOrObject.map(st => `<tr>
+                            <td>${st.firstname}</td>
+                            <td>${st.lastname}</td>
+                            <td>${st.lrn || st.Irn || ''}</td>
+                            <td>${st.cellphone || ''}</td>
+                            <td>${st.street_house || st['street house'] || ''}, ${st.barangay || ''}, ${st.municipal_city || ''}, ${st.province || ''}</td>
+                        </tr>`).join('')
+                        : "<tr><td colspan='5' style='text-align:center;'>No students</td></tr>";
+
+                    return `
+                        <div class="mb-3 border border-gray-700 rounded-lg overflow-hidden dropdown-wrapper">
+                            <div class="flex items-center justify-between bg-gray-800 px-4 py-2">
+                                <button class="text-left text-white font-semibold hover:bg-gray-700 toggle-dropdown flex-1">
+                                    ${label} (${listOrObject.length})
+                                </button>
+                                <button class="open-pdf-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded ml-2"
+                                    data-title="${label}" data-list='${JSON.stringify(listOrObject)}'>
+                                    Open PDF
+                                </button>
+                            </div>
+                            <div class="dropdown-content hidden bg-gray-900 text-white px-4 py-2">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="border-b border-gray-700 px-2 py-1">First Name</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">Last Name</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">LRN</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">Phone</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">Address</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${listHTML}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                // --- Nested dropdown ---
+                const createNestedDropdown = (label, groupedData) => {
+                    if (!groupedData || Object.keys(groupedData).length === 0) return "";
+
+                    const inner = Object.entries(groupedData).map(([key, students]) => `
+                        <div class="ml-4 mb-2 border border-gray-700 rounded-lg overflow-hidden dropdown-wrapper">
+                            <div class="flex items-center justify-between bg-gray-700 px-3 py-2">
+                                <button class="text-left text-white font-medium hover:bg-gray-600 toggle-dropdown flex-1">
+                                    ${key} (${students.length})
+                                </button>
+                                <button class="open-pdf-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded ml-2"
+                                    data-title="${key}" data-list='${JSON.stringify(students)}'>
+                                    Open PDF
+                                </button>
+                            </div>
+                            <div class="dropdown-content hidden bg-gray-900 text-white px-4 py-2">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="border-b border-gray-700 px-2 py-1">First Name</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">Last Name</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">LRN</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">Phone</th>
+                                            <th class="border-b border-gray-700 px-2 py-1">Address</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${students.length > 0
+                            ? students.map(st => `<tr>
+                                                <td>${st.firstname}</td>
+                                                <td>${st.lastname}</td>
+                                                <td>${st.lrn || st.Irn || ''}</td>
+                                                <td>${st.cellphone || ''}</td>
+                                                <td>${st.street_house || st['street house'] || ''}, ${st.barangay || ''}, ${st.municipal_city || ''}, ${st.province || ''}</td>
+                                            </tr>`).join('')
+                            : "<tr><td colspan='5' style='text-align:center;'>No students</td></tr>"
+                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="mb-3 border border-gray-700 rounded-lg overflow-hidden dropdown-wrapper">
+                            <div class="flex items-center justify-between bg-gray-800 px-4 py-2">
+                                <button class="text-left text-white font-semibold hover:bg-gray-700 toggle-dropdown flex-1">
+                                    ${label}
+                                </button>
+                            </div>
+                            <div class="dropdown-content hidden bg-gray-900 px-2 py-2">${inner}</div>
+                        </div>
+                    `;
+                };
+
+                // --- Main content ---
+                let dropdowns = `
+                    ${createDropdown("All Students", demographics.students || [])}
+                    ${createDropdown("Male Students", demographics.male_students || [])}
+                    ${createDropdown("Female Students", demographics.female_students || [])}
+                    ${createDropdown("Declined Students", demographics.declined_students || [])}
+                    ${createDropdown("Dropped Students", demographics.dropped_students || [])}
+                `;
+
                 if (assignedLevel.toLowerCase() === "senior high") {
-                    // SHS → show strands
-                    modalContent.innerHTML = `
-                    <h2 class="text-lg font-semibold mb-4 text-white">Demographics Report (Senior High)</h2>
-                    <div class="mb-3 text-white">
-                        <p><strong>Total Students:</strong> ${demographics.total}</p>
-                        <p><strong>Total Male:</strong> ${demographics.male}</p>
-                        <p><strong>Total Female:</strong> ${demographics.female}</p>
-                    </div>
-                    <div class="text-white">
-                        <h3 class="font-semibold mb-2">Students per Strand:</h3>
-                        <ul>
-                            ${Object.entries(demographics.strands || {}).map(([strand, count]) => `<li>${strand}: ${count}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
+                    dropdowns += createNestedDropdown("Students per Strand", demographics.students_per_strand || {});
+                    dropdowns += createNestedDropdown("Students per Year Level", demographics.students_per_year_level || {});
                 } else if (assignedLevel.toLowerCase() === "junior high") {
-                    // JHS → show grade levels
-                    modalContent.innerHTML = `
-                    <h2 class="text-lg font-semibold mb-4 text-white">Demographics Report (Junior High)</h2>
-                    <div class="mb-3 text-white">
-                        <p><strong>Total Students:</strong> ${demographics.total}</p>
-                        <p><strong>Total Male:</strong> ${demographics.male}</p>
-                        <p><strong>Total Female:</strong> ${demographics.female}</p>
-                    </div>
-                    <div class="text-white">
-                        <h3 class="font-semibold mb-2">Students per Grade Level:</h3>
-                        <ul>
-                            ${Object.entries(demographics.grade_levels || {}).map(([grade, count]) => `<li>Grade ${grade}: ${count}</li>`).join('')}
-                        </ul>
+                    dropdowns += createNestedDropdown("Students per Grade Level", demographics.students_per_grade || {});
+                }
+
+                modalContent.innerHTML = `
+                    <div class="max-h-[70vh] overflow-y-auto space-y-4 p-2">
+                        <h2 class="text-lg font-semibold mb-4 text-white text-center">Student Demographics (${assignedLevel})</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-white text-center">
+                            <div class="bg-gray-800 p-3 rounded-lg"><p class="text-sm">Total Students</p><p class="text-xl font-bold">${demographics.total_students || 0}</p></div>
+                            <div class="bg-gray-800 p-3 rounded-lg"><p class="text-sm">Male</p><p class="text-xl font-bold">${demographics.total_male || 0}</p></div>
+                            <div class="bg-gray-800 p-3 rounded-lg"><p class="text-sm">Female</p><p class="text-xl font-bold">${demographics.total_female || 0}</p></div>
+                        </div>
+                        ${dropdowns}
                     </div>
                 `;
-                } else {
-                    modalContent.innerHTML = `<p class="text-red-500">Unknown assigned level.</p>`;
-                }
+
+                // --- Toggle dropdowns: only one open at a time ---
+                modalContent.querySelectorAll(".toggle-dropdown").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const wrapper = btn.closest(".dropdown-wrapper");
+                        if (!wrapper) return;
+
+                        // Close all other dropdowns
+                        modalContent.querySelectorAll(".dropdown-wrapper .dropdown-content").forEach(c => {
+                            if (!wrapper.contains(c)) c.classList.add("hidden");
+                        });
+
+                        // Toggle this one
+                        const content = wrapper.querySelector(".dropdown-content");
+                        if (content) content.classList.toggle("hidden");
+                    });
+                });
+
+                // --- Open PDF using jsPDF ---
+                // --- Open PDF in new tab ---
+                modalContent.querySelectorAll(".open-pdf-btn").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const { jsPDF } = window.jspdf;
+                        const title = btn.dataset.title;
+                        const list = JSON.parse(btn.dataset.list || "[]");
+
+                        const doc = new jsPDF();
+                        doc.setFontSize(16);
+                        doc.text("Sulivan National High School", 105, 15, { align: "center" });
+                        doc.setFontSize(14);
+                        doc.text(`${title} (${list.length})`, 105, 25, { align: "center" });
+
+                        // Table headers and data
+                        const headers = [["#", "First Name", "Last Name", "LRN", "Phone", "Address"]];
+                        const data = list.map((st, i) => [
+                            i + 1,
+                            st.firstname,
+                            st.lastname,
+                            st.lrn || st.Irn || "",
+                            st.cellphone || "",
+                            `${st.street_house || st['street house'] || ''}, ${st.barangay || ''}, ${st.municipal_city || ''}, ${st.province || ''}`
+                        ]);
+
+                        doc.autoTable({
+                            startY: 35,
+                            head: headers,
+                            body: data,
+                            styles: { fontSize: 10 },
+                            headStyles: { fillColor: [200, 200, 200] }
+                        });
+
+                        // Open PDF in new tab
+                        doc.output('dataurlnewwindow', { filename: `${title}.pdf` });
+                    });
+                });
+
+
             } catch (err) {
                 console.error(err);
                 alert("Error loading demographics.");
             }
         });
     }
+
 
     // teachers list
     const teachersBtn = recordsButtons.querySelector("button:nth-child(5)");
@@ -985,58 +1129,58 @@ document.addEventListener("DOMContentLoaded", () => {
                 const modalContent = document.getElementById("records-modal-content");
                 modalContent.innerHTML = "";
                 modal.classList.remove("hidden");
-    
+
                 try {
                     const sectionsRes = await fetch("../php/fetch_section.php", { credentials: "include" });
                     const sectionsData = await sectionsRes.json();
-    
+
                     if (!sectionsData || sectionsData.error) {
                         modalContent.innerHTML = `<p>Failed to load sections: ${sectionsData?.error || "Unknown error"}</p>`;
                         return;
                     }
-    
+
                     const dropdownDiv = document.createElement("div");
                     dropdownDiv.className = "flex items-center gap-2 mb-4";
-    
+
                     const sectionSelect = document.createElement("select");
                     sectionSelect.className = "px-2 py-1 rounded bg-gray-700 text-white";
                     sectionSelect.innerHTML = `<option value="">Select Section</option>` +
                         sectionsData.map(s => `<option value="${s.section_id}">${s.section_name} (Grade ${s.grade_level})</option>`).join("");
-    
+
                     const exportBtn = document.createElement("button");
                     exportBtn.className = "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500";
                     exportBtn.textContent = "Export PDF";
-    
+
                     dropdownDiv.appendChild(sectionSelect);
                     dropdownDiv.appendChild(exportBtn);
                     modalContent.appendChild(dropdownDiv);
-    
+
                     exportBtn.addEventListener("click", async () => {
                         const sectionId = sectionSelect.value;
                         if (!sectionId) return alert("Please select a section.");
-    
+
                         try {
                             const res = await fetch(`../php/fetch_classlist.php?section_id=${sectionId}`, { credentials: "include" });
                             const data = await res.json();
-    
+
                             if (!data.success) return alert(data.message || "Failed to fetch class list.");
-    
+
                             const { schoolYear, gradeLevel, section, adviser, students, preparedBy, date } = data;
                             const { jsPDF } = window.jspdf;
                             const doc = new jsPDF('landscape');
-    
+
                             // Header - side by side
                             doc.setFontSize(12);
                             doc.text(`School Year: ${schoolYear}`, 14, 16);
                             doc.text(`Grade Level: ${gradeLevel}`, 80, 16);
                             doc.text(`Section: ${section}`, 140, 16);
                             doc.text(`Adviser: ${adviser || "N/A"}`, 200, 16);
-    
+
                             // Separate students by gender
                             const maleStudents = students.filter(s => s.gender?.toLowerCase() === 'male');
                             const femaleStudents = students.filter(s => s.gender?.toLowerCase() === 'female');
                             const maxRows = Math.max(maleStudents.length, femaleStudents.length);
-    
+
                             // Combine male and female into one row
                             const tableBody = [];
                             for (let i = 0; i < maxRows; i++) {
@@ -1044,7 +1188,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 const female = femaleStudents[i]?.student_name || "";
                                 tableBody.push([i + 1, male, i + 1, female]);
                             }
-    
+
                             doc.autoTable({
                                 head: [["No.", "Male Student", "No.", "Female Student"]],
                                 body: tableBody,
@@ -1058,20 +1202,20 @@ document.addEventListener("DOMContentLoaded", () => {
                                     3: { halign: 'left', cellWidth: 80 }
                                 }
                             });
-    
+
                             const finalY = doc.lastAutoTable.finalY || 24;
                             doc.text(`Total Students: ${students.length}`, 14, finalY + 10);
                             doc.text(`Prepared by: ${preparedBy}`, 14, finalY + 18);
                             doc.text(`Date: ${date}`, 14, finalY + 26);
-    
+
                             window.open(doc.output("bloburl"), "_blank");
-    
+
                         } catch (err) {
                             console.error(err);
                             alert("Error generating PDF.");
                         }
                     });
-    
+
                 } catch (err) {
                     console.error(err);
                     modalContent.innerHTML = `<p>Error loading class list.</p>`;
@@ -1079,8 +1223,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     }
-    
-    
+
+
 });
 
 

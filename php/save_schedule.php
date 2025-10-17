@@ -1,4 +1,5 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
@@ -10,6 +11,9 @@ if ($conn->connect_error) {
     echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
     exit;
 }
+
+// Include audit log helper
+include_once __DIR__ . '/log_audit.php';
 
 // Read JSON input
 $rawData = file_get_contents("php://input");
@@ -172,6 +176,21 @@ if (!empty($conflicts)) {
         'conflicts' => $conflicts
     ]);
     exit;
+}
+
+// ✅ AUDIT TRAIL (added section)
+if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
+    $username = $_SESSION['username'] ?? $_SESSION['email'] ?? 'Unknown User';
+    $details = "Updated class schedule for Section ID: $section_id";
+
+    logAction(
+        $conn,
+        $_SESSION['user_id'],
+        $username,
+        $_SESSION['role'],
+        "Updated Schedule",
+        $details
+    );
 }
 
 echo json_encode(['status' => 'success', 'message' => 'Schedules saved successfully']);

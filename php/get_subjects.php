@@ -14,10 +14,10 @@ if ($section_id <= 0) {
     exit;
 }
 
-// Get section info + strand abbreviation
-$sec_sql = "SELECT s.section_name, s.strand_id, s.grade_level, s.semester, st.strand 
+// Get section info + strand abbreviation + assigned level
+$sec_sql = "SELECT s.section_name, s.strand_id, s.grade_level, s.semester, s.assigned_level, st.strand 
             FROM sections_list s
-            INNER JOIN strand st ON s.strand_id = st.strand_id
+            LEFT JOIN strand st ON s.strand_id = st.strand_id
             WHERE s.section_id = ?";
 $stmt = $conn->prepare($sec_sql);
 $stmt->bind_param("i", $section_id);
@@ -31,34 +31,51 @@ if (!$section) {
     exit;
 }
 
-$strand_id = $section['strand_id'];
-$strand_abbr = $section['strand']; // e.g., "GAS"
-$grade = preg_replace('/[^0-9]/', '', $section['grade_level']); 
-$semester = $section['semester'];
-
-// Build subcode pattern
-$pattern = '';
-if ($grade == '11' && $semester == '1') {
-    $pattern = $strand_abbr . '11%';
-} elseif ($grade == '11' && $semester == '2') {
-    $pattern = $strand_abbr . '12%';
-} elseif ($grade == '12' && $semester == '1') {
-    $pattern = $strand_abbr . '21%';
-} elseif ($grade == '12' && $semester == '2') {
-    $pattern = $strand_abbr . '22%';
-}
-
-$sql = "SELECT subject_id, name 
-        FROM subjects 
-        WHERE strand_id = ? AND subcode LIKE ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("is", $strand_id, $pattern);
-$stmt->execute();
-$res = $stmt->get_result();
-
+$assigned_level = strtolower($section['assigned_level']);
 $subjects = [];
-while ($row = $res->fetch_assoc()) {
-    $subjects[] = $row;
+
+if ($assigned_level === 'senior high') {
+    // Existing logic for Senior High
+    $strand_id = $section['strand_id'];
+    $strand_abbr = $section['strand'];
+    $grade = preg_replace('/[^0-9]/', '', $section['grade_level']); 
+    $semester = $section['semester'];
+
+    // Build subcode pattern
+    $pattern = '';
+    if ($grade == '11' && $semester == '1') {
+        $pattern = $strand_abbr . '11%';
+    } elseif ($grade == '11' && $semester == '2') {
+        $pattern = $strand_abbr . '12%';
+    } elseif ($grade == '12' && $semester == '1') {
+        $pattern = $strand_abbr . '21%';
+    } elseif ($grade == '12' && $semester == '2') {
+        $pattern = $strand_abbr . '22%';
+    }
+
+    $sql = "SELECT subject_id, name 
+            FROM subjects 
+            WHERE strand_id = ? AND subcode LIKE ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("is", $strand_id, $pattern);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $subjects[] = $row;
+    }
+
+} elseif ($assigned_level === 'junior high') {
+    // Fetch from jhs_subjects for Junior High
+    $sql = "SELECT subject_id, subject_name AS name FROM jhs_subjects";
+    $res = $conn->query($sql);
+
+    while ($row = $res->fetch_assoc()) {
+        $subjects[] = $row;
+    }
+} else {
+    echo json_encode(['status'=>'error','message'=>'Unknown assigned level']);
+    exit;
 }
 
 echo json_encode(['status'=>'success','subjects'=>$subjects]);

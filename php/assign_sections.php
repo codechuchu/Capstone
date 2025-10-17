@@ -31,7 +31,7 @@ $data = json_decode(file_get_contents("php://input"), true);
 $grade  = trim($data['grade'] ?? '');
 $strand = trim($data['strand'] ?? '');
 $customSectionName = trim($data['section_name'] ?? '');
-$force = $data['force'] ?? false; 
+$force = $data['force'] ?? false;
 
 $assigned_level = strtolower($_SESSION['assigned_level']);
 
@@ -81,8 +81,10 @@ if ($assigned_level === 'senior high') {
     ");
     $stmt->execute([$grade]);
     $baseName = "Grade " . $grade;
-    $strand = null;
-    $strandId = null;
+
+    // For JHS, provide dummy strand values to satisfy foreign key
+    $strand = 'JHS';
+    $strandId = 1; // Ensure you have a "JHS" row in your strand table with ID = 1
 } else {
     echo json_encode(["error" => "Invalid assigned level"]);
     exit;
@@ -113,7 +115,13 @@ $sectionName = $baseName . "-" . strtoupper($customSectionName);
 $pdo->prepare("
     INSERT INTO sections_list (section_name, strand, strand_id, grade_level, semester, total_students, assigned_level)
     VALUES (?, ?, ?, ?, 1, 0, ?)
-")->execute([$sectionName, $strand, $strandId, $grade, ucfirst($assigned_level)]);
+")->execute([
+    $sectionName,
+    $strand,
+    $strandId,
+    $grade,
+    ucfirst($assigned_level)
+]);
 
 $sectionId = $pdo->lastInsertId();
 $sectionStudentCount = 0;
@@ -155,7 +163,7 @@ $userId   = $_SESSION['user_id'] ?? null;
 $username = $_SESSION['username'] ?? 'unknown';
 $role     = $_SESSION['role'] ?? 'unknown';
 $action   = "Section Created";
-$details  = "Created section '$sectionName' with $sectionStudentCount student(s), grade $grade, strand " . ($strand ?? "N/A");
+$details  = "Created section '$sectionName' with $sectionStudentCount student(s), grade $grade, strand $strand";
 
 $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 

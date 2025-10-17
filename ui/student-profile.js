@@ -272,35 +272,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
 //grades
 function loadGrades(studentId) {
-    const gradesPane = document.getElementById("my-grades-pane");
-    const gradesTableBody = gradesPane.querySelector("tbody");
+    const jhsPane = document.getElementById("jhs-grades-pane");
+    const shsPane = document.getElementById("shs-grades-pane");
+    const jhsTableBody = document.getElementById("jhs-grades-table-body");
+    const shsTableBody = document.getElementById("shs-grades-table-body");
 
-    fetch("../php/get_my_grades.php", { credentials: "include" })
+    // Hide both panes initially
+    jhsPane.classList.add("hidden");
+    shsPane.classList.add("hidden");
+    jhsTableBody.innerHTML = "";
+    shsTableBody.innerHTML = "";
+
+    fetch(`../php/get_my_grades.php?student_id=${encodeURIComponent(studentId)}`, { credentials: "include" })
         .then(res => res.json())
         .then(data => {
-            gradesTableBody.innerHTML = "";
-            if (data.error || !Array.isArray(data)) {
-                gradesTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">${data.error || "No grades found."}</td></tr>`;
+            if (data.error || !Array.isArray(data.grades) || data.grades.length === 0) {
+                // Show message in both panes
+                jhsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">${data.error || "No grades found."}</td></tr>`;
+                shsTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">${data.error || "No grades found."}</td></tr>`;
                 return;
             }
 
-            data.forEach(row => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1 ?? '-'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2 ?? '-'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q3 ?? '-'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q4 ?? '-'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.average ?? '-'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.teacher_name ?? '-'}</td>
-            `;
-            
-                gradesTableBody.appendChild(tr);
-            });
+            const level = data.level || "JHS";
+
+            if (level === "SHS") {
+                // Populate SHS table
+                data.grades.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1_grade ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2_grade ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.final_grade ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.encoded_by ?? '-'}</td>
+                    `;
+                    shsTableBody.appendChild(tr);
+                });
+                shsPane.classList.remove("hidden");
+            } else {
+                // Populate JHS table
+                data.grades.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1 ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2 ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q3 ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q4 ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.average ?? '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.teacher_name ?? '-'}</td>
+                    `;
+                    jhsTableBody.appendChild(tr);
+                });
+                jhsPane.classList.remove("hidden");
+            }
         })
-        .catch(err => console.error("Error fetching grades:", err));
+        .catch(err => {
+            console.error("Error fetching grades:", err);
+            jhsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">⚠️ Something went wrong while fetching grades.</td></tr>`;
+            shsTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">⚠️ Something went wrong while fetching grades.</td></tr>`;
+        });
 }
+
 
 
 //banner

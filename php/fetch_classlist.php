@@ -35,7 +35,7 @@ try {
 
     // Determine applicant table
     $assigned_level = $section['assigned_level'];
-    $applicant_table = $assigned_level === "Senior High" ? "shs_applicant" : "jhs_applicant";
+    $applicant_table = $assigned_level === "Senior High" ? "shs_applicant" : "jhs_applicants";
 
     // Fetch students
     $stmt = $pdo->prepare("

@@ -1,6 +1,9 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 session_start();
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
+
 
 $servername = "localhost";
 $username = "root";
@@ -13,59 +16,127 @@ if ($conn->connect_error) {
     exit;
 }
 
-// Get assigned level from GET parameter
-$level = $_GET['level'] ?? '';
-$level = strtolower(trim($level));
+$level = strtolower(trim($_GET['level'] ?? ''));
 
-// Determine table based on level
+// --- Determine table and fields ---
 if ($level === 'senior high') {
     $table = "shs_applicant";
-    $gradeCondition = "grade_level IN (11,12)";
+    $fields = "
+        applicant_id,
+        firstname,
+        middlename,
+        lastname,
+        suffix,
+        gender,
+        strand,
+        grade_level,
+        status,
+        lrn,
+        cellphone,
+        street_house,
+        barangay,
+        municipal_city,
+        province
+    ";
+    $gradeCondition = "grade_level IN (11, 12)";
 } elseif ($level === 'junior high') {
     $table = "jhs_applicants";
-    $gradeCondition = "grade_level BETWEEN 7 AND 10";
+    $fields = "
+        applicant_id,
+        firstname,
+        middlename,
+        lastname,
+        suffix,
+        gender,
+        grade_level,
+        status,
+        lrn,
+        cellphone,
+        street_house,
+        barangay,
+        municipal_city,
+        province
+    ";
+    $gradeCondition = "`grade_level` BETWEEN 7 AND 10";
 } else {
     echo json_encode(['error' => 'Invalid assigned level']);
     exit;
 }
 
-// 1. Total students
-$totalRes = $conn->query("SELECT COUNT(*) as total FROM $table WHERE $gradeCondition");
-$total = $totalRes->fetch_assoc()['total'] ?? 0;
+// --- Fetch students safely ---
+$students = [];
+$maleStudents = [];
+$femaleStudents = [];
+$declinedStudents = [];
+$droppedStudents = [];
+$studentsPerStrand = [];
+$studentsPerYearLevel = [];
+$studentsPerGrade = [];
 
-// 2. Total male and female
-$maleRes = $conn->query("SELECT COUNT(*) as male FROM $table WHERE gender='Male' AND $gradeCondition");
-$male = $maleRes->fetch_assoc()['male'] ?? 0;
+$studentsQuery = "SELECT $fields FROM $table WHERE $gradeCondition";
+$studentsRes = $conn->query($studentsQuery);
 
-$femaleRes = $conn->query("SELECT COUNT(*) as female FROM $table WHERE gender='Female' AND $gradeCondition");
-$female = $femaleRes->fetch_assoc()['female'] ?? 0;
+if ($studentsRes) {
+    while ($row = $studentsRes->fetch_assoc()) {
+        $student = [
+            'applicant_id' => $row['applicant_id'] ?? '',
+            'firstname' => $row['firstname'] ?? '',
+            'middlename' => $row['middlename'] ?? '',
+            'lastname' => $row['lastname'] ?? '',
+            'suffix' => $row['suffix'] ?? '',
+            'gender' => $row['gender'] ?? '',
+            'status' => $row['status'] ?? '',
+            'grade_level' => $row['grade_level'] ?? '',
+            'lrn' => $row['lrn'] ?? '',
+            'cellphone' => $row['cellphone'] ?? '',
+            'street_house' => $row['street_house'] ?? '',
+            'barangay' => $row['barangay'] ?? '',
+            'municipal_city' => $row['municipal_city'] ?? '',
+            'province' => $row['province'] ?? ''
+        ];
+
+        // --- Grouping ---
+        if ($level === 'senior high' && !empty($row['strand'])) {
+            $student['strand'] = $row['strand'];
+            $studentsPerStrand[$row['strand']][] = $student;
+            $studentsPerYearLevel[$row['grade_level']][] = $student;
+        } elseif ($level === 'junior high') {
+            $studentsPerGrade[$row['grade_level']][] = $student;
+        }
+
+        $students[] = $student;
+
+        // --- Gender lists ---
+        if (strcasecmp($row['gender'] ?? '', 'Male') === 0) $maleStudents[] = $student;
+        if (strcasecmp($row['gender'] ?? '', 'Female') === 0) $femaleStudents[] = $student;
+
+        // --- Status lists ---
+        if (strcasecmp($row['status'] ?? '', 'Declined') === 0) $declinedStudents[] = $student;
+        if (strcasecmp($row['status'] ?? '', 'Dropped') === 0) $droppedStudents[] = $student;
+    }
+} else {
+    // Return empty arrays if query fails
+    $students = [];
+}
+
+$output = [
+    'students' => $students,
+    'male_students' => $maleStudents,
+    'female_students' => $femaleStudents,
+    'declined_students' => $declinedStudents,
+    'dropped_students' => $droppedStudents,
+    'total_students' => count($students),
+    'total_male' => count($maleStudents),
+    'total_female' => count($femaleStudents)
+];
 
 if ($level === 'senior high') {
-    // 3. Total per strand
-    $strandRes = $conn->query("SELECT strand, COUNT(*) as count FROM $table WHERE $gradeCondition GROUP BY strand");
-    $strands = [];
-    while ($row = $strandRes->fetch_assoc()) {
-        $strands[$row['strand']] = (int)$row['count'];
-    }
-
-    echo json_encode([
-        'total' => (int)$total,
-        'male' => (int)$male,
-        'female' => (int)$female,
-        'strands' => $strands
-    ]);
+    $output['students_per_strand'] = $studentsPerStrand;
+    $output['students_per_year_level'] = $studentsPerYearLevel;
 } else {
-    // 3. Total per grade level (7-10 only)
-    $gradeRes = $conn->query("SELECT grade_level, COUNT(*) as count FROM $table WHERE $gradeCondition GROUP BY grade_level");
-    $grades = [];
-    while ($row = $gradeRes->fetch_assoc()) {
-        $grades[$row['grade_level']] = (int)$row['count'];
-    }
-
-    echo json_encode([
-        'total' => (int)$total,
-        'male' => (int)$male,
-        'female' => (int)$female,
-        'grade_levels' => $grades
-    ]);
+    $output['students_per_grade'] = $studentsPerGrade;
 }
+
+// --- Always return JSON ---
+echo json_encode($output);
+$conn->close();
