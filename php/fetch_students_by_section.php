@@ -33,7 +33,7 @@ $assigned_level = strtolower($section['assigned_level']);
 $students = [];
 
 if ($assigned_level === 'senior high') {
-    $stmt = $conn->prepare("SELECT applicant_id AS lrn, firstname, lastname, gender, status FROM shs_applicant WHERE section_id = ? ORDER BY lastname, firstname");
+    $stmt = $conn->prepare("SELECT lrn, firstname, lastname, gender, status FROM shs_applicant WHERE section_id = ? ORDER BY lastname, firstname");
 } else {
     $stmt = $conn->prepare("SELECT lrn, firstname, lastname, gender, status FROM jhs_applicants WHERE section_id = ? ORDER BY lastname, firstname");
 }

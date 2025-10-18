@@ -1789,38 +1789,39 @@ if (recordsButtons) {
                         }
 
                         let tableHTML = `
-                            <table class="w-full border border-gray-600 text-sm text-gray-200">
-                                <thead class="bg-gray-700 text-white sticky top-0">
-                                    <tr>
-                                        <th class="px-2 py-2">Section</th>
-                                        <th class="px-2 py-2">Grade Level</th>
-                                        <th class="px-2 py-2">Assigned Level</th>
-                                        <th class="px-2 py-2">Total Students</th>
-                                        <th class="px-2 py-2">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                        `;
-
-                        data.sections.forEach(s => {
-                            tableHTML += `
-                                <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                                    <td class="px-2 py-1">${s.section_name}</td>
-                                    <td class="px-2 py-1 text-center">${s.grade_level}</td>
-                                    <td class="px-2 py-1 text-center">${s.assigned_level}</td>
-                                    <td class="px-2 py-1 text-center">${s.total_students}</td>
-                                    <td class="px-2 py-1 text-center">
-                                        <button class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-500 view-btn" data-section="${s.section_id}">View</button>
-                                        <button class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 pdf-btn" data-section="${s.section_id}" data-name="${s.section_name}">PDF</button>
-                                    </td>
+                        <table class="w-full border border-gray-600 text-sm text-gray-200">
+                            <thead class="bg-gray-700 text-white sticky top-0">
+                                <tr>
+                                    <th class="px-2 py-2 text-left w-[30%]">Section</th>
+                                    <th class="px-2 py-2 text-center w-[15%]">Grade Level</th>
+                                    <th class="px-2 py-2 text-center w-[20%]">Assigned Level</th>
+                                    <th class="px-2 py-2 text-center w-[15%]">Total Students</th>
+                                    <th class="px-2 py-2 text-center w-[20%]">Actions</th>
                                 </tr>
-                            `;
-                        });
+                            </thead>
+                            <tbody>
+                    `;
+                    
+
+                    data.sections.forEach(s => {
+                        tableHTML += `
+                            <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                                <td class="px-2 py-1 text-left">${s.section_name}</td>
+                                <td class="px-2 py-1 text-center">${s.grade_level}</td>
+                                <td class="px-2 py-1 text-center">${s.assigned_level}</td>
+                                <td class="px-2 py-1 text-center">${s.total_students}</td>
+                                <td class="px-2 py-1 text-center">
+                                    <button class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-500 view-btn" data-section="${s.section_id}">View</button>
+                                    <button class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 pdf-btn" data-section="${s.section_id}" data-name="${s.section_name}">PDF</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
 
                         tableHTML += "</tbody></table>";
                         sectionsDiv.innerHTML = tableHTML;
 
-                        // VIEW BUTTON
                         // VIEW BUTTON
                         sectionsDiv.querySelectorAll(".view-btn").forEach(btn => {
                             btn.addEventListener("click", async () => {
@@ -1857,7 +1858,8 @@ if (recordsButtons) {
             `;
 
                                     studentsData.students.forEach((st, i) => {
-                                        const lrn = st.lrn ?? st.applicant_id ?? "";
+                                        const lrn = String(st.lrn ?? "").padStart(12, "0");
+
                                         studentHTML += `
                     <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
                         <td class="px-2 py-1 text-center">${i + 1}</td>
@@ -1880,7 +1882,6 @@ if (recordsButtons) {
                                 }
                             });
                         });
-
 
                         // PDF BUTTON
                         sectionsDiv.querySelectorAll(".pdf-btn").forEach(btn => {
@@ -1923,14 +1924,14 @@ if (recordsButtons) {
                                     // --- TABLE ---
                                     const bodyData = studentsData.students.map((s, i) => [
                                         i + 1,
-                                        s.lrn ?? s.applicant_id ?? "",
+                                        String(s.lrn ?? "").padStart(12, "0"),
                                         s.firstname || "",
                                         s.lastname || "",
                                         s.gender || ""
                                     ]);
                         
                                     // Center table
-                                    const colWidths = [15, 35, 45, 45, 25]; // Adjust widths to fit page
+                                    const colWidths = [15, 35, 45, 45, 25];
                                     const tableWidth = colWidths.reduce((a, b) => a + b, 0);
                                     const marginLeft = (pageWidth - tableWidth) / 2;
                         
@@ -1948,18 +1949,15 @@ if (recordsButtons) {
                                             doc.setTextColor(100);
                         
                                             const exportDate = new Date().toLocaleString('en-US', { hour12: false });
-                                            // Left footer
                                             doc.text(`Prepared By: ${preparedBy}    Section: ${sectionName}`, 14, pageHeight - 10);
                                             doc.text(`Date: ${exportDate}    School Year: ${yearSelect.value || ""}`, 14, pageHeight - 5);
                         
-                                            // Right footer
                                             const pageText = `Page ${pageNum} of ${totalPagesExp}`;
                                             const textWidth = doc.getTextWidth(pageText);
                                             doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
                                         }
                                     });
                         
-                                    // Replace total pages placeholder
                                     doc.putTotalPages(totalPagesExp);
                         
                                     window.open(doc.output("bloburl"), "_blank");
@@ -1970,7 +1968,6 @@ if (recordsButtons) {
                                 }
                             });
                         });
-                        
 
                     } catch (err) {
                         console.error(err);
