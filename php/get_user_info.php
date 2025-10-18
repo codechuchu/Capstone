@@ -21,7 +21,7 @@ if ($conn->connect_error) {
     exit();
 }
 
-// Determine table
+// Determine table and ID column
 $table = "";
 $idColumn = "";
 switch ($role) {
@@ -43,7 +43,7 @@ switch ($role) {
         break;
 }
 
-$stmt = $conn->prepare("SELECT firstname, lastname, email FROM $table WHERE $idColumn = ?");
+$stmt = $conn->prepare("SELECT $idColumn AS id, firstname, lastname, email FROM $table WHERE $idColumn = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -52,9 +52,11 @@ if ($result && $result->num_rows > 0) {
     $user = $result->fetch_assoc();
     echo json_encode([
         "success" => true,
+        "id" => $user['id'],
         "firstname" => $user['firstname'],
         "lastname" => $user['lastname'],
-        "email" => $user['email']
+        "email" => $user['email'],
+        "role" => $role
     ]);
 } else {
     echo json_encode(["success" => false, "message" => "User not found"]);

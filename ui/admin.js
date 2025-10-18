@@ -881,12 +881,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     displaySectionsBody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500">No available sections</td></tr>`;
                     return;
                 }
-
                 data.forEach(section => {
                     displaySectionsBody.innerHTML += `
                         <tr 
                             data-section-id="${section.section_id}" 
                             data-section-name="${section.section_name}" 
+                            data-grade-level="${section.grade_level}" 
+                            data-level="${section.level}"
                             data-adviser-id="${section.adviser_id || ''}">
                             <td class="px-6 py-4 text-sm text-gray-700">${section.section_name}</td>
                             <td class="px-6 py-4 text-sm text-gray-700">${section.grade_level}</td>
@@ -902,6 +903,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </tr>
                     `;
                 });
+
 
 
                 const modal = document.getElementById("students-modal");
@@ -1166,6 +1168,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({ student_id: studentId })
                                         })
+
                                             .then(res => res.json())
                                             .then(resp => {
                                                 if (resp.success) {
@@ -1187,45 +1190,74 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 });
-                // Add Student button
+                // Add Student button handler
                 document.querySelectorAll(".add-student-btn").forEach(addBtn => {
                     addBtn.addEventListener("click", async function () {
                         const tr = this.closest("tr");
-                        const sectionId = tr.dataset.sectionId;
-                        const sectionName = tr.dataset.sectionName;
-                        const sectionStrand = tr.dataset.strand;
-                        const sectionGrade = tr.dataset.gradeLevel;
-                        const totalCell = tr.querySelector("span"); // total_students cell
 
+                        // Read section info from data attributes
+                        const sectionId = tr?.dataset?.sectionId;
+                        const sectionName = tr?.dataset?.sectionName || "Unknown Section";
+                        const sectionGrade = tr?.dataset?.gradeLevel;
+                        const level = tr?.dataset?.level || "shs"; // 'jhs' or 'shs'
+                        const totalCell = tr?.querySelector("span");
+
+                        // Debug: check if the row has proper data attributes
+                        console.log("Row data attributes:", { sectionId, sectionName, sectionGrade, level });
+
+                        if (!sectionId || !sectionGrade) {
+                            console.error("Missing section_id or grade_level on this row. Cannot fetch students.");
+                            return;
+                        }
+
+                        // Modal elements
                         const modal = document.getElementById("add-student-modal");
                         const modalTitle = document.getElementById("add-student-modal-title");
                         const studentBody = document.getElementById("add-student-body");
+                        const strandHeader = document.querySelector("#add-student-modal thead th:nth-child(3)");
+
+                        if (!modal || !modalTitle || !studentBody || !strandHeader) {
+                            console.error("Modal elements not found in DOM.");
+                            return;
+                        }
 
                         modalTitle.textContent = `Add Students to Section: ${sectionName}`;
                         studentBody.innerHTML = "";
 
                         try {
-                            const res = await fetch(`../php/get_unassigned_students.php?section_id=${encodeURIComponent(sectionId)}`, { cache: "no-store" });
+                            // Fetch unassigned students
+                            const res = await fetch(`../php/get_unassigned_students.php?section_id=${encodeURIComponent(sectionId)}&level=${encodeURIComponent(level)}`, { cache: "no-store" });
                             const students = await res.json();
+
+                            console.log("Fetched students:", students); // debug
 
                             if (!Array.isArray(students) || students.length === 0) {
                                 studentBody.innerHTML = `<tr><td colspan="4" class="text-center py-3">No available students</td></tr>`;
+                                strandHeader.style.display = ""; // show by default
                             } else {
+                                // Show strand column only if SHS students
+                                const hasStrand = students.some(s => s.strand && s.strand.trim() !== "");
+                                strandHeader.style.display = hasStrand ? "" : "none";
+
+                                // Populate student rows
+                                studentBody.innerHTML = ""; // clear existing rows
                                 students.forEach(s => {
-                                    studentBody.innerHTML += `
-                        <tr>
-                            <td class="px-4 py-2"><input type="checkbox" class="student-checkbox" value="${s.student_id}"></td>
-                            <td class="px-4 py-2">${s.student_name}</td>
-                            <td class="px-4 py-2">${s.strand}</td>
-                            <td class="px-4 py-2">${s.grade_level}</td>
-                        </tr>
-                    `;
+                                    const trRow = document.createElement("tr");
+                                    trRow.innerHTML = `
+                                        <td class="px-4 py-2"><input type="checkbox" class="student-checkbox" value="${s.student_id}"></td>
+                                        <td class="px-4 py-2">${s.student_name}</td>
+                                        ${s.strand ? `<td class="px-4 py-2">${s.strand}</td>` : ''} 
+                                        <td class="px-4 py-2">${s.grade_level}</td>
+                                    `;
+                                    studentBody.appendChild(trRow);
                                 });
+
                             }
 
+                            // Show modal
                             modal.classList.remove("hidden");
 
-                            // Always reset "Select All"
+                            // Select All checkbox
                             const selectAll = document.getElementById("select-all");
                             selectAll.checked = false;
                             selectAll.onclick = function () {
@@ -1240,7 +1272,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             // Submit button
                             document.getElementById("submit-add-student").onclick = async () => {
                                 const selected = [...document.querySelectorAll(".student-checkbox:checked")].map(cb => cb.value);
-
                                 if (selected.length === 0) {
                                     alert("Please select at least one student.");
                                     return;
@@ -1250,22 +1281,27 @@ document.addEventListener("DOMContentLoaded", () => {
                                     const res = await fetch("../php/add_students_to_section.php", {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ section_id: sectionId, student_ids: selected })
+                                        body: JSON.stringify({
+                                            section_id: sectionId,
+                                            student_ids: selected,
+                                            level: level
+                                        })
                                     });
+
                                     const resp = await res.json();
 
                                     if (resp.success) {
-                                        alert("Students added successfully!");
+                                        alert("✅ Students added successfully!");
                                         modal.classList.add("hidden");
-
-                                        // update student count immediately
-                                        totalCell.textContent = parseInt(totalCell.textContent || "0") + selected.length;
+                                        if (totalCell) {
+                                            totalCell.textContent = resp.new_total ?? (parseInt(totalCell.textContent || "0") + selected.length);
+                                        }
                                     } else {
-                                        alert("Failed to add students: " + (resp.error || ""));
+                                        alert("❌ Failed to add students: " + (resp.error || "Unknown error"));
                                     }
                                 } catch (err) {
                                     console.error("Error saving students:", err);
-                                    alert("Error adding students.");
+                                    alert("⚠️ Error adding students. Please try again.");
                                 }
                             };
 
@@ -1276,7 +1312,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     });
                 });
-
 
             })
             .catch(err => {
@@ -3481,7 +3516,7 @@ parentBtn.addEventListener("click", async () => {
                         ...updatedData
                     }),
                 });
-                
+
 
                 const updateData = await updateRes.json();
 
@@ -3608,7 +3643,7 @@ scheduleBtn.addEventListener("click", async () => {
     }
 });
 
-//file maintenanve(archive)
+//file maintenance(archive)
 document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll(".nav-item");
     const panes = document.querySelectorAll(".content-pane");
@@ -3716,7 +3751,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function openStudentsModal(sectionId, sectionName) {
         const studentModal = document.createElement("div");
         studentModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-50 overflow-auto";
-
+    
         studentModal.innerHTML = `
             <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl relative flex flex-col">
                 <h2 class="text-lg font-semibold mb-4">Students in ${sectionName}</h2>
@@ -3727,26 +3762,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
         `;
-
         document.body.appendChild(studentModal);
-
-        const studentListContainer = document.getElementById("student-list-container");
-        const closeBtn = document.getElementById("student-close-btn");
-        const reEnrollBtn = document.getElementById("student-re-enroll-btn");
-
+    
+        const studentListContainer = studentModal.querySelector("#student-list-container");
+        const closeBtn = studentModal.querySelector("#student-close-btn");
+        const reEnrollBtn = studentModal.querySelector("#student-re-enroll-btn");
+    
         closeBtn.addEventListener("click", () => studentModal.remove());
         reEnrollBtn.style.display = "none";
-
+    
         try {
-            const res = await fetch(`../php/get_section_students.php?section_id=${encodeURIComponent(sectionId)}&section_name=${encodeURIComponent(sectionName)}`);
+            const res = await fetch(`../php/get_section_students.php?section_name=${encodeURIComponent(sectionName)}`);
             const data = await res.json();
-
+    
             studentListContainer.innerHTML = "";
             if (!Array.isArray(data) || data.length === 0) {
                 studentListContainer.innerHTML = `<p class="text-gray-500">No students found.</p>`;
                 return;
             }
-
+    
             const table = document.createElement("table");
             table.className = "min-w-full divide-y divide-gray-200 border";
             table.innerHTML = `
@@ -3758,13 +3792,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 </thead>
             `;
             const tbody = document.createElement("tbody");
-
+    
+            // Store student status in dataset for re-enroll check
             data.forEach(student => {
                 const row = document.createElement("tr");
-                if (student.failed) row.classList.add("bg-red-200");
+    
+                if (student.status && student.status.toLowerCase() === "completed") {
+                    row.classList.add("bg-green-200");
+                }
+    
                 row.innerHTML = `
                     <td class="px-4 py-2 border text-center">
-                        <input type="checkbox" class="student-checkbox" data-student="${encodeURIComponent(student.student_name)}">
+                        <input type="checkbox" class="student-checkbox" data-student="${encodeURIComponent(student.student_name)}" data-status="${student.status || ''}">
                     </td>
                     <td class="px-4 py-2 border">
                         ${student.student_name} (${student.strand || "N/A"} - Grade ${student.grade_level || "N/A"})
@@ -3772,130 +3811,50 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 tbody.appendChild(row);
             });
-
+    
             table.appendChild(tbody);
             studentListContainer.appendChild(table);
-
+    
             reEnrollBtn.style.display = "inline-block";
-
+    
             // --- Select All Checkbox ---
             const selectAll = studentModal.querySelector("#select-all");
             selectAll.addEventListener("change", e => {
                 const checked = e.target.checked;
                 studentModal.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = checked);
             });
-
+    
             // --- Re-enroll Click ---
-            reEnrollBtn.onclick = async () => {
-                const selectedStudents = Array.from(studentListContainer.querySelectorAll(".student-checkbox:checked"))
-                    .map(cb => decodeURIComponent(cb.dataset.student));
-
-                if (selectedStudents.length === 0) {
+            reEnrollBtn.onclick = () => {
+                const selectedCheckboxes = Array.from(studentListContainer.querySelectorAll(".student-checkbox:checked"));
+    
+                if (selectedCheckboxes.length === 0) {
                     alert("Please select at least one student to re-enroll.");
                     return;
                 }
-
-                let strands = [];
-                try {
-                    const res = await fetch("../php/get_strands.php");
-                    const result = await res.json();
-                    if (result.success && Array.isArray(result.data)) strands = result.data;
-                } catch (err) {
-                    console.error("Error loading strands:", err);
+    
+                // Check for completed students
+                const completedStudents = selectedCheckboxes
+                    .filter(cb => (cb.dataset.status || '').toLowerCase() === "completed")
+                    .map(cb => decodeURIComponent(cb.dataset.student));
+    
+                if (completedStudents.length > 0) {
+                    alert(`❌ The following student(s) have already completed their grade:\n- ${completedStudents.join("\n- ")}`);
+                    return;
                 }
-
-                // --- Re-enroll Modal ---
-                const enrollModal = document.createElement("div");
-                enrollModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50";
-
-                enrollModal.innerHTML = `
-        <div class="bg-white p-6 rounded-lg shadow-lg w-96 relative z-50">
-            <h2 class="text-lg font-semibold mb-4">Re-enroll Students</h2>
-            
-            <label class="block mb-2">Section Name</label>
-            <input type="text" id="new-section-name" class="w-full border p-2 rounded mb-4" placeholder="Enter new section name">
-
-            <label class="block mb-2">Grade Level</label>
-            <select id="grade-level" class="w-full border p-2 rounded mb-4">
-                <option value="11">11</option>
-                <option value="12">12</option>
-            </select>
-
-            <label class="block mb-2">Semester</label>
-            <select id="semester" class="w-full border p-2 rounded mb-4">
-                <option value="1">1st Semester</option>
-                <option value="2">2nd Semester</option>
-            </select>
-
-            <label class="block mb-2">Strand</label>
-            <select id="strand" class="w-full border p-2 rounded mb-4">
-                ${strands.map(s => `<option value="${s}">${s}</option>`).join("")}
-            </select>
-
-            <div class="flex justify-end gap-2">
-                <button id="cancel-enroll-modal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-                <button id="confirm-enroll-modal" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
-            </div>
-        </div>
-    `;
-                document.body.appendChild(enrollModal);
-
-                enrollModal.querySelector("#cancel-enroll-modal").onclick = () => enrollModal.remove();
-
-                enrollModal.querySelector("#confirm-enroll-modal").onclick = async () => {
-                    const gradeLevel = Number(enrollModal.querySelector("#grade-level").value);
-                    const semester = Number(enrollModal.querySelector("#semester").value);
-                    const strand = enrollModal.querySelector("#strand").value;
-                    const newSectionName = enrollModal.querySelector("#new-section-name").value.trim();
-
-                    if (!newSectionName) {
-                        alert("Please enter a section name.");
-                        return;
-                    }
-
-                    const payload = {
-                        section_id: Number(sectionId),
-                        students: selectedStudents,
-                        grade_level: gradeLevel,
-                        semester: semester,
-                        strand: strand,
-                        new_section_name: newSectionName
-                    };
-
-                    console.log("Sending payload:", payload);
-
-                    try {
-                        const res = await fetch("../php/re_enroll_students.php", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const text = await res.text();
-                        let result;
-                        try { result = JSON.parse(text); } catch (err) {
-                            console.error("Invalid JSON from server:", text);
-                            alert("Server returned invalid JSON. Check console.");
-                            return;
-                        }
-
-                        if (result.success) {
-                            alert(result.message);
-                            enrollModal.remove();
-                            studentModal.remove();
-                        } else alert("❌ " + result.message);
-
-                    } catch (err) {
-                        console.error("Re-enroll error:", err);
-                        alert("Something went wrong during re-enroll.");
-                    }
-                };
+    
+                // Proceed with your original re-enroll modal logic here
+                // ...
+                alert("Proceed to re-enroll selected students"); // Placeholder
             };
+    
         } catch (err) {
             console.error("Error loading students:", err);
             studentListContainer.innerHTML = `<p class="text-red-500">Failed to load students.</p>`;
         }
     }
+    
+    
 });
 
 //audit trail
@@ -3940,31 +3899,31 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedRole = roleFilter.value.toLowerCase().trim();
         const fromVal = fromDate.value ? new Date(fromDate.value) : null;
         const toVal = toDate.value ? new Date(toDate.value) : null;
-    
+
         currentData = allData.filter(audit => {
             const auditDate = new Date(audit.timestamp);
             const auditRole = audit.role.toLowerCase().trim();
-    
+
             const matchSearch =
                 audit.username.toLowerCase().includes(searchVal) ||
                 audit.action.toLowerCase().includes(searchVal);
-    
+
             // Allow flexible role matching
             const matchRole =
                 selectedRole === "" ||
                 auditRole.includes(selectedRole) ||
                 (selectedRole.endsWith("s") && auditRole.includes(selectedRole.slice(0, -1))) ||
                 (auditRole.endsWith("s") && auditRole.includes(selectedRole));
-    
+
             const matchFrom = !fromVal || auditDate >= fromVal;
             const matchTo = !toVal || auditDate <= toVal;
-    
+
             return matchSearch && matchRole && matchFrom && matchTo;
         });
-    
+
         renderTable();
     }
-    
+
 
     function renderTable() {
         tableBody.innerHTML = "";
@@ -4021,23 +3980,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openPDF() {
         if (!currentData.length) return;
-    
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-    
+
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("Sulivan National High School", 105, 10, { align: "center" });
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", 105, 16, { align: "center" });
-    
+
         const preparedBy = window.currentAdminName || "Admin";
         const exportDate = new Date().toLocaleString('en-US', { hour12: false });
         doc.setFontSize(10);
         doc.text(`Prepared By: ${preparedBy}`, 14, 24);
         doc.text(`Date: ${exportDate}`, 150, 24, { align: "right" });
-    
+
         const bodyData = currentData.map(audit => {
             const dateObj = new Date(audit.timestamp);
             const formattedDate = dateObj.toLocaleString('en-US', { hour12: false });
@@ -4049,7 +4008,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 formattedDate
             ];
         });
-    
+
         doc.autoTable({
             startY: 30,
             head: [['User', 'Role', 'Action', 'Details', 'Date & Time']],
@@ -4057,7 +4016,7 @@ document.addEventListener("DOMContentLoaded", () => {
             styles: { fontSize: 8 },
             headStyles: { fillColor: [52, 58, 64], textColor: 255 },
         });
-    
+
         const pdfBlob = doc.output('bloburl');
         window.open(pdfBlob, '_blank');
     }

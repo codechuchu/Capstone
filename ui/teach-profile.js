@@ -1201,11 +1201,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!classSectionsBtn || !sectionsContainer) return;
 
-    // Load sections and render buttons (can be reused by "Back" button)
     async function loadSections() {
         sectionsContainer.innerHTML = '<p class="text-gray-500 col-span-full">Loading sections...</p>';
 
         try {
+            const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+            const userData = await userRes.json();
+            const teacherId = userData?.id || 0;
+
             const res = await fetch('../php/get-teacher-sections.php', { credentials: "include" });
             const data = await res.json();
 
@@ -1214,18 +1217,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Clear and render section buttons
             sectionsContainer.innerHTML = '';
-            data.sections.forEach(section => {
+
+            const advisorySections = data.sections.filter(s => Number(s.adviser) === Number(teacherId));
+            const otherSections = data.sections.filter(s => Number(s.adviser) !== Number(teacherId));
+            const orderedSections = [...advisorySections, ...otherSections];
+
+            orderedSections.forEach(section => {
+                const isAdvisory = Number(section.adviser) === Number(teacherId);
+
                 const btn = document.createElement("button");
-                btn.className =
-                    "class-section-btn bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out flex items-center justify-center text-lg font-semibold text-gray-800 border border-gray-200 w-full";
-                btn.textContent = section.section_name;
+                btn.className = isAdvisory
+                    ? "class-section-btn bg-green-100 text-green-900 p-6 rounded-lg shadow-md hover:bg-green-200 transition text-lg font-semibold border border-green-400 w-full"
+                    : "class-section-btn bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition text-lg font-semibold text-gray-800 border border-gray-200 w-full";
+
+                btn.textContent = isAdvisory
+                    ? `${section.section_name} (Advisory Class)`
+                    : section.section_name;
+
                 btn.dataset.sectionId = section.section_id;
                 btn.dataset.sectionName = section.section_name;
+                btn.dataset.isAdvisory = isAdvisory;
 
-                btn.addEventListener("click", () => loadStudentsForSection(section));
-
+                btn.addEventListener("click", () => loadStudentsForSection(section, isAdvisory));
                 sectionsContainer.appendChild(btn);
             });
         } catch (err) {
@@ -1234,15 +1248,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Load students for a specific section and render table
-    async function loadStudentsForSection(section) {
-        sectionsContainer.innerHTML = `<div class="col-span-full px-2"><p class="text-gray-500">Loading students for ${section.section_name}...</p></div>`;
+    async function loadStudentsForSection(section, isAdvisory) {
+        sectionsContainer.innerHTML = `<div class="col-span-full px-2"><p class="text-gray-500">Loading students for ${escapeHtml(section.section_name)}...</p></div>`;
 
         try {
-            const resStudents = await fetch(
-                `../php/get-section-students.php?section_id=${encodeURIComponent(section.section_id)}`,
-                { credentials: "include" }
-            );
+            const resStudents = await fetch(`../php/get-section-students.php?section_id=${encodeURIComponent(section.section_id)}`, { credentials: "include" });
             const stuData = await resStudents.json();
 
             if (!stuData || stuData.status !== "success" || !Array.isArray(stuData.students) || stuData.students.length === 0) {
@@ -1259,108 +1269,278 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const wrapperHtml = `
-            <div class="col-span-full max-h-[700px] overflow-y-auto">
+                <div class="col-span-full max-h-[700px] overflow-y-auto">
                     <div class="mb-4 flex items-center space-x-4">
-                        <button id="backToSections" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                            ← Back to Sections
-                        </button>
+                        <button id="backToSections" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">← Back</button>
                         <h2 class="text-xl font-semibold">Students in ${escapeHtml(section.section_name)}</h2>
                     </div>
-
                     <div class="w-full overflow-x-auto">
-                        <table class="min-w-[1000px] w-full bg-white border border-gray-200 shadow-md rounded-lg mx-auto">
+                        <table class="min-w-[900px] w-full bg-white border border-gray-200 shadow-md rounded-lg mx-auto">
                             <thead class="bg-gray-100">
                                 <tr>
                                     <th class="px-6 py-3 border text-left">Firstname</th>
                                     <th class="px-6 py-3 border text-left">Lastname</th>
                                     <th class="px-6 py-3 border text-left">Email</th>
                                     <th class="px-6 py-3 border text-left">Password</th>
+                                    ${isAdvisory ? `<th class="px-4 py-3 border text-center w-[5%]">Action</th>` : ""}
                                 </tr>
                             </thead>
-                            <tbody id="section-students-body">
-                                <tr>
-                                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Loading students...</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="section-students-body"></tbody>
                         </table>
                     </div>
                 </div>
             `;
-
             sectionsContainer.innerHTML = wrapperHtml;
 
             const tbody = document.getElementById("section-students-body");
-            tbody.innerHTML = "";
-
             stuData.students.forEach(stu => {
-                const studentId = stu.student_id ?? stu.applicant_id ?? "";
                 const firstname = stu.firstname ?? "";
                 const lastname = stu.lastname ?? "";
-                const email = stu.email ?? "";
+                const email = stu.email ?? stu.emailaddress ?? "";
                 const password = stu.password ?? "";
                 const maskedPassword = "*".repeat(password.length || 6);
 
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50";
+
                 tr.innerHTML = `
-                    <td class="px-6 py-4 border break-words">${escapeHtml(firstname)}</td>
-                    <td class="px-6 py-4 border break-words">${escapeHtml(lastname)}</td>
-                    <td class="px-6 py-4 border break-words">${escapeHtml(email)}</td>
-                    <td class="px-6 py-4 border">
-                        <div class="flex items-center justify-between">
-                            <span class="password-text">${maskedPassword}</span>
-                            <button class="resetPasswordBtn px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition ml-4"
-                                data-student-id="${escapeAttr(studentId)}" data-lastname="${escapeAttr(lastname)}">
-                                Reset
-                            </button>
-                        </div>
-                    </td>
+                    <td class="px-6 py-4 border">${escapeHtml(firstname)}</td>
+                    <td class="px-6 py-4 border">${escapeHtml(lastname)}</td>
+                    <td class="px-6 py-4 border">${escapeHtml(email)}</td>
+                    <td class="px-6 py-4 border">${maskedPassword}</td>
+                    ${isAdvisory ? `
+                    <td class="px-4 py-2 border text-center">
+                        <button class="editBtn px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                            data-applicant="${stu.applicant_id}">
+                            Edit
+                        </button>
+                    </td>` : ""}
                 `;
 
                 tbody.appendChild(tr);
             });
 
-            // Back button
             document.getElementById("backToSections").addEventListener("click", loadSections);
 
-            // Reset password handlers
-            document.querySelectorAll(".resetPasswordBtn").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    const studentId = btn.dataset.studentId;
-                    const lastname = btn.dataset.lastname;
-                    if (!studentId) {
-                        alert("Missing student id.");
-                        return;
-                    }
-                    const confirmReset = confirm(`Reset password for ${lastname || "this student"} to ${lastname}123?`);
-                    if (!confirmReset) return;
-
-                    try {
-                        const resReset = await fetch("../php/reset-student-password.php", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include",
-                            body: JSON.stringify({ student_id: studentId, lastname: lastname })
-                        });
-                        const resetData = await resReset.json();
-                        if (resetData.status === "success") {
-                            alert("Password reset successfully!");
-                            const newPass = (lastname ?? "") + "123";
-                            btn.closest("td").querySelector(".password-text").textContent = "*".repeat(newPass.length);
-                        } else {
-                            alert("Failed to reset password: " + (resetData.message || "Unknown"));
-                        }
-                    } catch (err) {
-                        console.error("Error resetting password:", err);
-                        alert("An error occurred while resetting password.");
-                    }
+            if (isAdvisory) {
+                document.querySelectorAll(".editBtn").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const applicantId = btn.dataset.applicant;
+                        openEditModalFetch(applicantId, section.section_id);
+                    });
                 });
-            });
+            }
 
         } catch (err) {
             console.error("Failed to load students:", err);
             sectionsContainer.innerHTML = '<div class="col-span-full"><p class="text-red-500">Error loading students.</p></div>';
         }
+    }
+
+    async function openEditModalFetch(applicantId, sectionId) {
+        try {
+            const res = await fetch("../php/fetch_student_full.php", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ applicant_id: applicantId })
+            });
+            const data = await res.json();
+            if (!data || data.status !== "success") {
+                return alert(data?.message || "Failed to fetch student data.");
+            }
+            openEditModal(data);
+        } catch (err) {
+            console.error(err);
+            alert("Error fetching student data.");
+        }
+    }
+
+    function openEditModal(data) {
+        const applicant = data.applicant || {};
+        const guardian = data.guardian || {};
+        const documents = data.documents || {};
+        const level = data.level || "shs";
+        const applicantId = applicant.applicant_id || applicant.student_id || '';
+
+        const modal = document.createElement("div");
+        modal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-12 z-50 overflow-auto";
+
+        modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 w-[900px] max-w-[95%] shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Edit Student (ID: ${escapeHtml(applicantId)})</h3>
+            <button id="closeEditModal" class="text-gray-600 hover:text-gray-900 text-2xl leading-none">&times;</button>
+        </div>
+
+        <form id="editStudentForm" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="applicant_id" value="${escapeAttr(applicantId)}" />
+            <input type="hidden" name="level" value="${escapeAttr(level)}" />
+
+            <section class="border rounded-xl p-4 bg-gray-50">
+                <h4 class="text-lg font-semibold mb-3 text-gray-700">Student Information</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium">Grade Level</label>
+                        <input name="grade_level" value="${escapeAttr(applicant.grade_level ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        ${level === 'shs' ? `
+                            <label class="block text-sm font-medium">Semester</label>
+                            <select name="semester" class="w-full p-2 border rounded mb-2">
+                                <option value="">Select</option>
+                                <option value="1" ${applicant.semester == 1 ? 'selected' : ''}>1</option>
+                                <option value="2" ${applicant.semester == 2 ? 'selected' : ''}>2</option>
+                            </select>
+
+                            <label class="block text-sm font-medium">Strand</label>
+                            <input name="strand" value="${escapeAttr(applicant.strand ?? '')}" class="w-full p-2 border rounded mb-2" />
+                        ` : `
+                            <input type="hidden" name="semester" value="" />
+                            <input type="hidden" name="strand" value="" />
+                        `}
+
+                        <label class="block text-sm font-medium">First Name</label>
+                        <input name="firstname" value="${escapeAttr(applicant.firstname ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Middle Name</label>
+                        <input name="middlename" value="${escapeAttr(applicant.middlename ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Last Name</label>
+                        <input name="lastname" value="${escapeAttr(applicant.lastname ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Suffix</label>
+                        <input name="suffix" value="${escapeAttr(applicant.suffix ?? '')}" class="w-full p-2 border rounded mb-2" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium">Gender</label>
+                        <select name="gender" class="w-full p-2 border rounded mb-2">
+                            <option value="">Select</option>
+                            <option value="Male" ${applicant.gender === 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${applicant.gender === 'Female' ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${applicant.gender === 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+
+                        <label class="block text-sm font-medium">Birth Date</label>
+                        <input name="birth_date" type="date" value="${escapeAttr(applicant.birth_date ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">LRN</label>
+                        <input name="lrn" value="${escapeAttr(applicant.lrn ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Street / House</label>
+                        <input name="street_house" value="${escapeAttr(applicant.street_house ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Barangay</label>
+                        <input name="barangay" value="${escapeAttr(applicant.barangay ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Municipal / City</label>
+                        <input name="municipal_city" value="${escapeAttr(applicant.municipal_city ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Province</label>
+                        <input name="province" value="${escapeAttr(applicant.province ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Cellphone</label>
+                        <input name="cellphone" value="${escapeAttr(applicant.cellphone ?? '')}" class="w-full p-2 border rounded mb-2" />
+
+                        <label class="block text-sm font-medium">Email Address</label>
+                        <input name="emailaddress" value="${escapeAttr(applicant.emailaddress ?? '')}" class="w-full p-2 border rounded mb-2" />
+                    </div>
+                </div>
+            </section>
+
+            <section class="border rounded-xl p-4 bg-gray-50">
+                <h4 class="text-lg font-semibold mb-3 text-gray-700">Guardian Information</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <input name="g_firstname" placeholder="First Name" value="${escapeAttr(guardian.firstname ?? '')}" class="w-full p-2 border rounded" />
+                    <input name="g_middlename" placeholder="Middle Name" value="${escapeAttr(guardian.middlename ?? '')}" class="w-full p-2 border rounded" />
+                    <input name="g_lastname" placeholder="Last Name" value="${escapeAttr(guardian.lastname ?? '')}" class="w-full p-2 border rounded" />
+                    <input name="g_suffix" placeholder="Suffix" value="${escapeAttr(guardian.suffix ?? '')}" class="w-full p-2 border rounded" />
+                    <input name="g_cellphone" placeholder="Cellphone" value="${escapeAttr(guardian.cellphone ?? guardian.contact ?? '')}" class="w-full p-2 border rounded" />
+                    <input name="g_email" placeholder="Email" value="${escapeAttr(guardian.email ?? '')}" class="w-full p-2 border rounded" />
+                    <input name="g_relationship" placeholder="Relationship" value="${escapeAttr(guardian.relationship ?? '')}" class="w-full p-2 border rounded" />
+                </div>
+            </section>
+
+            <section class="border rounded-xl p-4 bg-gray-50">
+                <h4 class="text-lg font-semibold mb-3 text-gray-700">Documents</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    ${[
+                        { key: 'birth_certificate', label: 'Birth Certificate' },
+                        { key: 'original_form_138', label: 'Original Form 138' },
+                        { key: 'good_moral', label: 'Good Moral' },
+                        { key: 'original_form_137', label: 'Original Form 137' }
+                    ].map(doc => {
+                        const rawPath = documents[doc.key] || "";
+                        const fixedPath = rawPath.startsWith("uploads/")
+                            ? `${window.location.origin}/capstone/${rawPath}`
+                            : rawPath;
+                        return `
+                            <div>
+                                <label class="block text-sm">${doc.label}</label>
+                                ${rawPath
+                                    ? `<a href="${escapeAttr(fixedPath)}" target="_blank" class="text-blue-600 underline text-sm mb-1 inline-block">View current</a>`
+                                    : `<span class="text-gray-500 text-sm block mb-1">No file</span>`}
+                                <input type="file" name="${doc.key}" accept=".pdf,.jpg,.jpeg,.png" class="w-full border rounded p-1 bg-white">
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </section>
+
+            <div class="flex justify-end gap-3 pt-3 border-t">
+                <button type="button" id="cancelEdit" class="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">Cancel</button>
+                <button type="submit" id="saveEdit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save Changes</button>
+            </div>
+        </form>
+    </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector("#closeEditModal").addEventListener("click", () => modal.remove());
+        modal.querySelector("#cancelEdit").addEventListener("click", () => modal.remove());
+
+        modal.querySelector("#editStudentForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+
+            const applicantId = form.querySelector('input[name="applicant_id"]')?.value?.trim();
+            const level = form.querySelector('input[name="level"]')?.value?.trim();
+            if (!applicantId || !level) {
+                alert("Error: Missing applicant ID or level.");
+                return;
+            }
+
+            try {
+                const res = await fetch("../php/update_applicant_full.php", {
+                    method: "POST",
+                    credentials: "include",
+                    body: formData
+                });
+
+                const text = await res.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch {
+                    console.error("Non-JSON response:", text);
+                    alert("Server returned invalid response:\n" + text);
+                    return;
+                }
+
+                if (result.status === "success") {
+                    alert("Student updated successfully.");
+                    modal.remove();
+                    loadSections();
+                } else {
+                    alert("Update failed: " + (result.message || "Unknown error"));
+                }
+            } catch (err) {
+                console.error("Update error:", err);
+                alert("Error updating student.");
+            }
+        });
     }
 
     classSectionsBtn.addEventListener("click", () => {
@@ -1369,7 +1549,6 @@ document.addEventListener("DOMContentLoaded", () => {
         loadSections();
     });
 
-    // Helpers
     function escapeHtml(str) {
         if (str == null) return "";
         return String(str)
@@ -1379,6 +1558,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+
     function escapeAttr(str) {
         if (str == null) return "";
         return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#039;");

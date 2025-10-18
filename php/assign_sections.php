@@ -50,6 +50,36 @@ if ($customSectionName === '') {
     exit;
 }
 
+// ---------- DETERMINE SCHOOL YEAR ----------
+$today = date('Y-m-d');
+$periodStmt = $pdo->query("
+    SELECT * 
+    FROM activation_periods 
+    WHERE '$today' BETWEEN start_date AND end_date
+    LIMIT 1
+");
+$period = $periodStmt->fetch();
+
+if ($period) {
+    $startYear = date('Y', strtotime($period['start_date']));
+    $endYear   = date('Y', strtotime($period['end_date']));
+
+    if ($startYear == $endYear) {
+        $schoolYear = $startYear . '-' . ($startYear + 1);
+    } else {
+        $schoolYear = $startYear . '-' . $endYear;
+    }
+} else {
+    // fallback if no active period
+    $year = date('Y');
+    $month = date('n');
+    if ($month >= 6) { 
+        $schoolYear = $year . '-' . ($year + 1);
+    } else {
+        $schoolYear = ($year - 1) . '-' . $year;
+    }
+}
+
 // Fetch unassigned students
 if ($assigned_level === 'senior high') {
     $stmt = $pdo->prepare("
@@ -111,16 +141,17 @@ if ($totalStudents < $studentsPerSection && !$force) {
 $currentIndex = 0;
 $sectionName = $baseName . "-" . strtoupper($customSectionName);
 
-// Create new section
+// Create new section with school_year
 $pdo->prepare("
-    INSERT INTO sections_list (section_name, strand, strand_id, grade_level, semester, total_students, assigned_level)
-    VALUES (?, ?, ?, ?, 1, 0, ?)
+    INSERT INTO sections_list (section_name, strand, strand_id, grade_level, semester, total_students, assigned_level, school_year)
+    VALUES (?, ?, ?, ?, 1, 0, ?, ?)
 ")->execute([
     $sectionName,
     $strand,
     $strandId,
     $grade,
-    ucfirst($assigned_level)
+    ucfirst($assigned_level),
+    $schoolYear
 ]);
 
 $sectionId = $pdo->lastInsertId();
@@ -163,7 +194,7 @@ $userId   = $_SESSION['user_id'] ?? null;
 $username = $_SESSION['username'] ?? 'unknown';
 $role     = $_SESSION['role'] ?? 'unknown';
 $action   = "Section Created";
-$details  = "Created section '$sectionName' with $sectionStudentCount student(s), grade $grade, strand $strand";
+$details  = "Created section '$sectionName' with $sectionStudentCount student(s), grade $grade, strand $strand, S.Y. $schoolYear";
 
 $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 

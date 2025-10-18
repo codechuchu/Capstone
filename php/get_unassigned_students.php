@@ -18,12 +18,14 @@ try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 
     $sectionId = $_GET['section_id'] ?? null;
+    $level = $_GET['level'] ?? 'shs'; // Default to SHS
+
     if (!$sectionId) {
         echo json_encode(["error" => "Missing section_id"]);
         exit;
     }
 
-    // Get the section’s strand & grade_level
+    // Get section info
     $stmt = $pdo->prepare("SELECT strand, grade_level FROM sections_list WHERE section_id = :section_id");
     $stmt->execute([':section_id' => $sectionId]);
     $section = $stmt->fetch();
@@ -36,24 +38,42 @@ try {
     $strand = $section['strand'];
     $gradeLevel = $section['grade_level'];
 
-    // Retrieve only enrolled + unassigned students that match strand + grade_level
-    $stmt = $pdo->prepare("
-        SELECT applicant_id AS student_id,
-               CONCAT(firstname, ' ', lastname) AS student_name,
-               strand,
-               grade_level
-        FROM shs_applicant
-        WHERE section_id IS NULL
-          AND status = 'enrolled'
-          AND strand = :strand
-          AND grade_level = :grade_level
-    ");
-    $stmt->execute([
-        ':strand' => $strand,
-        ':grade_level' => $gradeLevel
-    ]);
+    if ($level === 'jhs') {
+        // JHS: fetch students by grade_level only, section_id IS NULL
+        $stmt = $pdo->prepare("
+            SELECT applicant_id AS student_id,
+                   CONCAT(firstname, ' ', lastname) AS student_name,
+                   grade_level
+            FROM jhs_applicants
+            WHERE (section_id IS NULL OR section_id = 0)
+              AND status = 'enrolled'
+              AND grade_level = :grade_level
+        ");
+        $stmt->execute([':grade_level' => $gradeLevel]);
+    } else {
+        // SHS: fetch students by strand + grade_level, section_id IS NULL
+        $stmt = $pdo->prepare("
+            SELECT applicant_id AS student_id,
+                   CONCAT(firstname, ' ', lastname) AS student_name,
+                   strand,
+                   grade_level
+            FROM shs_applicant
+            WHERE (section_id IS NULL OR section_id = 0)
+              AND status = 'enrolled'
+              AND strand = :strand
+              AND grade_level = :grade_level
+        ");
+        $stmt->execute([
+            ':strand' => $strand,
+            ':grade_level' => $gradeLevel
+        ]);
+    }
 
     $students = $stmt->fetchAll();
+
+    // Debugging: uncomment to log results to server error log
+    // file_put_contents('php://stderr', print_r($students, true));
+
     echo json_encode($students);
 
 } catch (PDOException $e) {

@@ -1,9 +1,10 @@
 <?php
-ini_set('display_errors', 0); // hide errors in production
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
 session_start();
+
 // 🔒 Require login + role check
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     echo json_encode(["success" => false, "error" => "Unauthorized"]);
@@ -30,20 +31,24 @@ try {
     $input = json_decode(file_get_contents("php://input"), true);
     $section_id = $input['section_id'] ?? null;
     $student_ids = $input['student_ids'] ?? [];
+    $level = strtolower($input['level'] ?? ''); // expects 'shs' or 'jhs'
 
-    if (!$section_id || empty($student_ids)) {
-        echo json_encode(["success" => false, "error" => "Missing section_id or student_ids"]);
+    if (!$section_id || empty($student_ids) || !in_array($level, ['shs', 'jhs'])) {
+        echo json_encode(["success" => false, "error" => "Missing or invalid section_id, student_ids, or level"]);
         exit;
     }
 
-    // Prepared statements
-    $stmtUpdate = $pdo->prepare("UPDATE shs_applicant SET section_id = :section_id WHERE applicant_id = :student_id");
+    // 🧩 Choose tables dynamically based on level
+    $applicant_table = ($level === 'shs') ? 'shs_applicant' : 'jhs_applicants';
+
+    // Prepare statements
+    $stmtUpdate = $pdo->prepare("UPDATE {$applicant_table} SET section_id = :section_id WHERE applicant_id = :student_id");
     $stmtFetchStudent = $pdo->prepare("
         SELECT applicant_id AS student_id,
                CONCAT(firstname, ' ', lastname) AS student_name,
-               strand,
+               " . ($level === 'shs' ? "strand," : "'' AS strand,") . "
                grade_level
-        FROM shs_applicant
+        FROM {$applicant_table}
         WHERE applicant_id = :student_id
         LIMIT 1
     ");
@@ -52,11 +57,11 @@ try {
         VALUES (:section_id, :student_name, :strand, :grade_level, :student_id)
     ");
 
-    // Temporary mysqli connection for audit logging
+    // mysqli for audit logging
     $conn = new mysqli($host, $user, $pass, $db);
 
     foreach ($student_ids as $sid) {
-        // Update applicant table
+        // Update applicant table (assign section)
         $stmtUpdate->execute([
             ':section_id' => $section_id,
             ':student_id' => $sid
@@ -79,7 +84,7 @@ try {
 
                 // ✅ Log audit for each student
                 $action = "Assigned Student to Section";
-                $details = "Student: {$student['student_name']} (ID: {$student['student_id']}) assigned to Section ID: $section_id";
+                $details = strtoupper($level) . " Student: {$student['student_name']} (ID: {$student['student_id']}) assigned to Section ID: $section_id";
                 logAction($conn, $_SESSION['user_id'], $_SESSION['email'], $_SESSION['role'], $action, $details);
 
             } catch (PDOException $dup) {
@@ -88,8 +93,8 @@ try {
         }
     }
 
-    // Recalculate total_students
-    $recalc = $pdo->prepare("SELECT COUNT(*) AS total FROM shs_applicant WHERE section_id = :section_id AND status = 'enrolled'");
+    // Recalculate total students
+    $recalc = $pdo->prepare("SELECT COUNT(*) AS total FROM {$applicant_table} WHERE section_id = :section_id AND status = 'enrolled'");
     $recalc->execute([':section_id' => $section_id]);
     $row = $recalc->fetch();
 

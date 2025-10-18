@@ -24,7 +24,7 @@ try {
     }
 
     // Case-insensitive search for the section
-    $stmt = $pdo->prepare("SELECT section_id FROM sections_list WHERE LOWER(section_name) = LOWER(?)");
+    $stmt = $pdo->prepare("SELECT section_id, assigned_level FROM sections_list WHERE LOWER(section_name) = LOWER(?)");
     $stmt->execute([$sectionName]);
     $section = $stmt->fetch();
 
@@ -34,14 +34,27 @@ try {
     }
 
     $sectionId = $section['section_id'];
+    $level = strtolower($section['assigned_level'] ?? 'jhs');
 
-    // Fetch students in that section
-    $stmt = $pdo->prepare("
-        SELECT student_id, student_name, strand, grade_level
-        FROM section
-        WHERE section_id = ?
-        ORDER BY student_name
-    ");
+    // Fetch students depending on level
+    if ($level === 'senior high') {
+        $stmt = $pdo->prepare("
+            SELECT applicant_id AS student_id, CONCAT(firstname, ' ', middlename, ' ', lastname) AS student_name,
+                   strand, grade_level, status
+            FROM shs_applicant
+            WHERE section_id = ?
+            ORDER BY student_name
+        ");
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT applicant_id AS student_id, CONCAT(firstname, ' ', middlename, ' ', lastname) AS student_name,
+                   NULL AS strand, grade_level, status
+            FROM jhs_applicants
+            WHERE section_id = ?
+            ORDER BY student_name
+        ");
+    }
+
     $stmt->execute([$sectionId]);
     $students = $stmt->fetchAll();
 
@@ -50,3 +63,4 @@ try {
 } catch (Throwable $e) {
     echo json_encode(["error" => $e->getMessage()]);
 }
+?>

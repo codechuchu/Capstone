@@ -2,7 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 
-// Check if teacher is logged in
+// Ensure teacher is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teachers') {
     echo json_encode(['status' => 'error', 'message' => 'Not logged in as teacher']);
     exit;
@@ -16,9 +16,9 @@ if ($conn->connect_error) {
     exit;
 }
 
-// Fetch all sections assigned to this teacher (from teacher_ids)
+// ✅ Fetch all sections assigned to this teacher and include adviser column
 $sql = "
-    SELECT section_id, section_name, strand, grade_level
+    SELECT section_id, section_name, strand, grade_level, adviser
     FROM sections_list
     WHERE FIND_IN_SET(?, teacher_ids)
 ";
@@ -33,7 +33,8 @@ while ($row = $result->fetch_assoc()) {
         'section_id'   => $row['section_id'],
         'section_name' => $row['section_name'],
         'strand'       => $row['strand'],
-        'grade_level'  => $row['grade_level']
+        'grade_level'  => $row['grade_level'],
+        'adviser'      => $row['adviser'] // ✅ Include this field for JS advisory check
     ];
 }
 

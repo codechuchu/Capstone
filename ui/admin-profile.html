@@ -402,7 +402,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Decline Modal -->
             <div id="declineModal"
                 class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -640,10 +640,11 @@
                                 <tr>
                                     <th class="px-4 py-2"><input type="checkbox" id="select-all"></th>
                                     <th class="px-4 py-2 text-left">Name</th>
-                                    <th class="px-4 py-2 text-left">Strand</th>
+                                    <th class="px-4 py-2 text-left" id="strand-header">Strand</th>
                                     <th class="px-4 py-2 text-left">Grade Level</th>
                                 </tr>
                             </thead>
+
                             <tbody id="add-student-body"></tbody>
                         </table>
                     </div>
@@ -1025,6 +1026,14 @@
                 <button
                     class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
                     Schedule Per Section
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Class List (Subjects)
+                </button>
+                <button
+                    class="px-3 py-2 rounded-md bg-gray-700 text-sm text-gray-200 hover:bg-gray-600 hover:text-white transition duration-200">
+                    Completed (Sections and Students)
                 </button>
 
             </div>

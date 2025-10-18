@@ -92,13 +92,47 @@ try {
         $logConn->close();
     }
 
-    // Update applicant status
-    $update = $pdo->prepare("UPDATE $applicantTable SET status = 'enrolled' WHERE applicant_id = ?");
-    $update->execute([$id]);
+    // ---------- DETERMINE SCHOOL YEAR ----------
+    $today = date('Y-m-d');
+    $periodStmt = $pdo->query("
+        SELECT * 
+        FROM activation_periods 
+        WHERE '$today' BETWEEN start_date AND end_date
+        LIMIT 1
+    ");
+    $period = $periodStmt->fetch();
+
+    if ($period) {
+        $startYear = date('Y', strtotime($period['start_date']));
+        $endYear   = date('Y', strtotime($period['end_date']));
+
+        if ($startYear == $endYear) {
+            $schoolYear = $startYear . '-' . ($startYear + 1);
+        } else {
+            $schoolYear = $startYear . '-' . $endYear;
+        }
+    } else {
+        // fallback if no active period
+        $year = date('Y');
+        $month = date('n');
+        if ($month >= 6) { 
+            $schoolYear = $year . '-' . ($year + 1);
+        } else {
+            $schoolYear = ($year - 1) . '-' . $year;
+        }
+    }
+
+    // Update applicant status and add school_year
+    $update = $pdo->prepare("
+        UPDATE $applicantTable 
+        SET status = 'enrolled', school_year = ? 
+        WHERE applicant_id = ?
+    ");
+    $update->execute([$schoolYear, $id]);
 
     // Log
     $logConn = new mysqli($host, $user, $pass, $db);
-    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', "Updated Applicant Status", "Applicant ID: $id status set to enrolled");
+    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', "Updated Applicant Status", "Applicant ID: $id status set to enrolled for S.Y. $schoolYear");
     $logConn->close();
 
     // ---------- EMAIL CONFIG ----------

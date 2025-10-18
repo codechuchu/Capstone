@@ -63,3 +63,121 @@ Stack trace:
 #0 C:\xampp\htdocs\Capstone\php\assign_sections.php(143): logAction(Object(PDO), 3, 'shsadmin', 'admin', 'Created Section', 'Section ID: 52,...')
 #1 {main}
   thrown in C:\xampp\htdocs\Capstone\php\log_audit.php on line 12
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 94
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 95
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 96
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 97
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 98
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 99
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 100
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 101
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 102
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 103
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 104
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 105
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 106
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 107
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 108
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 109
+[18-Oct-2025 09:06:54 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:93
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\update_applicant_full.php(93): mysqli_stmt->bind_param('sisssssssssssss...', '11', '1', 'STEM', 'Sofia', 'Villanueva', 'Morales', '', 'Female', '2007-03-08', 'a', 'Barangay 8', 'Pasig', 'Metro Manila', '09123456706', 'sofia.morales@e...', '105018080083', 89)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 93
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 95
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 96
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 97
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 98
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 99
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 100
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 101
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 102
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 103
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 104
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 105
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 106
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 107
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 108
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 109
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 110
+[18-Oct-2025 09:07:33 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:94
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\update_applicant_full.php(94): mysqli_stmt->bind_param('sisssssssssssss...', '11', '1', 'STEM', 'Sofia', 'Villanueva', 'Morales', '', 'Female', '2007-03-08', 'a', 'Barangay 8', 'Pasig', 'Metro Manila', '09123456706', 'sofia.morales@e...', '105018080083', 89)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 94
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 95
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 96
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 97
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 98
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 99
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 100
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 101
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 102
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 103
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 104
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 105
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 106
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 107
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 108
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 109
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 110
+[18-Oct-2025 09:09:25 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:94
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\update_applicant_full.php(94): mysqli_stmt->bind_param('sisssssssssssss...', '11', '2', 'STEM', 'Sofia', 'Villanueva', 'Morales', '', 'Female', '2007-03-08', '', 'Barangay 8', 'Pasig', 'Metro Manila', '09123456706', 'sofia.morales@e...', '105018080083', 89)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 94
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 95
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 96
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 97
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 98
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 99
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 100
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 101
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 102
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 103
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 104
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 105
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 106
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 107
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 108
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 109
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 110
+[18-Oct-2025 09:09:37 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:94
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\update_applicant_full.php(94): mysqli_stmt->bind_param('sisssssssssssss...', '11', '1', 'STEM', 'JD', 'sdf', 'dddd', 'a', 'Male', '2025-10-02', 'asdfa', 'sdfd', 'adf', 'daf', '09152340819', 'onionknight418@...', '109123213123', 242)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 94
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 95
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 96
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 97
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 98
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 99
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 100
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 101
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 102
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 103
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 104
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 105
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 106
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 107
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 108
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 109
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Notice:  Only variables should be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 110
+[18-Oct-2025 09:10:47 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:94
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\update_applicant_full.php(94): mysqli_stmt->bind_param('sisssssssssssss...', '11', '1', 'STEM', 'Sofia', 'Villanueva', 'Morales', '', 'Female', '2007-03-08', 'aaa', 'Barangay 8', 'Pasig', 'Metro Manila', '09123456706', 'sofia.morales@e...', '105018080083', 89)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 94
+[18-Oct-2025 09:11:41 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:112
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\update_applicant_full.php(112): mysqli_stmt->bind_param('sisssssssssssss...', '11', '1', 'STEM', 'Sofia', 'Villanueva', 'Morales', '', 'Female', '2007-03-08', 'a', 'Barangay 8', 'Pasig', 'Metro Manila', '09123456706', 'sofia.morales@e...', '105018080083', 89)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 112
+[18-Oct-2025 09:12:58 Europe/Berlin] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:83
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 83
+[18-Oct-2025 09:16:03 Europe/Berlin] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference in C:\xampp\htdocs\Capstone\php\update_applicant_full.php:82
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 82
