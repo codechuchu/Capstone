@@ -12,6 +12,7 @@ $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
 ];
 
 try {
@@ -23,7 +24,6 @@ try {
         exit;
     }
 
-    // Case-insensitive search for the section
     $stmt = $pdo->prepare("SELECT section_id, assigned_level FROM sections_list WHERE LOWER(section_name) = LOWER(?)");
     $stmt->execute([$sectionName]);
     $section = $stmt->fetch();
@@ -36,22 +36,29 @@ try {
     $sectionId = $section['section_id'];
     $level = strtolower($section['assigned_level'] ?? 'jhs');
 
-    // Fetch students depending on level
     if ($level === 'senior high') {
         $stmt = $pdo->prepare("
-            SELECT applicant_id AS student_id, CONCAT(firstname, ' ', middlename, ' ', lastname) AS student_name,
-                   strand, grade_level, status
+            SELECT 
+                applicant_id AS applicant_id,
+                CONCAT(firstname, ' ', IFNULL(CONCAT(SUBSTRING(middlename,1,1),'. '),''), lastname) AS student_name,
+                strand,
+                grade_level,
+                status
             FROM shs_applicant
             WHERE section_id = ?
-            ORDER BY student_name
+            ORDER BY lastname, firstname
         ");
     } else {
         $stmt = $pdo->prepare("
-            SELECT applicant_id AS student_id, CONCAT(firstname, ' ', middlename, ' ', lastname) AS student_name,
-                   NULL AS strand, grade_level, status
+            SELECT 
+                applicant_id AS applicant_id,
+                CONCAT(firstname, ' ', IFNULL(CONCAT(SUBSTRING(middlename,1,1),'. '),''), lastname) AS student_name,
+                NULL AS strand,
+                grade_level,
+                status
             FROM jhs_applicants
             WHERE section_id = ?
-            ORDER BY student_name
+            ORDER BY lastname, firstname
         ");
     }
 

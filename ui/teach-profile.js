@@ -419,7 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const studentsTitle = document.getElementById("students-title");
     const studentsTableBody = document.getElementById("students-table-body");
     const backBtn = document.getElementById("back-to-sections-btn");
-    const attendanceBtn = document.getElementById("attendance-btn");
+    const viewGradesBtn = document.getElementById("view-grades-btn");
 
     // ====== JHS Modal Elements ======
     const jhsModal = document.getElementById("encode-grade-modal");
@@ -439,30 +439,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const shsSubjectNameInput = document.getElementById("subject-name");
     const closeShsBtn = document.getElementById("close-shs-modal");
     const shsForm = document.getElementById("encode-shs-grade-form");
-
-    // Assume HTML has sections like <div id="jhs-fields" class="hidden"> for JHS inputs (q1-q4, average)
-    // and <div id="shs-fields"> for SHS inputs (q1_grade, q2_grade, final_grade, remarks)
-    // If not, add these divs around the respective inputs in your HTML and apply 'hidden' class to one by default.
-
-    // Create attendance modal
-    const attendanceModal = document.createElement("div");
-    attendanceModal.id = "attendance-modal";
-    attendanceModal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
-    attendanceModal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-hidden">
-            <div class="p-4 border-b border-gray-200">
-            <h3 id="attendance-modal-title" class="text-lg font-semibold">Attendance</h3>
-            </div>
-            <div class="p-4 overflow-auto max-h-[60vh]">
-            <div id="attendance-table-container"></div>
-            </div>
-            <div class="p-4 border-t border-gray-200 flex justify-end space-x-2">
-            <button id="attendance-submit-btn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Submit</button>
-            <button id="attendance-cancel-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Cancel</button>
-            </div>
-        </div>
-        `;
-    document.body.appendChild(attendanceModal);
 
     let currentSectionId = null;
     let currentSubjectName = null;
@@ -492,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sectionsContainer.classList.add("hidden");
         backBtn.classList.remove("hidden");
-        if (attendanceBtn) attendanceBtn.classList.remove("hidden");
+        if (viewGradesBtn) viewGradesBtn.classList.remove("hidden");
 
         fetch(`../php/get_section_student.php?section_id=${encodeURIComponent(sectionId)}`, { credentials: "include" })
             .then(res => res.json())
@@ -507,174 +483,196 @@ document.addEventListener("DOMContentLoaded", () => {
                 students.forEach(st => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                            <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
-                                <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
-                            </td>
-                        `;
-
-                    // ✅ Updated line — now includes subjectName
+                        <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
+                        </td>
+                    `;
                     tr.querySelector(".encode-btn").addEventListener("click", () =>
                         openModal(st.student_id, st.student_name, sectionId, subjectId, subjectName)
                     );
-
                     studentsTableBody.appendChild(tr);
                 });
-
                 studentsList.classList.remove("hidden");
             })
             .catch(err => console.error("Error fetching students:", err));
     }
 
-    async function showAttendanceModal() {
-        if (!currentSectionId) {
-            alert("Please select a section first.");
-            return;
-        }
+    // ================= VIEW GRADES MODAL =================
+    const viewGradesModal = document.createElement("div");
+    viewGradesModal.id = "view-grades-modal";
+    viewGradesModal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
+    viewGradesModal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-auto">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold" id="view-grades-title">Grades</h3>
+                <div>
+                    <button id="export-pdf-btn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ml-2">Export PDF</button>
+                    <button id="view-grades-close-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ml-2">Close</button>
+                </div>
+            </div>
+            <div class="p-4 overflow-auto max-h-[60vh]" id="view-grades-table-container"></div>
+        </div>
+    `;
+    document.body.appendChild(viewGradesModal);
 
-        document.getElementById("attendance-modal-title").textContent = `Attendance for ${currentSubjectName}`;
+    const exportPdfBtn = document.getElementById("export-pdf-btn");
 
+exportPdfBtn.addEventListener("click", async () => {
+    const table = document.querySelector("#view-grades-table-container table");
+    if (!table) {
+        alert("No table to export.");
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) return alert("jsPDF not loaded!");
+
+        const doc = new jsPDF({ orientation: "landscape" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let totalPagesExp = "{total_pages_count_string}";
+
+        // Fetch logged-in user info
+        let preparedBy = "Admin";
         try {
-            const [studentsRes, attRes] = await Promise.all([
-                fetch(`../php/get_section_student.php?section_id=${encodeURIComponent(currentSectionId)}`, { credentials: "include" }),
-                fetch(`../php/get_attendance.php?section_id=${encodeURIComponent(currentSectionId)}`, { credentials: "include" })
-            ]);
+            const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+            const userData = await userRes.json();
+            if (userData.success) preparedBy = `${userData.firstname} ${userData.lastname} (${userData.role || "Staff"})`;
+        } catch {}
 
-            const students = await studentsRes.json();
-            const savedAttendance = await attRes.json();
+        // --- HEADER ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
 
-            if (students.error || students.length === 0) {
-                alert(students.error || "No students found for attendance.");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
+        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
+
+        // --- TABLE TITLE ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        const gradeLevel = currentSubjectName || "N/A";
+        doc.text(`Subject: ${gradeLevel}`, pageWidth / 2, 40, { align: "center" });
+
+        // --- TABLE DATA ---
+        doc.autoTable({
+            html: table,
+            startY: 45,
+            styles: { fontSize: 10, halign: "center" },
+            headStyles: { fillColor: [200, 200, 200], halign: "center", fontStyle: "bold" },
+            margin: { bottom: 20 },
+            didDrawPage: function (data) {
+                const pageNum = doc.internal.getNumberOfPages();
+                doc.setFontSize(10);
+
+                // Left footer (slightly transparent)
+                doc.setTextColor(150);
+                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
+                doc.text(`Time and Date: ${new Date().toLocaleString()}`, 14, pageHeight - 8);
+
+                // Right footer
+                doc.setTextColor(100);
+                const pageText = `Page ${pageNum} of ${totalPagesExp}`;
+                const textWidth = doc.getTextWidth(pageText);
+                doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
+            }
+        });
+
+        doc.putTotalPages(totalPagesExp);
+
+        window.open(doc.output("bloburl"), "_blank");
+    } catch (err) {
+        console.error("Error exporting PDF:", err);
+        alert("Failed to export PDF.");
+    }
+});
+
+
+    if (viewGradesBtn) {
+        viewGradesBtn.addEventListener("click", () => {
+            if (!currentSectionId) {
+                alert("Please select a section first.");
                 return;
             }
 
-            const attendanceMap = {};
-            savedAttendance.forEach(a => {
-                if (!attendanceMap[a.student_id]) attendanceMap[a.student_id] = {};
-                if (a.status === 1) attendanceMap[a.student_id][a.attendance_date] = 1;
-                if (a.status === 2) attendanceMap[a.student_id][a.attendance_date] = 2;
-            });
-
-            const dates = [];
-            const today = new Date();
-            for (let i = 0; i < 3; i++) {
-                const d = new Date(today);
-                d.setDate(today.getDate() + i);
-                dates.push(d);
-            }
-
-            function formatDate(date) { return date.toISOString().split("T")[0]; }
-
-            let tableHTML = `<table class="min-w-full border-collapse border border-gray-300"><thead class="bg-gray-100"><tr><th class="border border-gray-300 px-4 py-2 text-left">Student</th>`;
-            dates.forEach(date => tableHTML += `<th class="border border-gray-300 px-4 py-2">${formatDate(date)}</th>`);
-            tableHTML += `</tr></thead><tbody>`;
-
-            students.forEach(student => {
-                tableHTML += `<tr data-student-id="${student.student_id}">`;
-                tableHTML += `<td class="border border-gray-300 px-4 py-2">${student.student_name}</td>`;
-                dates.forEach(date => {
-                    let present = attendanceMap[student.student_id]?.[formatDate(date)] === 1;
-                    let absent = attendanceMap[student.student_id]?.[formatDate(date)] === 2;
-                    let cellContent = present ? "✓" : absent ? "X" : "";
-                    let dataChecked = present ? "true" : absent ? "x" : "false";
-                    tableHTML += `<td class="border border-gray-300 px-4 py-2 text-center cursor-pointer hover:bg-gray-50 ${cellContent ? (present ? 'bg-green-100' : 'bg-red-100') : ''}" 
-                                    data-date="${formatDate(date)}" data-checked="${dataChecked}">
-                                    ${cellContent}</td>`;
-                });
-                tableHTML += `</tr>`;
-            });
-
-            tableHTML += `</tbody></table>`;
-            document.getElementById("attendance-table-container").innerHTML = tableHTML;
-            attendanceModal.classList.remove("hidden");
-
-            document.querySelectorAll("#attendance-table-container td[data-date]").forEach(cell => {
-                cell.addEventListener("click", () => {
-                    let state = cell.getAttribute("data-checked");
-                    if (state === "false") {
-                        cell.setAttribute("data-checked", "true");
-                        cell.textContent = "✓";
-                        cell.classList.remove("bg-red-100");
-                        cell.classList.add("bg-green-100");
-                    } else if (state === "true") {
-                        cell.setAttribute("data-checked", "x");
-                        cell.textContent = "X";
-                        cell.classList.remove("bg-green-100");
-                        cell.classList.add("bg-red-100");
-                    } else {
-                        cell.setAttribute("data-checked", "false");
-                        cell.textContent = "";
-                        cell.classList.remove("bg-green-100", "bg-red-100");
+            fetch("../php/get_assigned_level.php", { credentials: "include" })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert("Failed to detect assigned level.");
+                        return;
                     }
-                });
-            });
 
-        } catch (err) {
-            console.error("Error fetching students or attendance:", err);
-            alert("Failed to load students for attendance.");
-        }
+                    const assignedLevel = data.assigned_level;
+                    fetch(`../php/get_section_grades.php?section_id=${currentSectionId}&level=${assignedLevel}`, { credentials: "include" })
+                        .then(res => res.json())
+                        .then(grades => {
+                            let tableHTML = `<table class="min-w-full border-collapse border border-gray-300">
+                                <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Student</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Subject</th>`;
+                            if (assignedLevel === "Junior High") {
+                                tableHTML += `<th class="border border-gray-300 px-4 py-2">Q1</th>
+                                              <th class="border border-gray-300 px-4 py-2">Q2</th>
+                                              <th class="border border-gray-300 px-4 py-2">Q3</th>
+                                              <th class="border border-gray-300 px-4 py-2">Q4</th>
+                                              <th class="border border-gray-300 px-4 py-2">Average</th>`;
+                            } else {
+                                tableHTML += `<th class="border border-gray-300 px-4 py-2">Q1</th>
+                                              <th class="border border-gray-300 px-4 py-2">Q2</th>
+                                              <th class="border border-gray-300 px-4 py-2">Final</th>`;
+                            }
+                            tableHTML += `</tr></thead><tbody>`;
+
+                            grades.forEach(g => {
+                                tableHTML += `<tr>
+                                    <td class="border border-gray-300 px-4 py-2">${g.student_name}</td>
+                                    <td class="border border-gray-300 px-4 py-2">${g.subject_name}</td>`;
+                                if (assignedLevel === "Junior High") {
+                                    tableHTML += `<td class="border border-gray-300 px-4 py-2">${g.q1 || ""}</td>
+                                                  <td class="border border-gray-300 px-4 py-2">${g.q2 || ""}</td>
+                                                  <td class="border border-gray-300 px-4 py-2">${g.q3 || ""}</td>
+                                                  <td class="border border-gray-300 px-4 py-2">${g.q4 || ""}</td>
+                                                  <td class="border border-gray-300 px-4 py-2">${g.average || ""}</td>`;
+                                } else {
+                                    tableHTML += `<td class="border border-gray-300 px-4 py-2">${g.q1_grade || ""}</td>
+                                                  <td class="border border-gray-300 px-4 py-2">${g.q2_grade || ""}</td>
+                                                  <td class="border border-gray-300 px-4 py-2">${g.final_grade || ""}</td>`;
+                                }
+                                tableHTML += `</tr>`;
+                            });
+
+                            tableHTML += `</tbody></table>`;
+                            document.getElementById("view-grades-table-container").innerHTML = tableHTML;
+                            viewGradesModal.classList.remove("hidden");
+                        })
+                        .catch(err => { console.error("Error fetching grades:", err); alert("Failed to fetch grades."); });
+                })
+                .catch(err => { console.error("Error fetching assigned level:", err); alert("Failed to fetch assigned level."); });
+        });
     }
 
-    document.getElementById("attendance-submit-btn").addEventListener("click", () => {
-        const attendanceData = [];
-        document.querySelectorAll("#attendance-table-container tbody tr").forEach(tr => {
-            const studentId = tr.getAttribute("data-student-id");
-            tr.querySelectorAll("td[data-date]").forEach(td => {
-                const state = td.getAttribute("data-checked");
-                if (state === "false") return;
-                let present = state === "true" ? 1 : 2;
-                attendanceData.push({
-                    student_id: studentId,
-                    date: td.getAttribute("data-date"),
-                    present: present
-                });
-            });
-        });
+    document.getElementById("view-grades-close-btn").addEventListener("click", () => viewGradesModal.classList.add("hidden"));
+    viewGradesModal.addEventListener("click", e => { if (e.target === viewGradesModal) viewGradesModal.classList.add("hidden"); });
 
-        fetch("../php/save_attendance.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ section_id: currentSectionId, attendance: attendanceData }),
-            credentials: "include"
-        })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.message || "Attendance saved successfully!");
-                attendanceModal.classList.add("hidden");
-            })
-            .catch(err => { console.error("Error saving attendance:", err); alert("Failed to save attendance."); });
-    });
-
-    document.getElementById("attendance-cancel-btn").addEventListener("click", () => attendanceModal.classList.add("hidden"));
-    attendanceModal.addEventListener("click", e => { if (e.target === attendanceModal) attendanceModal.classList.add("hidden"); });
-    if (attendanceBtn) attendanceBtn.addEventListener("click", showAttendanceModal);
-
-    // Grade modal
+    // ================== GRADE MODAL & SAVE LOGIC ==================
     function openModal(studentId, studentName, sectionId, subjectId, subjectName) {
         fetch("../php/get_assigned_level.php", { credentials: "include" })
             .then(res => res.json())
             .then(data => {
-                if (!data.success) {
-                    alert("No assigned level detected. Please log in again.");
-                    return;
-                }
-
+                if (!data.success) { alert("No assigned level detected."); return; }
                 const assignedLevel = data.assigned_level;
 
-                // --- Hide both modals ---
-                const jhsModal = document.getElementById("encode-grade-modal");
-                const shsModal = document.getElementById("encode-shs-grade-modal");
                 if (jhsModal) jhsModal.classList.add("hidden");
                 if (shsModal) shsModal.classList.add("hidden");
 
                 if (assignedLevel === "Junior High") {
-                    // ======== JHS MODAL ========
-                    const modalStudentName = document.getElementById("modal-student-name");
-                    const studentIdInput = document.getElementById("student-id");
-                    const sectionIdInput = document.getElementById("section-id");
-                    const subjectIdInput = document.getElementById("subject-id");
-
                     modalStudentName.textContent = `Encode JHS Grade for ${studentName}`;
                     studentIdInput.value = studentId;
                     sectionIdInput.value = sectionId;
@@ -685,15 +683,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const q3 = document.getElementById("q3");
                     const q4 = document.getElementById("q4");
                     const avg = document.getElementById("average");
-
-                    [q1, q2, q3, q4].forEach(i => (i.value = ""));
+                    [q1, q2, q3, q4].forEach(i => i.value = "");
                     avg.value = "";
 
                     function computeAverage() {
-                        const vals = [q1, q2, q3, q4]
-                            .map(i => parseFloat(i.value))
-                            .filter(v => !isNaN(v));
-                        avg.value = vals.length === 4 ? (vals.reduce((a, b) => a + b, 0) / 4).toFixed(2) : "";
+                        const vals = [q1, q2, q3, q4].map(i => parseFloat(i.value)).filter(v => !isNaN(v));
+                        avg.value = vals.length === 4 ? (vals.reduce((a,b)=>a+b,0)/4).toFixed(2) : "";
                     }
                     [q1, q2, q3, q4].forEach(i => i.addEventListener("input", computeAverage));
 
@@ -710,152 +705,87 @@ document.addEventListener("DOMContentLoaded", () => {
                         });
 
                     jhsModal.classList.remove("hidden");
-                }
-
-                else if (assignedLevel === "Senior High") {
-                    // ======== SHS MODAL ========
-                    const modalStudentName = document.getElementById("shs-modal-student-name");
-                    const studentIdInput = document.getElementById("shs-student-id");
-                    const sectionIdInput = document.getElementById("shs-section-id");
-                    const subjectIdInput = document.getElementById("shs-subject-id");
-                    const subjectNameInput = document.getElementById("subject-name");
-                    const closeShsModal = document.getElementById("close-shs-modal");
-
-                    modalStudentName.textContent = `Encode SHS Grade for ${studentName}`;
-                    studentIdInput.value = studentId;
-                    sectionIdInput.value = sectionId;
-                    subjectIdInput.value = subjectId;
-
-                    // ✅ Auto-populate subject name & make readonly
-                    subjectNameInput.value = subjectName || "";
-                    subjectNameInput.readOnly = true;
+                } else {
+                    shsStudentName.textContent = `Encode SHS Grade for ${studentName}`;
+                    shsStudentIdInput.value = studentId;
+                    shsSectionIdInput.value = sectionId;
+                    shsSubjectIdInput.value = subjectId;
+                    shsSubjectNameInput.value = subjectName || "";
+                    shsSubjectNameInput.readOnly = true;
 
                     const q1 = document.getElementById("q1-grade");
                     const q2 = document.getElementById("q2-grade");
                     const finalGrade = document.getElementById("final-grade");
                     const remarks = document.getElementById("remarks");
-
-                    [q1, q2, finalGrade, remarks].forEach(i => (i.value = ""));
+                    [q1, q2, finalGrade, remarks].forEach(i => i.value = "");
 
                     function computeFinal() {
                         const a = parseFloat(q1.value);
                         const b = parseFloat(q2.value);
-                    
-                        // Only compute if BOTH grades are numbers
                         if (!isNaN(a) && !isNaN(b)) {
-                            const avg = ((a + b) / 2).toFixed(2);
+                            const avg = ((a+b)/2).toFixed(2);
                             finalGrade.value = avg;
-                            remarks.value = avg >= 75 ? "Passed" : "Failed";
+                            remarks.value = avg >= 75 ? "Passed":"Failed";
                         } else {
-                            finalGrade.value = ""; // Keep empty if incomplete
-                            remarks.value = "";    // Keep empty if incomplete
+                            finalGrade.value = "";
+                            remarks.value = "";
                         }
                     }
-                    
                     q1.addEventListener("input", computeFinal);
                     q2.addEventListener("input", computeFinal);
 
                     fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (Array.isArray(data) && data.length > 0) {
-                            q1.value = data[0].q1_grade || data[0].first_sem_q1 || "";
-                            q2.value = data[0].q2_grade || data[0].first_sem_q2 || "";
-                    
-                            // Only set finalGrade if BOTH q1 and q2 exist
-                            if (q1.value !== "" && q2.value !== "") {
-                                const avg = ((parseFloat(q1.value) + parseFloat(q2.value)) / 2).toFixed(2);
-                                finalGrade.value = avg;
-                                remarks.value = avg >= 75 ? "Passed" : "Failed";
-                            } else {
-                                finalGrade.value = "";
-                                remarks.value = "";
+                        .then(res => res.json())
+                        .then(data => {
+                            if (Array.isArray(data) && data.length > 0) {
+                                q1.value = data[0].q1_grade || "";
+                                q2.value = data[0].q2_grade || "";
+                                if (q1.value !== "" && q2.value !== "") {
+                                    const avg = ((parseFloat(q1.value)+parseFloat(q2.value))/2).toFixed(2);
+                                    finalGrade.value = avg;
+                                    remarks.value = avg>=75?"Passed":"Failed";
+                                }
                             }
-                        }
-                    })
-                    .catch(err => console.error("Error fetching SHS grades:", err));
-                    
+                        })
+                        .catch(err => console.error("Error fetching SHS grades:", err));
 
                     shsModal.classList.remove("hidden");
-
-                    // ✅ Cancel button now closes modal
-                    closeShsModal.addEventListener("click", () => {
-                        shsModal.classList.add("hidden");
-                    });
                 }
             })
-            .catch(err => {
-                console.error("Error fetching assigned level:", err);
-                alert("Failed to open grade modal.");
-            });
+            .catch(err => { console.error("Error fetching assigned level:", err); alert("Failed to open grade modal."); });
     }
 
-// Close modal buttons
+    if (closeJhsBtn) closeJhsBtn.addEventListener("click", ()=>jhsModal.classList.add("hidden"));
+    if (closeShsBtn) closeShsBtn.addEventListener("click", ()=>shsModal.classList.add("hidden"));
 
-if (closeJhsBtn) {
-    closeJhsBtn.addEventListener("click", () => jhsModal.classList.add("hidden"));
-}
-
-if (closeShsBtn) {
-    closeShsBtn.addEventListener("click", () => shsModal.classList.add("hidden"));
-}
-
-
-    // === SAVE JHS GRADES ===
     if (jhsForm) {
         jhsForm.addEventListener("submit", e => {
             e.preventDefault();
-
-            const formData = new FormData(jhsForm);
-            fetch("../php/save_grades.php", {
-                method: "POST",
-                body: formData,
-                credentials: "include"
-            })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message || "JHS grade saved successfully!");
-                    jhsModal.classList.add("hidden");
-                })
-                .catch(err => {
-                    console.error("Error saving JHS grade:", err);
-                    alert("Failed to save JHS grade.");
-                });
+            fetch("../php/save_grades.php", { method:"POST", body:new FormData(jhsForm), credentials:"include" })
+                .then(res=>res.json())
+                .then(data=>{ alert(data.message||"JHS grade saved!"); jhsModal.classList.add("hidden"); })
+                .catch(err=>{ console.error(err); alert("Failed to save JHS grade."); });
         });
     }
 
-    // === SAVE SHS GRADES ===
     if (shsForm) {
         shsForm.addEventListener("submit", e => {
             e.preventDefault();
-
-            const formData = new FormData(shsForm);
-            fetch("../php/save_grades.php", {
-                method: "POST",
-                body: formData,
-                credentials: "include"
-            })  
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message || "SHS grade saved successfully!");
-                    shsModal.classList.add("hidden");
-                })
-                .catch(err => {
-                    console.error("Error saving SHS grade:", err);
-                    alert("Failed to save SHS grade.");
-                });
+            fetch("../php/save_grades.php", { method:"POST", body:new FormData(shsForm), credentials:"include" })
+                .then(res=>res.json())
+                .then(data=>{ alert(data.message||"SHS grade saved!"); shsModal.classList.add("hidden"); })
+                .catch(err=>{ console.error(err); alert("Failed to save SHS grade."); });
         });
     }
 
-
-    // Go back to sections
-    backBtn.addEventListener("click", () => {
+    backBtn.addEventListener("click", ()=>{
         sectionsContainer.classList.remove("hidden");
         studentsList.classList.add("hidden");
         backBtn.classList.add("hidden");
-        if (attendanceBtn) attendanceBtn.classList.add("hidden");
+        if (viewGradesBtn) viewGradesBtn.classList.add("hidden");
     });
 });
+
 
 
 //banner
@@ -1250,11 +1180,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadStudentsForSection(section, isAdvisory) {
         sectionsContainer.innerHTML = `<div class="col-span-full px-2"><p class="text-gray-500">Loading students for ${escapeHtml(section.section_name)}...</p></div>`;
-
+    
         try {
             const resStudents = await fetch(`../php/get-section-students.php?section_id=${encodeURIComponent(section.section_id)}`, { credentials: "include" });
             const stuData = await resStudents.json();
-
+    
             if (!stuData || stuData.status !== "success" || !Array.isArray(stuData.students) || stuData.students.length === 0) {
                 sectionsContainer.innerHTML = `
                     <div class="col-span-full mb-4">
@@ -1267,7 +1197,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("backToSections").addEventListener("click", loadSections);
                 return;
             }
-
+    
             const wrapperHtml = `
                 <div class="col-span-full max-h-[700px] overflow-y-auto">
                     <div class="mb-4 flex items-center space-x-4">
@@ -1275,13 +1205,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         <h2 class="text-xl font-semibold">Students in ${escapeHtml(section.section_name)}</h2>
                     </div>
                     <div class="w-full overflow-x-auto">
-                        <table class="min-w-[900px] w-full bg-white border border-gray-200 shadow-md rounded-lg mx-auto">
-                            <thead class="bg-gray-100">
+                        <table class="min-w-[900px] w-full bg-white border border-gray-200 shadow-md rounded-lg mx-auto" id="studentsTable">
+                            <thead class="bg-gray-100 cursor-pointer">
                                 <tr>
-                                    <th class="px-6 py-3 border text-left">Firstname</th>
-                                    <th class="px-6 py-3 border text-left">Lastname</th>
-                                    <th class="px-6 py-3 border text-left">Email</th>
-                                    <th class="px-6 py-3 border text-left">Password</th>
+                                    <th data-key="firstname" class="px-6 py-3 border text-left">Firstname</th>
+                                    <th data-key="lastname" class="px-6 py-3 border text-left">Lastname</th>
+                                    <th data-key="email" class="px-6 py-3 border text-left">Email</th>
+                                    <th data-key="password" class="px-6 py-3 border text-left">Password</th>
                                     ${isAdvisory ? `<th class="px-4 py-3 border text-center w-[5%]">Action</th>` : ""}
                                 </tr>
                             </thead>
@@ -1291,37 +1221,78 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
             sectionsContainer.innerHTML = wrapperHtml;
-
+    
             const tbody = document.getElementById("section-students-body");
-            stuData.students.forEach(stu => {
-                const firstname = stu.firstname ?? "";
-                const lastname = stu.lastname ?? "";
-                const email = stu.email ?? stu.emailaddress ?? "";
-                const password = stu.password ?? "";
-                const maskedPassword = "*".repeat(password.length || 6);
-
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-50";
-
-                tr.innerHTML = `
-                    <td class="px-6 py-4 border">${escapeHtml(firstname)}</td>
-                    <td class="px-6 py-4 border">${escapeHtml(lastname)}</td>
-                    <td class="px-6 py-4 border">${escapeHtml(email)}</td>
-                    <td class="px-6 py-4 border">${maskedPassword}</td>
-                    ${isAdvisory ? `
-                    <td class="px-4 py-2 border text-center">
-                        <button class="editBtn px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-                            data-applicant="${stu.applicant_id}">
-                            Edit
-                        </button>
-                    </td>` : ""}
-                `;
-
-                tbody.appendChild(tr);
+            const students = stuData.students;
+    
+            const renderTable = (list) => {
+                tbody.innerHTML = "";
+                list.forEach(stu => {
+                    const firstname = stu.firstname ?? "";
+                    const lastname = stu.lastname ?? "";
+                    const email = stu.email ?? stu.emailaddress ?? "";
+                    const password = stu.password ?? "";
+                    const maskedPassword = "*".repeat(password.length || 6);
+    
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-gray-50";
+    
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 border">${escapeHtml(firstname)}</td>
+                        <td class="px-6 py-4 border">${escapeHtml(lastname)}</td>
+                        <td class="px-6 py-4 border">${escapeHtml(email)}</td>
+                        <td class="px-6 py-4 border">${maskedPassword}</td>
+                        ${isAdvisory ? `
+                        <td class="px-4 py-2 border text-center">
+                            <button class="editBtn px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                                data-applicant="${stu.applicant_id}">
+                                Edit
+                            </button>
+                        </td>` : ""}
+                    `;
+                    tbody.appendChild(tr);
+                });
+            };
+    
+            // Initial render
+            renderTable(students);
+    
+            // Sorting functionality
+            const headers = document.querySelectorAll("#studentsTable thead th[data-key]");
+            let currentSort = { key: null, asc: true };
+    
+            headers.forEach(header => {
+                header.addEventListener("click", () => {
+                    const key = header.getAttribute("data-key");
+    
+                    // Toggle sort order
+                    if (currentSort.key === key) {
+                        currentSort.asc = !currentSort.asc;
+                    } else {
+                        currentSort.key = key;
+                        currentSort.asc = true;
+                    }
+    
+                    // Sort students
+                    const sorted = [...students].sort((a, b) => {
+                        const valA = (a[key] || "").toString().toLowerCase();
+                        const valB = (b[key] || "").toString().toLowerCase();
+    
+                        if (valA < valB) return currentSort.asc ? -1 : 1;
+                        if (valA > valB) return currentSort.asc ? 1 : -1;
+                        return 0;
+                    });
+    
+                    renderTable(sorted);
+    
+                    // Optional: add small visual cue (▲ or ▼)
+                    headers.forEach(h => h.textContent = h.textContent.replace(/[▲▼]/g, ""));
+                    header.textContent += currentSort.asc ? " ▲" : " ▼";
+                });
             });
-
+    
             document.getElementById("backToSections").addEventListener("click", loadSections);
-
+    
             if (isAdvisory) {
                 document.querySelectorAll(".editBtn").forEach(btn => {
                     btn.addEventListener("click", () => {
@@ -1330,13 +1301,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 });
             }
-
+    
         } catch (err) {
             console.error("Failed to load students:", err);
             sectionsContainer.innerHTML = '<div class="col-span-full"><p class="text-red-500">Error loading students.</p></div>';
         }
     }
-
+    
     async function openEditModalFetch(applicantId, sectionId) {
         try {
             const res = await fetch("../php/fetch_student_full.php", {

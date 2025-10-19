@@ -161,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+
     // --- "Back to Enrolled Students" Button Logic ---
     if (backToEnrolledBtn) {
         backToEnrolledBtn.addEventListener('click', () => {
@@ -799,68 +800,59 @@ document.addEventListener("DOMContentLoaded", () => {
             closeModal();
         });
 
-        // Submit button
-        submitBtn.addEventListener("click", () => {
-            const sectionName = input.value.trim();
-            if (!sectionName) {
-                alert("Section name is required.");
-                return;
-            }
+submitBtn.addEventListener("click", () => {
+    const sectionName = input.value.trim();
+    if (!sectionName) {
+        alert("Section name is required.");
+        return;
+    }
 
-            // Send the POST request
-            fetch('../php/assign_sections.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    grade: selectedGrade,
-                    strand: selectedStrand,
-                    section_name: sectionName
-                })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert("Section created successfully!");
-                        document.body.removeChild(modalOverlay);
-                    }
-                    else if (data.error === "not_enough") {
-                        // Show confirm dialog
-                        if (confirm(`There are only ${data.available} students left (need ${data.required}). Do you still want to create the section?`)) {
-                            // Retry request with force=true
-                            return fetch('../php/assign_sections.php', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    grade: selectedGrade,
-                                    strand: selectedStrand,
-                                    section_name: sectionName,
-                                    force: true
-                                })
-                            })
-                                .then(res => res.json())
-                                .then(forceData => {
-                                    if (forceData.success) {
-                                        alert("Section created successfully with fewer students.");
-                                    } else {
-                                        alert("Error: " + (forceData.error || 'Unknown'));
-                                    }
-                                });
+    const createSection = (force = false) => {
+        const payload = {
+            grade: selectedGrade,
+            strand: selectedStrand,
+            section_name: sectionName
+        };
+        if (force) payload.force = true;
+
+        return fetch('../php/assign_sections.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(res => res.json());
+    };
+
+    createSection()
+        .then(data => {
+            if (data.success) {
+                alert("Section created successfully!");
+                document.body.removeChild(modalOverlay);
+            } else if (data.error === "not_enough") {
+                if (confirm(`There are only ${data.available} students left (need ${data.required}). Do you still want to create the section?`)) {
+                    return createSection(true).then(forceData => {
+                        if (forceData.success) {
+                            alert("Section created successfully with fewer students.");
+                            document.body.removeChild(modalOverlay); // <- remove modal here too
                         } else {
-                            alert("Section creation cancelled.");
+                            alert("Error: " + (forceData.error || 'Unknown'));
                         }
-                    }
-                    else {
-                        alert("Error: " + (data.error || 'Unknown'));
-                        document.body.removeChild(modalOverlay);
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Request failed");
-                    document.body.removeChild(modalOverlay);
-                });
-
+                    });
+                } else {
+                    alert("Section creation cancelled.");
+                    document.body.removeChild(modalOverlay); // <- also remove modal here if cancelled
+                }
+            } else {
+                alert("Error: " + (data.error || 'Unknown'));
+                document.body.removeChild(modalOverlay);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Request failed");
+            document.body.removeChild(modalOverlay);
         });
+});
+
 
     });
 
@@ -1580,21 +1572,72 @@ function approveApplication() {
         return;
     }
 
+    // Add spinner animation CSS if not already added
+    if (!document.getElementById('spinnerStyle')) {
+        const style = document.createElement('style');
+        style.id = 'spinnerStyle';
+        style.innerHTML = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .spinner {
+                border: 6px solid #f3f3f3;
+                border-top: 6px solid #3498db;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Create loading overlay
+    let loadingOverlay = document.createElement("div");
+    loadingOverlay.id = "loadingOverlay";
+    loadingOverlay.style.position = "fixed";
+    loadingOverlay.style.top = 0;
+    loadingOverlay.style.left = 0;
+    loadingOverlay.style.width = "100%";
+    loadingOverlay.style.height = "100%";
+    loadingOverlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+    loadingOverlay.style.display = "flex";
+    loadingOverlay.style.flexDirection = "column";
+    loadingOverlay.style.justifyContent = "center";
+    loadingOverlay.style.alignItems = "center";
+    loadingOverlay.style.zIndex = 10000;
+
+    loadingOverlay.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; background: #fff; padding: 20px 30px; border-radius: 8px;">
+            <div class="spinner"></div>
+            <p style="margin: 0; font-weight: bold;">Approving...</p>
+        </div>
+    `;
+
+    document.body.appendChild(loadingOverlay);
+
     fetch(`../php/approve_application.php?id=${currentApplicantId}`, {
         method: "POST"
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Applicant approved successfully!");
-                closeApplicationModal();
-                loadPendingApplications(); // refresh table
-            } else {
-                alert("Error: " + data.error);
-            }
-        })
-        .catch(err => alert("Request failed: " + err.message));
+    .then(response => response.json())
+    .then(data => {
+        document.body.removeChild(loadingOverlay);
+
+        if (data.success) {
+            alert("Applicant approved successfully!");
+            closeApplicationModal();
+            loadPendingApplications();
+        } else {
+            alert("Error: " + data.error);
+        }
+    })
+    .catch(err => {
+        document.body.removeChild(loadingOverlay);
+        alert("Request failed: " + err.message);
+    });
 }
+
 
 function denyApplication() {
     if (!currentApplicantId) {
@@ -1617,6 +1660,51 @@ function submitDecline() {
         return;
     }
 
+    // Create loading overlay
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = 9999;
+
+    // Spinner
+    const spinner = document.createElement("div");
+    spinner.style.width = "50px";
+    spinner.style.height = "50px";
+    spinner.style.border = "6px solid #f3f3f3";
+    spinner.style.borderTop = "6px solid #3498db";
+    spinner.style.borderRadius = "50%";
+    spinner.style.animation = "spin 1s linear infinite";
+    overlay.appendChild(spinner);
+
+    // Text
+    const text = document.createElement("div");
+    text.innerText = "Declining application...";
+    text.style.color = "#fff";
+    text.style.fontSize = "18px";
+    text.style.marginTop = "10px";
+    overlay.appendChild(text);
+
+    // Keyframes for spinner
+    const style = document.createElement("style");
+    style.innerHTML = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Add overlay to body
+    document.body.appendChild(overlay);
+
     fetch("../php/decline_applicant.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1625,22 +1713,26 @@ function submitDecline() {
             reason: reason
         })
     })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert("Application has been declined successfully.");
-                closeDeclineModal();
-                closeApplicationModal();
-                loadPendingApplications(); // refresh table
-            } else {
-                alert("Error: " + (data.error || "Unable to decline applicant."));
-            }
-        })
-        .catch(err => {
-            console.error("Error:", err);
-            alert("Something went wrong while declining the applicant.");
-        });
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Application has been declined successfully.");
+            closeDeclineModal();
+            closeApplicationModal();
+            loadPendingApplications(); // refresh table
+        } else {
+            alert("Error: " + (data.error || "Unable to decline applicant."));
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Something went wrong while declining the applicant.");
+    })
+    .finally(() => {
+        document.body.removeChild(overlay); // Remove spinner overlay
+    });
 }
+
 
 function closeApplicationModal() {
     document.getElementById("applicationModal").classList.add("hidden");
@@ -3472,11 +3564,9 @@ parentBtn.addEventListener("click", async () => {
             </div>
         `;
 
-        // Add Edit → Save functionality for all columns
         modalContent.querySelectorAll(".edit-btn").forEach((btn, index) => {
             btn.addEventListener("click", async () => {
                 const row = btn.closest("tr");
-
                 const cells = {
                     firstname: row.querySelector(".firstname-cell"),
                     lastname: row.querySelector(".lastname-cell"),
@@ -3492,7 +3582,6 @@ parentBtn.addEventListener("click", async () => {
                     btn.classList.remove("bg-blue-600", "hover:bg-blue-500");
                     btn.classList.add("bg-green-600", "hover:bg-green-500");
 
-                    // Turn all cells into input fields
                     for (const key in cells) {
                         const value = cells[key].textContent.trim();
                         cells[key].innerHTML = `<input type="text" class="w-full bg-gray-700 text-white px-1 py-0.5 rounded" value="${value}">`;
@@ -3506,33 +3595,42 @@ parentBtn.addEventListener("click", async () => {
                     updatedData[key] = cells[key].querySelector("input")?.value.trim() || "";
                 }
 
-                // Send updated data to PHP
-                const updateRes = await fetch("../php/update_parent_info.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include", // ✅ ensures session cookies are sent
-                    body: JSON.stringify({
-                        parent_email: parents[index].email, // identify parent by email or use parent_id
-                        ...updatedData
-                    }),
-                });
+                const originalEmail = parents[index].email; // immutable identifier
 
+                try {
+                    const updateRes = await fetch("../php/update_parent_info.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            parent_email: originalEmail,
+                            ...updatedData
+                        }),
+                    });
 
-                const updateData = await updateRes.json();
+                    const updateData = await updateRes.json();
 
-                if (updateData.success) {
-                    alert("✅ Parent updated successfully!");
-                    for (const key in cells) {
-                        cells[key].textContent = updatedData[key] || updatedData[key] === "" ? updatedData[key] : updatedData[key];
+                    if (updateData.success) {
+                        alert("✅ Parent updated successfully!");
+                        // Update table cells
+                        for (const key in cells) {
+                            cells[key].textContent = updatedData[key] || "";
+                        }
+                        // Update the parents array so next edits work
+                        parents[index] = { ...parents[index], ...updatedData };
+                    } else {
+                        alert("❌ Update failed: " + updateData.message);
+                        return;
                     }
-                } else {
-                    alert("❌ Update failed: " + updateData.message);
-                }
 
-                // Switch button back to Edit
-                btn.textContent = "Edit";
-                btn.classList.remove("bg-green-600", "hover:bg-green-500");
-                btn.classList.add("bg-blue-600", "hover:bg-blue-500");
+                    // Switch button back to Edit
+                    btn.textContent = "Edit";
+                    btn.classList.remove("bg-green-600", "hover:bg-green-500");
+                    btn.classList.add("bg-blue-600", "hover:bg-blue-500");
+                } catch (err) {
+                    console.error(err);
+                    alert("❌ Something went wrong while updating.");
+                }
             });
         });
 
@@ -3541,6 +3639,7 @@ parentBtn.addEventListener("click", async () => {
         modalContent.innerHTML = "<p>Error loading parents.</p>";
     }
 });
+
 //file maintenance(schedule per section)
 const scheduleBtn = document.getElementById("scheduleBtn");
 
@@ -3669,7 +3768,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const archivedModal = document.createElement("div");
             archivedModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-40 overflow-auto";
-
             archivedModal.innerHTML = `
                 <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-5xl relative flex flex-col">
                     <h2 class="text-lg font-semibold mb-4">Archived Sections</h2>
@@ -3693,18 +3791,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `;
-
             document.body.appendChild(archivedModal);
 
             const tableBody = document.getElementById("archived-sections-table-body");
             const closeBtn = document.getElementById("archived-close");
-
             closeBtn.addEventListener("click", () => archivedModal.remove());
 
             try {
                 const res = await fetch(`../php/fetch_sections.php?status=archived`);
                 const data = await res.json();
-
                 tableBody.innerHTML = "";
 
                 if (!Array.isArray(data) || data.length === 0) {
@@ -3723,6 +3818,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 class="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 view-btn"
                                 data-id="${section.section_id}"
                                 data-name="${section.section_name}"
+                                data-level="${section.assigned_level}"
                             >
                                 View Students
                             </button>
@@ -3735,8 +3831,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     btn.addEventListener("click", async () => {
                         currentSectionId = btn.dataset.id;
                         const sectionName = btn.dataset.name;
+                        const assignedLevel = btn.dataset.level; // 'Senior High' or 'Junior High'
                         archivedModal.remove();
-                        await openStudentsModal(currentSectionId, sectionName);
+                        await openStudentsModal(currentSectionId, sectionName, assignedLevel);
                     });
                 });
 
@@ -3748,10 +3845,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Students Modal ---
-    async function openStudentsModal(sectionId, sectionName) {
+    async function openStudentsModal(sectionId, sectionName, assignedLevel) {
         const studentModal = document.createElement("div");
         studentModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-50 overflow-auto";
-    
+
         studentModal.innerHTML = `
             <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl relative flex flex-col">
                 <h2 class="text-lg font-semibold mb-4">Students in ${sectionName}</h2>
@@ -3763,24 +3860,23 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `;
         document.body.appendChild(studentModal);
-    
+
         const studentListContainer = studentModal.querySelector("#student-list-container");
         const closeBtn = studentModal.querySelector("#student-close-btn");
         const reEnrollBtn = studentModal.querySelector("#student-re-enroll-btn");
-    
         closeBtn.addEventListener("click", () => studentModal.remove());
         reEnrollBtn.style.display = "none";
-    
+
         try {
             const res = await fetch(`../php/get_section_students.php?section_name=${encodeURIComponent(sectionName)}`);
             const data = await res.json();
-    
+
             studentListContainer.innerHTML = "";
             if (!Array.isArray(data) || data.length === 0) {
                 studentListContainer.innerHTML = `<p class="text-gray-500">No students found.</p>`;
                 return;
             }
-    
+
             const table = document.createElement("table");
             table.className = "min-w-full divide-y divide-gray-200 border";
             table.innerHTML = `
@@ -3792,70 +3888,179 @@ document.addEventListener("DOMContentLoaded", () => {
                 </thead>
             `;
             const tbody = document.createElement("tbody");
-    
-            // Store student status in dataset for re-enroll check
+
+            const isSHS = assignedLevel === "Senior High";
+
             data.forEach(student => {
+                const fullName = student.student_name;
+                const displayText = isSHS 
+                    ? `${student.strand || "N/A"} ${student.grade_level || "N/A"}` 
+                    : `Grade ${student.grade_level || "N/A"}`;
                 const row = document.createElement("tr");
-    
+
                 if (student.status && student.status.toLowerCase() === "completed") {
                     row.classList.add("bg-green-200");
+                } else if (student.status && student.status.toLowerCase() === "failed") {
+                    row.classList.add("bg-red-200");
                 }
-    
+
                 row.innerHTML = `
                     <td class="px-4 py-2 border text-center">
-                        <input type="checkbox" class="student-checkbox" data-student="${encodeURIComponent(student.student_name)}" data-status="${student.status || ''}">
+                        <input type="checkbox" 
+                               class="student-checkbox" 
+                               data-applicant-id="${student.applicant_id}" 
+                               data-student="${encodeURIComponent(fullName)}"
+                               data-status="${student.status || ''}"
+                               data-level="${assignedLevel}"
+                               ${student.status && student.status.toLowerCase() === "completed" ? 'disabled title="Already completed"' : ''}>
                     </td>
                     <td class="px-4 py-2 border">
-                        ${student.student_name} (${student.strand || "N/A"} - Grade ${student.grade_level || "N/A"})
+                        ${fullName} (${displayText})
                     </td>
                 `;
                 tbody.appendChild(row);
             });
-    
+
             table.appendChild(tbody);
             studentListContainer.appendChild(table);
-    
             reEnrollBtn.style.display = "inline-block";
-    
-            // --- Select All Checkbox ---
+
             const selectAll = studentModal.querySelector("#select-all");
             selectAll.addEventListener("change", e => {
                 const checked = e.target.checked;
-                studentModal.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = checked);
+                studentModal.querySelectorAll(".student-checkbox").forEach(cb => {
+                    if (!cb.disabled) cb.checked = checked;
+                });
             });
-    
-            // --- Re-enroll Click ---
-            reEnrollBtn.onclick = () => {
+
+            reEnrollBtn.onclick = async () => {
                 const selectedCheckboxes = Array.from(studentListContainer.querySelectorAll(".student-checkbox:checked"));
-    
                 if (selectedCheckboxes.length === 0) {
                     alert("Please select at least one student to re-enroll.");
                     return;
                 }
-    
-                // Check for completed students
+
                 const completedStudents = selectedCheckboxes
                     .filter(cb => (cb.dataset.status || '').toLowerCase() === "completed")
                     .map(cb => decodeURIComponent(cb.dataset.student));
-    
+
                 if (completedStudents.length > 0) {
                     alert(`❌ The following student(s) have already completed their grade:\n- ${completedStudents.join("\n- ")}`);
                     return;
                 }
-    
-                // Proceed with your original re-enroll modal logic here
-                // ...
-                alert("Proceed to re-enroll selected students"); // Placeholder
+
+                const selectedStudents = selectedCheckboxes.map(cb => Number(cb.dataset.applicantId));
+
+                let strandsOptions = '';
+                if (isSHS) {
+                    let strands = [];
+                    try {
+                        const res = await fetch("../php/get_strands.php");
+                        const result = await res.json();
+                        if (result.success && Array.isArray(result.data)) strands = result.data;
+                    } catch (err) {
+                        console.error("Error loading strands:", err);
+                    }
+
+                    strandsOptions = `<label class="block mb-2">Strand</label>
+                        <select id="strand" class="w-full border p-2 rounded mb-4">
+                            ${strands.map(s => `<option value="${s}">${s}</option>`).join("")}
+                        </select>`;
+                }
+
+                const enrollModal = document.createElement("div");
+                enrollModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50";
+                enrollModal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-lg w-96 relative z-50">
+                        <h2 class="text-lg font-semibold mb-4">Re-enroll Students</h2>
+                        
+                        <label class="block mb-2">Section Name</label>
+                        <input type="text" id="new-section-name" class="w-full border p-2 rounded mb-4" placeholder="Enter new section name">
+
+                        <label class="block mb-2">Grade Level</label>
+                        <select id="grade-level" class="w-full border p-2 rounded mb-4">
+                            ${isSHS ? `<option value="11">11</option><option value="12">12</option>` : [7,8,9,10].map(g => `<option value="${g}">${g}</option>`).join("")}
+                        </select>
+
+                        ${isSHS ? `<label class="block mb-2">Semester</label>
+                        <select id="semester" class="w-full border p-2 rounded mb-4">
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>` : ''}
+
+                        ${strandsOptions}
+
+                        <label class="block mb-2">School Year</label>
+                        <input type="text" id="school-year" class="w-full border p-2 rounded mb-4" placeholder="e.g., 2025-2026">
+
+                        <div class="flex justify-end gap-2">
+                            <button id="cancel-enroll-modal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                            <button id="confirm-enroll-modal" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(enrollModal);
+
+                enrollModal.querySelector("#cancel-enroll-modal").onclick = () => enrollModal.remove();
+
+                enrollModal.querySelector("#confirm-enroll-modal").onclick = async () => {
+                    const newSectionName = enrollModal.querySelector("#new-section-name").value.trim();
+                    const schoolYear = enrollModal.querySelector("#school-year").value.trim();
+                    if (!newSectionName) {
+                        alert("Please enter a section name.");
+                        return;
+                    }
+                    if (!schoolYear) {
+                        alert("Please enter the school year.");
+                        return;
+                    }
+
+                    const payload = {
+                        section_id: Number(sectionId),
+                        students: selectedStudents,
+                        grade_level: Number(enrollModal.querySelector("#grade-level").value),
+                        semester: isSHS ? Number(enrollModal.querySelector("#semester").value) : 0,
+                        strand: isSHS ? enrollModal.querySelector("#strand").value : '',
+                        new_section_name: newSectionName,
+                        school_year: schoolYear
+                    };
+
+                    try {
+                        const res = await fetch("../php/re_enroll_students.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const text = await res.text();
+                        let result;
+                        try { result = JSON.parse(text); } catch (err) {
+                            console.error("Invalid JSON from server:", text);
+                            alert("Server returned invalid JSON. Check console.");
+                            return;
+                        }
+
+                        if (result.success) {
+                            alert(result.message);
+                            enrollModal.remove();
+                            studentModal.remove();
+                        } else alert("❌ " + result.message);
+
+                    } catch (err) {
+                        console.error("Re-enroll error:", err);
+                        alert("Something went wrong during re-enroll.");
+                    }
+                };
             };
-    
+
         } catch (err) {
             console.error("Error loading students:", err);
             studentListContainer.innerHTML = `<p class="text-red-500">Failed to load students.</p>`;
         }
     }
-    
-    
 });
+
+
 
 //audit trail
 document.addEventListener("DOMContentLoaded", () => {

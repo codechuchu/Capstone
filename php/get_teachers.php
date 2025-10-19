@@ -9,8 +9,9 @@ if ($conn->connect_error) {
     exit;
 }
 
-$subject_id = $_GET['subject_id'] ?? '';
-$subject_id = intval($subject_id);
+$subject_id = intval($_GET['subject_id'] ?? 0);
+$assigned_level = $_GET['assigned_level'] ?? 'Senior High'; 
+$assigned_level = $conn->real_escape_string($assigned_level);
 
 if ($subject_id <= 0) {
     http_response_code(400);
@@ -18,8 +19,12 @@ if ($subject_id <= 0) {
     exit;
 }
 
-// Get the subject name from subjects table
-$stmt = $conn->prepare("SELECT name FROM subjects WHERE subject_id = ?");
+if (strtolower($assigned_level) === 'junior high') {
+    $stmt = $conn->prepare("SELECT subject_name AS name FROM jhs_subjects WHERE subject_id = ?");
+} else {
+    $stmt = $conn->prepare("SELECT name FROM subjects WHERE subject_id = ?");
+}
+
 $stmt->bind_param("i", $subject_id);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -32,21 +37,18 @@ if (!$subject) {
 
 $subject_name = $subject['name'];
 
-// Now find teachers who teach this subject
-$sql = "SELECT teacher_id, firstname, lastname, subjects FROM teachers";
+$sql = "SELECT teacher_id, firstname, lastname, subjects 
+        FROM teachers 
+        WHERE assigned_level = ?";
 
-$result = $conn->query($sql);
-
-if (!$result) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Query failed: ' . $conn->error]);
-    exit;
-}
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $assigned_level);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $teachers = [];
 while ($row = $result->fetch_assoc()) {
     $subjectsArray = array_map('trim', explode(',', $row['subjects'] ?? ''));
-
     foreach ($subjectsArray as $s) {
         if (strcasecmp($s, $subject_name) === 0) {
             $teachers[] = [

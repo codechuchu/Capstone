@@ -11,7 +11,7 @@ if ($conn->connect_error) {
 $status = $_GET['status'] ?? 'inuse'; 
 $assigned_level = $_SESSION['assigned_level'] ?? null;
 
-$sql = "SELECT section_id, section_name, grade_level, total_students, assigned_level, adviser 
+$sql = "SELECT section_id, section_name, grade_level, total_students, assigned_level, adviser, strand_id 
         FROM sections_list 
         WHERE 1=1";
 
@@ -39,9 +39,12 @@ if ($result) {
         $row['adviser_id'] = $row['adviser'] ?? '';
         // Add level field for JS: 'jhs' or 'shs'
         $row['level'] = (strtolower($row['assigned_level']) === 'junior high') ? 'jhs' : 'shs';
+        // Include strand_id
+        $row['strand_id'] = $row['strand_id'] ?? '';
         $sections[] = $row;
     }
 }
 
 echo json_encode($sections);
 $conn->close();
+

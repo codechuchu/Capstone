@@ -8,10 +8,15 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 
 $conn = new mysqli("localhost", "root", "", "sulivannhs");
+
+// Check connection
 if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $conn->connect_error]);
     exit;
 }
+
+// Set charset
+//$conn->set_charset($charset);
 
 try {
     $data = json_decode(file_get_contents("php://input"), true);

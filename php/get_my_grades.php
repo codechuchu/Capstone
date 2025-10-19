@@ -2,29 +2,51 @@
 session_start();
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'students') {
-    echo json_encode(["error" => "Student not logged in"]);
+// ✅ Enable debugging in XAMPP
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// --- Get student ID from URL (priority) or session
+$student_id = $_GET['student_id'] ?? ($_SESSION['user_id'] ?? null);
+
+if (!$student_id) {
+    echo json_encode(["error" => "No student_id provided or student not logged in"]);
     exit;
 }
 
-$student_id = $_SESSION['user_id'];
-
 try {
-    $pdo = new PDO("mysql:host=localhost;dbname=sulivannhs;charset=utf8mb4", "root", "", [
+    // ✅ XAMPP connection settings
+    $host = 'localhost';
+    $db   = 'sulivannhs';
+    $user = 'root';
+    $pass = '';
+    $charset = 'utf8mb4';
+    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+
+    $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    // Determine grade level
+    // --- Check if SHS ---
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM shs_studentgrade WHERE student_id = ?");
     $stmt->execute([$student_id]);
-    $isSHS = $stmt->fetchColumn() > 0;
+    $shs_count = (int)$stmt->fetchColumn();
 
-    $grade_level = $isSHS ? "SHS" : "JHS";
-    $grades = [];
+    // --- Check if JHS ---
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM studentgrade WHERE student_id = ?");
+    $stmt->execute([$student_id]);
+    $jhs_count = (int)$stmt->fetchColumn();
 
-    if ($isSHS) {
-        // Fetch SHS grades
+    // Debug info (so you can confirm what’s found)
+    $debug_info = [
+        "student_id" => $student_id,
+        "shs_count" => $shs_count,
+        "jhs_count" => $jhs_count
+    ];
+
+    if ($shs_count > 0) {
+        $grade_level = "SHS";
         $stmt = $pdo->prepare("
             SELECT 
                 sg.section_id,
@@ -45,8 +67,8 @@ try {
         ");
         $stmt->execute([$student_id]);
         $grades = $stmt->fetchAll();
-    } else {
-        // Fetch JHS grades
+    } elseif ($jhs_count > 0) {
+        $grade_level = "JHS";
         $stmt = $pdo->prepare("
             SELECT 
                 sg.section_id,
@@ -68,7 +90,6 @@ try {
         $stmt->execute([$student_id]);
         $grades = $stmt->fetchAll();
 
-        // Compute average for each JHS row
         foreach ($grades as &$row) {
             $total = 0;
             $count = 0;
@@ -80,13 +101,22 @@ try {
             }
             $row['average'] = $count > 0 ? round($total / $count, 2) : null;
         }
+        unset($row);
+    } else {
+        echo json_encode([
+            "status" => "success",
+            "message" => "No grades found in either JHS or SHS tables.",
+            "debug" => $debug_info
+        ], JSON_PRETTY_PRINT);
+        exit;
     }
 
     echo json_encode([
         "status" => "success",
         "level" => $grade_level,
-        "grades" => $grades
-    ]);
+        "grades" => $grades,
+        "debug" => $debug_info
+    ], JSON_PRETTY_PRINT);
 
 } catch (PDOException $e) {
     echo json_encode(["error" => "Database error: " . $e->getMessage()]);

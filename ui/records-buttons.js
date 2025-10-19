@@ -108,77 +108,83 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // PDF button click handler
             // Export PDF button click handler
-            pdfBtn.addEventListener("click", async () => {
-                const table = document.getElementById("records-table");
-                if (!table) {
-                    alert("No table to export.");
-                    return;
-                }
+pdfBtn.addEventListener("click", async () => {
+    const table = document.getElementById("records-table");
+    if (!table) {
+        alert("No table to export.");
+        return;
+    }
 
-                try {
-                    const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
-                    const userData = await userRes.json();
+    try {
+        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+        const userData = await userRes.json();
 
-                    const preparedBy = (userData.success)
-                        ? `${userData.firstname} ${userData.lastname} (${userData.role || "Staff"})`
-                        : "N/A";
-                    const gradeLevel = select.value ? `Grade ${select.value}` : "N/A";
-                    const now = new Date();
-                    const formattedDate = now.toLocaleDateString();
-                    const formattedTime = now.toLocaleTimeString();
+        const preparedBy = (userData.success)
+            ? `${userData.firstname} ${userData.lastname} (${userData.role || "Staff"})`
+            : "N/A";
+        const gradeLevel = select.value ? `Grade ${select.value}` : "N/A";
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString();
+        const formattedTime = now.toLocaleTimeString();
 
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({ orientation: "landscape" });
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "landscape" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const totalPagesExp = "{total_pages_count_string}";
 
-                    // --- HEADER ---
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(18);
-                    doc.text("Sulivan National High School", pageWidth / 2, 18, { align: "center" });
+        // --- HEADER ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text("Sulivan National High School", pageWidth / 2, 18, { align: "center" });
 
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(11);
-                    doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 25, { align: "center" });
-                    doc.text("(044) 816 7731 (mobile)", pageWidth / 2, 31, { align: "center" });
-                    doc.text("300778@deped.gov.ph (email)", pageWidth / 2, 37, { align: "center" });
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 25, { align: "center" });
+        doc.text("(044) 816 7731 (mobile)", pageWidth / 2, 31, { align: "center" });
+        doc.text("300778@deped.gov.ph (email)", pageWidth / 2, 37, { align: "center" });
 
-                    // --- TABLE TITLE ---
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(13);
-                    doc.text(`Grade Level: ${gradeLevel}`, pageWidth / 2, 48, { align: "center" });
+        // --- TABLE TITLE ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(`Grade Level: ${gradeLevel}`, pageWidth / 2, 48, { align: "center" });
 
-                    // --- TABLE ---
-                    doc.autoTable({
-                        html: "#records-table",
-                        startY: 55,
-                        styles: { halign: "center", font: "helvetica", fontSize: 10 },
-                        headStyles: { fillColor: [240, 240, 240], textColor: 0, halign: "center", fontStyle: "bold" },
-                        alternateRowStyles: { fillColor: [250, 250, 250] },
-                        didDrawPage: function (data) {
-                            const pageCount = doc.internal.getNumberOfPages();
-                            const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+        // --- TABLE ---
+        doc.autoTable({
+            html: "#records-table",
+            startY: 55,
+            styles: { halign: "center", font: "helvetica", fontSize: 10 },
+            headStyles: { fillColor: [240, 240, 240], textColor: 0, halign: "center", fontStyle: "bold" },
+            alternateRowStyles: { fillColor: [250, 250, 250] },
+            margin: { bottom: 20 },
+            didDrawPage: function (data) {
+                const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
 
-                            // --- FOOTER ---
-                            doc.setFontSize(9);
-                            doc.setTextColor(100); // slightly transparent gray
-                            const footerY = pageHeight - 10;
+                // --- FOOTER ---
+                doc.setFontSize(9);
+                doc.setTextColor(150);
+                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
+                doc.text(`Time and Date: ${formattedDate} ${formattedTime}`, 14, pageHeight - 8);
 
-                            doc.text(`Prepared by: ${preparedBy}`, 14, footerY - 4);
-                            doc.text(`Time and Date: ${formattedDate} ${formattedTime}`, 14, footerY + 2);
+                doc.setTextColor(100);
+                const pageText = `Page ${pageNum} of ${totalPagesExp}`;
+                const textWidth = doc.getTextWidth(pageText);
+                doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
+            }
+        });
 
-                            doc.text(`Page ${currentPage} of ${pageCount}`, pageWidth - 20, footerY, { align: "right" });
-                        }
-                    });
+        // Replace placeholder with total pages
+        doc.putTotalPages(totalPagesExp);
 
-                    // --- OPEN PDF ---
-                    window.open(doc.output("bloburl"), "_blank");
+        // --- OPEN PDF ---
+        window.open(doc.output("bloburl"), "_blank");
 
-                } catch (err) {
-                    console.error(err);
-                    alert("Failed to generate PDF.");
-                }
-            });
+    } catch (err) {
+        console.error(err);
+        alert("Failed to generate PDF.");
+    }
+});
+
 
 
             // 3. On change -> fetch students
@@ -286,81 +292,88 @@ document.addEventListener("DOMContentLoaded", () => {
                 modalContent.appendChild(container);
 
                 // PDF button click handler
-                pdfBtn.addEventListener("click", async () => {
-                    const table = document.getElementById("records-table");
-                    if (!table) {
-                        alert("No table to export.");
-                        return;
-                    }
+pdfBtn.addEventListener("click", async () => {
+    const table = document.getElementById("records-table");
+    if (!table) {
+        alert("No table to export.");
+        return;
+    }
 
-                    const sectionName = select.value;
-                    if (!sectionName) {
-                        alert("Please select a section first.");
-                        return;
-                    }
+    const sectionName = select.value;
+    if (!sectionName) {
+        alert("Please select a section first.");
+        return;
+    }
 
-                    try {
-                        // Fetch user info
-                        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
-                        const userData = await userRes.json();
-                        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname} (${userData.role})` : "N/A";
+    try {
+        // Fetch user info
+        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+        const userData = await userRes.json();
+        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname} (${userData.role})` : "N/A";
 
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF({ orientation: "landscape" });
-                        const pageWidth = doc.internal.pageSize.getWidth();
-                        const pageHeight = doc.internal.pageSize.getHeight();
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "landscape" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const totalPagesExp = "{total_pages_count_string}";
 
-                        // --- HEADER ---
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(14);
-                        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
+        // --- HEADER ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
 
-                        doc.setFont("helvetica", "normal");
-                        doc.setFontSize(11);
-                        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
-                        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
+        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
 
-                        // --- TITLE ---
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(13);
-                        doc.text(sectionName, pageWidth / 2, 40, { align: "center" });
+        // --- TITLE ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(sectionName, pageWidth / 2, 40, { align: "center" });
 
-                        // --- TABLE ---
-                        doc.autoTable({
-                            html: "#records-table",
-                            startY: 48,
-                            styles: { halign: "center", valign: "middle" },
-                            headStyles: { fillColor: [41, 128, 185] },
-                            theme: "grid",
-                            tableWidth: "auto",
-                            didDrawPage: function (data) {
-                                const currentPage = doc.internal.getNumberOfPages();
-                                const totalPages = doc.internal.getNumberOfPages();
+        // --- TABLE ---
+        doc.autoTable({
+            html: "#records-table",
+            startY: 48,
+            styles: { halign: "center", valign: "middle" },
+            headStyles: { fillColor: [41, 128, 185] },
+            theme: "grid",
+            tableWidth: "auto",
+            margin: { bottom: 20 },
+            didDrawPage: function (data) {
+                const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
 
-                                // Footer
-                                doc.setFontSize(10);
-                                doc.setTextColor(100);
+                // Footer
+                doc.setFontSize(10);
+                doc.setTextColor(100);
 
-                                const now = new Date();
-                                const formattedDate = now.toLocaleString();
+                const now = new Date();
+                const formattedDate = now.toLocaleString();
 
-                                // Left side (Prepared by & Time)
-                                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15, { align: "left" });
-                                doc.text(`Time and Date: ${formattedDate}`, 14, pageHeight - 8, { align: "left" });
+                // Left side (Prepared by & Time)
+                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
+                doc.text(`Time and Date: ${formattedDate}`, 14, pageHeight - 8);
 
-                                // Right side (Page number)
-                                doc.text(`Page ${currentPage} of ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: "right" });
-                            }
-                        });
+                // Right side (Page number)
+                const pageText = `Page ${currentPage} of ${totalPagesExp}`;
+                const textWidth = doc.getTextWidth(pageText);
+                doc.text(pageText, pageWidth - textWidth - 14, pageHeight - 10);
+            }
+        });
 
-                        // --- OPEN IN NEW TAB ---
-                        window.open(doc.output("bloburl"), "_blank");
+        // Replace placeholder with total pages
+        doc.putTotalPages(totalPagesExp);
 
-                    } catch (err) {
-                        console.error(err);
-                        alert("Failed to generate PDF.");
-                    }
-                });
+        // --- OPEN IN NEW TAB ---
+        window.open(doc.output("bloburl"), "_blank");
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to generate PDF.");
+    }
+});
+
 
 
 

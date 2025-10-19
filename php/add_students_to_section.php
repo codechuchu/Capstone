@@ -58,7 +58,8 @@ try {
     ");
 
     // mysqli for audit logging
-    $conn = new mysqli($host, $user, $pass, $db);
+    $conn = new mysqli($host, $username, $password, $db);
+
 
     foreach ($student_ids as $sid) {
         // Update applicant table (assign section)

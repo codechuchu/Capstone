@@ -2,7 +2,6 @@
 session_start();
 header('Content-Type: application/json');
 
-// Check if teacher is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teachers') {
     echo json_encode(['status' => 'error', 'message' => 'Not logged in as teacher']);
     exit;
@@ -24,9 +23,14 @@ $students = [];
 
 // --- SHS applicants ---
 $sqlShs = "
-    SELECT a.applicant_id, a.firstname, a.lastname, s.email, s.password
+    SELECT 
+        a.applicant_id, 
+        a.firstname, 
+        a.lastname, 
+        s.email, 
+        s.password
     FROM shs_applicant a
-    JOIN students s ON a.applicant_id = s.student_id
+    LEFT JOIN students s ON a.applicant_id = s.student_id
     WHERE a.section_id = ?
 ";
 $stmt = $conn->prepare($sqlShs);
@@ -40,9 +44,14 @@ $stmt->close();
 
 // --- JHS applicants ---
 $sqlJhs = "
-    SELECT a.applicant_id, a.firstname, a.lastname, s.email, s.password
+    SELECT 
+        a.applicant_id, 
+        a.firstname, 
+        a.lastname, 
+        s.email, 
+        s.password
     FROM jhs_applicants a
-    JOIN students s ON a.applicant_id = s.student_id
+    LEFT JOIN students s ON a.applicant_id = s.student_id
     WHERE a.section_id = ?
 ";
 $stmt = $conn->prepare($sqlJhs);
