@@ -35,13 +35,11 @@ try {
     }
 
     $level = strtolower($section['assigned_level'] ?? 'jhs');
-    $gradeLevel = $section['grade_level'];
-    $semester = $section['semester'];
 
     if ($level === 'senior high') {
         $stmt = $pdo->prepare("
             SELECT 
-                a.applicant_id,
+                a.applicant_id AS student_id,
                 CONCAT(a.firstname, ' ', IFNULL(CONCAT(SUBSTRING(a.middlename,1,1),'. '),''), a.lastname) AS student_name,
                 a.strand,
                 a.grade_level,
@@ -60,11 +58,9 @@ try {
     } else {
         $stmt = $pdo->prepare("
             SELECT 
-                a.applicant_id,
+                a.applicant_id AS student_id,
                 CONCAT(a.firstname, ' ', IFNULL(CONCAT(SUBSTRING(a.middlename,1,1),'. '),''), a.lastname) AS student_name,
-                NULL AS strand,
                 a.grade_level,
-                a.semester,
                 COALESCE(
                     (SELECT remarks FROM studentgrade g 
                      WHERE g.student_id = a.applicant_id 
@@ -77,7 +73,6 @@ try {
         ");
         $stmt->execute([$section['section_id']]);
     }
-    
 
     $students = $stmt->fetchAll();
 

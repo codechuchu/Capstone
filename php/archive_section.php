@@ -1,19 +1,21 @@
 <?php
-error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
-ini_set('display_errors', 0);
 header('Content-Type: application/json');
 session_start();
 
-
-$conn = new mysqli("localhost", "root", "", "sulivannhs");
-if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
-    exit;
-}
+$host = 'localhost';
+$db   = 'sulivannhs';
+$user = 'root';
+$pass = '';
+$charset = 'utf8mb4';
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+$pdo = new PDO($dsn, $user, $pass, $options);
 
 include_once __DIR__ . '/log_audit.php';
 
-// Get JSON input
 $data = json_decode(file_get_contents('php://input'), true);
 $section_id = intval($data['section_id'] ?? 0);
 
@@ -22,13 +24,9 @@ if ($section_id <= 0) {
     exit;
 }
 
-// Fetch section info
-$secStmt = $conn->prepare("SELECT section_name, grade_level, assigned_level, school_year FROM sections_list WHERE section_id = ?");
-$secStmt->bind_param("i", $section_id);
-$secStmt->execute();
-$secResult = $secStmt->get_result();
-$section = $secResult->fetch_assoc();
-$secStmt->close();
+$secStmt = $pdo->prepare("SELECT section_name, grade_level, assigned_level, school_year FROM sections_list WHERE section_id = ?");
+$secStmt->execute([$section_id]);
+$section = $secStmt->fetch();
 
 if (!$section) {
     echo json_encode(['success' => false, 'error' => 'Section not found']);
@@ -37,33 +35,23 @@ if (!$section) {
 
 $shouldGraduate = false;
 
-// Determine if this section is graduating
 if (strtolower($section['assigned_level']) === 'senior high' && intval($section['grade_level']) === 12) {
     $shouldGraduate = true;
 } elseif (strtolower($section['assigned_level']) !== 'senior high' && intval($section['grade_level']) === 10) {
     $shouldGraduate = true;
 }
 
-// Only set graduation_year if graduating
 if ($shouldGraduate) {
     $graduation_year = $section['school_year'];
-    $archiveStmt = $conn->prepare("UPDATE sections_list SET is_archived = 1, graduation_year = ? WHERE section_id = ?");
-    $archiveStmt->bind_param("si", $graduation_year, $section_id);
+    $archiveStmt = $pdo->prepare("UPDATE sections_list SET is_archived = 1, graduation_year = ? WHERE section_id = ?");
+    $archiveStmt->execute([$graduation_year, $section_id]);
 } else {
-    $archiveStmt = $conn->prepare("UPDATE sections_list SET is_archived = 1 WHERE section_id = ?");
-    $archiveStmt->bind_param("i", $section_id);
+    $archiveStmt = $pdo->prepare("UPDATE sections_list SET is_archived = 1 WHERE section_id = ?");
+    $archiveStmt->execute([$section_id]);
 }
 
-if (!$archiveStmt->execute()) {
-    echo json_encode(['success' => false, 'error' => $archiveStmt->error]);
-    $archiveStmt->close();
-    exit;
-}
-$archiveStmt->close();
-
-// Audit: Section archived
 logAction(
-    $conn,
+    $pdo,
     $_SESSION['user_id'] ?? 0,
     $_SESSION['email'] ?? 'unknown',
     $_SESSION['role'] ?? 'unknown',
@@ -71,15 +59,11 @@ logAction(
     "Section ID: $section_id archived" . ($shouldGraduate ? " with graduation year $graduation_year" : "")
 );
 
-// Delete class schedules
-$delStmt = $conn->prepare("DELETE FROM class_schedules WHERE section_id = ?");
-$delStmt->bind_param("i", $section_id);
-$delStmt->execute();
-$delStmt->close();
+$delStmt = $pdo->prepare("DELETE FROM class_schedules WHERE section_id = ?");
+$delStmt->execute([$section_id]);
 
-// Audit: Class schedules deleted
 logAction(
-    $conn,
+    $pdo,
     $_SESSION['user_id'] ?? 0,
     $_SESSION['email'] ?? 'unknown',
     $_SESSION['role'] ?? 'unknown',
@@ -87,31 +71,25 @@ logAction(
     "Deleted schedules for Section ID: $section_id"
 );
 
-// Update student status to graduated only if graduating
 if ($shouldGraduate) {
     if (strtolower($section['assigned_level']) === 'senior high') {
-        $updateShs = $conn->prepare("
+        $updateShs = $pdo->prepare("
             UPDATE shs_applicant
             SET status = 'graduated'
             WHERE section_id = ? AND grade_level = 12 AND semester = 2
         ");
-        $updateShs->bind_param("i", $section_id);
-        $updateShs->execute();
-        $updateShs->close();
+        $updateShs->execute([$section_id]);
     } else {
-        $updateJhs = $conn->prepare("
+        $updateJhs = $pdo->prepare("
             UPDATE jhs_applicants
             SET status = 'graduated'
             WHERE section_id = ? AND grade_level = 10
         ");
-        $updateJhs->bind_param("i", $section_id);
-        $updateJhs->execute();
-        $updateJhs->close();
+        $updateJhs->execute([$section_id]);
     }
 
-    // Audit: Updated student statuses
     logAction(
-        $conn,
+        $pdo,
         $_SESSION['user_id'] ?? 0,
         $_SESSION['email'] ?? 'unknown',
         $_SESSION['role'] ?? 'unknown',
@@ -120,79 +98,72 @@ if ($shouldGraduate) {
     );
 }
 
-// Archive SHS students
-$conn->query("
+$pdo->exec("
     INSERT INTO archived_section_students (section_name, student_id, student_name, grade_level, semester, strand, level)
     SELECT 
-        '{$section['section_name']}' AS section_name,
-        applicant_id AS student_id,
-        CONCAT(firstname, ' ', IFNULL(CONCAT(SUBSTRING(middlename,1,1),'. '),''), lastname) AS student_name,
+        '{$section['section_name']}',
+        applicant_id,
+        CONCAT(firstname, ' ', IFNULL(CONCAT(SUBSTRING(middlename,1,1),'. '),''), lastname),
         grade_level,
         semester,
         strand,
-        'SHS' AS level
+        'SHS'
     FROM shs_applicant
     WHERE section_id = $section_id
 ");
 
-// Archive SHS students into archived_students
-$result = $conn->query("
+$result = $pdo->exec("
     INSERT INTO archived_students (applicant_id, section_id, assigned_level, grade_level, semester)
     SELECT 
         applicant_id,
-        $section_id AS section_id,
-        'SHS' AS assigned_level,
+        $section_id,
+        'SHS',
         grade_level,
-        1 AS semester
+        1
     FROM shs_applicant
     WHERE section_id = $section_id
 ");
-if (!$result) {
-    echo json_encode(['success' => false, 'error' => 'SHS insert failed: ' . $conn->error]);
+
+if ($result === false) {
+    echo json_encode(['success' => false, 'error' => 'SHS insert failed']);
     exit;
 }
 
-// Archive JHS students into archived_students
-$result = $conn->query("
+$result = $pdo->exec("
     INSERT INTO archived_students (applicant_id, section_id, assigned_level, grade_level, semester)
     SELECT 
         applicant_id,
-        $section_id AS section_id,
-        'JHS' AS assigned_level,
+        $section_id,
+        'JHS',
         grade_level,
-        NULL AS semester
+        NULL
     FROM jhs_applicants
     WHERE section_id = $section_id
 ");
-if (!$result) {
-    echo json_encode(['success' => false, 'error' => 'JHS insert failed: ' . $conn->error]);
+
+if ($result === false) {
+    echo json_encode(['success' => false, 'error' => 'JHS insert failed']);
     exit;
 }
 
-if (!$result) {
-    echo json_encode(['success' => false, 'error' => 'SHS insert failed: ' . $conn->error]);
-    exit;
-}
-
-// Archive JHS students into archived_students
-$result = $conn->query("
-    INSERT INTO archived_students (applicant_id, section_id, assigned_level, grade_level, semester)
+$result = $pdo->exec("
+    INSERT INTO archived_section_students (section_name, student_id, student_name, grade_level, semester, strand, level)
     SELECT 
+        '{$section['section_name']}',
         applicant_id,
-        section_id,
-        assigned_level,
+        CONCAT(firstname, ' ', IFNULL(CONCAT(SUBSTRING(middlename,1,1),'. '),''), lastname),
         grade_level,
-        semester
+        NULL,
+        NULL,
+        'JHS'
     FROM jhs_applicants
     WHERE section_id = $section_id
 ");
-if (!$result) {
-    echo json_encode(['success' => false, 'error' => 'JHS insert failed: ' . $conn->error]);
+
+if ($result === false) {
+    echo json_encode(['success' => false, 'error' => 'JHS insert failed']);
     exit;
 }
 
 echo json_encode(['success' => true]);
-$conn->close();
-exit; // ensures nothing else is sent
-
 ?>

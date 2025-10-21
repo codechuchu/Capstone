@@ -2,6 +2,11 @@
 session_start();
 header('Content-Type: application/json');
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/approve_error.log');
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -9,25 +14,31 @@ require __DIR__ . '/../PHPMailer-master/src/Exception.php';
 require __DIR__ . '/../PHPMailer-master/src/PHPMailer.php';
 require __DIR__ . '/../PHPMailer-master/src/SMTP.php';
 
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error) {
+        file_put_contents(__DIR__ . '/approve_error.log', "[FATAL] " . print_r($error, true), FILE_APPEND);
+    }
+});
+
 if (!isset($_SESSION['assigned_level'])) {
     echo json_encode(["error" => "Assigned level not set in session"]);
     exit;
 }
 
+// ✅ XAMPP credentials
 $host = 'localhost';
 $db   = 'sulivannhs';
 $user = 'root';
 $pass = '';
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-];
-
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
     include_once __DIR__ . '/log_audit.php';
 
     $id = $_GET['id'] ?? null;
@@ -36,7 +47,7 @@ try {
         exit;
     }
 
-    // Determine table based on assigned level
+    // Determine tables
     if ($_SESSION['assigned_level'] === 'Senior High') {
         $applicantTable = 'shs_applicant';
         $guardianTable  = 'shs_applicant_guardians';
@@ -45,11 +56,12 @@ try {
         $guardianTable  = 'jhs_applicant_guardians';
     }
 
-    // Fetch applicant info
-    $stmt = $pdo->prepare("SELECT applicant_id, lastname, firstname, emailaddress FROM $applicantTable WHERE applicant_id = ?");
+    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Fetch applicant ID $id\n", FILE_APPEND);
+
+    // Fetch applicant
+    $stmt = $pdo->prepare("SELECT applicant_id, firstname, lastname, emailaddress FROM $applicantTable WHERE applicant_id = ?");
     $stmt->execute([$id]);
     $applicant = $stmt->fetch();
-
     if (!$applicant) {
         echo json_encode(["error" => "Applicant not found"]);
         exit;
@@ -59,14 +71,16 @@ try {
     $email     = $applicant['emailaddress'];
     $password  = $applicant['lastname'] . "123";
 
-    // Insert student record
-    $insert = $pdo->prepare("INSERT INTO students (student_id, email, password) VALUES (?, ?, ?)");
-    $insert->execute([$studentId, $email, $password]);
-
-    // Log
-    $logConn = new mysqli($host, $user, $pass, $db);
-    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', "Enrolled Student", "Student ID: $studentId added with email: $email");
-    $logConn->close();
+    // Insert student if not exists
+    $checkStudent = $pdo->prepare("SELECT student_id FROM students WHERE student_id = ?");
+    $checkStudent->execute([$studentId]);
+    if (!$checkStudent->fetch()) {
+        $insert = $pdo->prepare("INSERT INTO students (student_id, email, password) VALUES (?, ?, ?)");
+        $insert->execute([$studentId, $email, $password]);
+        file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Student inserted: $studentId\n", FILE_APPEND);
+    } else {
+        file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Student already exists: $studentId\n", FILE_APPEND);
+    }
 
     // Fetch guardian
     $guardianStmt = $pdo->prepare("SELECT firstname, lastname, email FROM $guardianTable WHERE applicant_id = ?");
@@ -75,68 +89,50 @@ try {
 
     $guardianEmail = '';
     $guardianPassword = '';
-
     if ($guardian) {
         $guardianFirstName = $guardian['firstname'];
         $guardianLastName  = $guardian['lastname'];
         $guardianEmail     = $guardian['email'];
         $guardianPassword  = $guardianLastName . "123";
 
-        // Insert parent
-        $insertParent = $pdo->prepare("INSERT INTO parents (student_id, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)");
-        $insertParent->execute([$studentId, $guardianFirstName, $guardianLastName, $guardianEmail, $guardianPassword]);
-
-        // Log
-        $logConn = new mysqli($host, $user, $pass, $db);
-        logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', "Added Parent Account", "Parent email: $guardianEmail linked to Student ID: $studentId");
-        $logConn->close();
+        if (!empty($guardianEmail) && filter_var($guardianEmail, FILTER_VALIDATE_EMAIL)) {
+            $checkParent = $pdo->prepare("SELECT student_id FROM parents WHERE student_id = ? AND email = ?");
+            $checkParent->execute([$studentId, $guardianEmail]);
+            if (!$checkParent->fetch()) {
+                $insertParent = $pdo->prepare("INSERT INTO parents (student_id, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)");
+                $insertParent->execute([$studentId, $guardianFirstName, $guardianLastName, $guardianEmail, $guardianPassword]);
+                file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Guardian inserted: $guardianEmail\n", FILE_APPEND);
+            } else {
+                file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Guardian already exists: $guardianEmail\n", FILE_APPEND);
+            }
+        }
     }
 
-    // ---------- DETERMINE SCHOOL YEAR ----------
+    // Determine school year
     $today = date('Y-m-d');
-    $periodStmt = $pdo->query("
-        SELECT * 
-        FROM activation_periods 
-        WHERE '$today' BETWEEN start_date AND end_date
-        LIMIT 1
-    ");
+    $periodStmt = $pdo->query("SELECT * FROM activation_periods WHERE '$today' BETWEEN start_date AND end_date LIMIT 1");
     $period = $periodStmt->fetch();
-
+    $schoolYear = '';
     if ($period) {
         $startYear = date('Y', strtotime($period['start_date']));
         $endYear   = date('Y', strtotime($period['end_date']));
-
-        if ($startYear == $endYear) {
-            $schoolYear = $startYear . '-' . ($startYear + 1);
-        } else {
-            $schoolYear = $startYear . '-' . $endYear;
-        }
+        $schoolYear = ($startYear == $endYear) ? $startYear . '-' . ($startYear + 1) : $startYear . '-' . $endYear;
     } else {
-        // fallback if no active period
         $year = date('Y');
         $month = date('n');
-        if ($month >= 6) { 
-            $schoolYear = $year . '-' . ($year + 1);
-        } else {
-            $schoolYear = ($year - 1) . '-' . $year;
-        }
+        $schoolYear = ($month >= 6) ? $year . '-' . ($year + 1) : ($year - 1) . '-' . $year;
     }
+    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Determined school year: $schoolYear\n", FILE_APPEND);
 
-    // Update applicant status and add school_year
-    $update = $pdo->prepare("
-        UPDATE $applicantTable 
-        SET status = 'enrolled', school_year = ? 
-        WHERE applicant_id = ?
-    ");
+    // Update applicant status
+    $update = $pdo->prepare("UPDATE $applicantTable SET status = 'enrolled', school_year = ? WHERE applicant_id = ?");
     $update->execute([$schoolYear, $id]);
+    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Applicant status updated: $id\n", FILE_APPEND);
 
-    // Log
-    $logConn = new mysqli($host, $user, $pass, $db);
-    logAction($logConn, $_SESSION['user_id'] ?? 0, $_SESSION['email'] ?? 'unknown', $_SESSION['role'] ?? 'unknown', "Updated Applicant Status", "Applicant ID: $id status set to enrolled for S.Y. $schoolYear");
-    $logConn->close();
-
-    // ---------- EMAIL CONFIG ----------
-    function sendEmail($to, $subject, $body) {
+    // Email sending function
+    function sendEmail($to, $subject, $body)
+    {
+        if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
@@ -146,55 +142,49 @@ try {
             $mail->Password   = 'lmke ipfx oqnq zbpk';
             $mail->SMTPSecure = 'tls';
             $mail->Port       = 587;
-
             $mail->setFrom('onionknight418@gmail.com', 'Sulivan NHS');
             $mail->addAddress($to);
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body    = $body;
-
             $mail->send();
             return true;
         } catch (Exception $e) {
+            file_put_contents(__DIR__ . '/approve_error.log', "[EMAIL ERROR] $to : " . $e->getMessage() . "\n", FILE_APPEND);
             return false;
         }
     }
 
     $portalURL = "https://sulivannhs.com";
-
-    // ---------- STUDENT EMAIL ----------
     $studentName = $applicant['firstname'] . ' ' . $applicant['lastname'];
-    $studentPassword = $applicant['lastname'] . "123";
-    $studentBody = "
-        <p>Dear {$studentName},</p>
-        <p>We are pleased to inform you that you have been successfully enrolled at <b>Sulivan National High School</b> for the upcoming academic year.</p>
-        <p>📌 <b>Portal Login Details:</b></p>
-        <p>
-            Portal Link: <a href='{$portalURL}'>{$portalURL}</a><br>
-            Username: {$email}<br>
-            Password: {$studentPassword}
-        </p>
-        <p>🔐 Please change your password upon first login.</p>
-        <p>Best regards,<br><b>Sulivan National High School</b></p>
-    ";
+    $studentBody = <<<HTML
+<p>Dear {$studentName},</p>
+<p>We are pleased to inform you that you have been successfully enrolled at <b>Sulivan National High School</b> for the upcoming academic year.</p>
+<p><b>Portal Login Details:</b></p>
+<p>Portal Link: <a href="{$portalURL}">{$portalURL}</a><br>
+Username: {$email}<br>
+Password: {$password}</p>
+<p>🔐 Please change your password upon first login.</p>
+<p>Best regards,<br><b>Sulivan National High School</b></p>
+HTML;
+
+
     $studentSent = sendEmail($email, 'Enrollment Confirmation', $studentBody);
 
-    // ---------- GUARDIAN EMAIL ----------
     $guardianSent = false;
     if (!empty($guardianEmail)) {
         $guardianName = $guardian['firstname'] . ' ' . $guardian['lastname'];
-        $guardianBody = "
-            <p>Dear {$guardianName},</p>
-            <p>Your child <b>{$studentName}</b> has been successfully enrolled at <b>Sulivan National High School</b>.</p>
-            <p>📌 <b>Parent/Guardian Portal Login Details:</b></p>
-            <p>
-                Portal Link: <a href='{$portalURL}'>{$portalURL}</a><br>
-                Username: {$guardianEmail}<br>
-                Password: {$guardianPassword}
-            </p>
-            <p>🔐 Please change your password upon first login.</p>
-            <p>Best regards,<br><b>Sulivan National High School</b></p>
-        ";
+        $guardianBody = <<<HTML
+<p>Dear {$guardianName},</p>
+<p>Your child <b>{$studentName}</b> has been successfully enrolled at <b>Sulivan National High School</b>.</p>
+<p><b>Parent/Guardian Portal Login Details:</b></p>
+<p>Portal Link: <a href="{$portalURL}">{$portalURL}</a><br>
+Username: {$guardianEmail}<br>
+Password: {$guardianPassword}</p>
+<p>🔐 Please change your password upon first login.</p>
+<p>Best regards,<br><b>Sulivan National High School</b></p>
+HTML;
+
         $guardianSent = sendEmail($guardianEmail, 'Parent Portal Account Created', $guardianBody);
     }
 
@@ -203,7 +193,7 @@ try {
         "student_email_sent" => $studentSent,
         "guardian_email_sent" => $guardianSent
     ]);
-
 } catch (Exception $e) {
+    file_put_contents(__DIR__ . '/approve_error.log', "[EXCEPTION] " . $e->getMessage() . "\n", FILE_APPEND);
     echo json_encode(["error" => $e->getMessage()]);
 }

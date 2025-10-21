@@ -152,7 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // --- Logout Button Logic ---
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function () {
@@ -799,58 +798,58 @@ document.addEventListener("DOMContentLoaded", () => {
             closeModal();
         });
 
-submitBtn.addEventListener("click", () => {
-    const sectionName = input.value.trim();
-    if (!sectionName) {
-        alert("Section name is required.");
-        return;
-    }
-
-    const createSection = (force = false) => {
-        const payload = {
-            grade: selectedGrade,
-            strand: selectedStrand,
-            section_name: sectionName
-        };
-        if (force) payload.force = true;
-
-        return fetch('../php/assign_sections.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).then(res => res.json());
-    };
-
-    createSection()
-        .then(data => {
-            if (data.success) {
-                alert("Section created successfully!");
-                document.body.removeChild(modalOverlay);
-            } else if (data.error === "not_enough") {
-                if (confirm(`There are only ${data.available} students left (need ${data.required}). Do you still want to create the section?`)) {
-                    return createSection(true).then(forceData => {
-                        if (forceData.success) {
-                            alert("Section created successfully with fewer students.");
-                            document.body.removeChild(modalOverlay); // <- remove modal here too
-                        } else {
-                            alert("Error: " + (forceData.error || 'Unknown'));
-                        }
-                    });
-                } else {
-                    alert("Section creation cancelled.");
-                    document.body.removeChild(modalOverlay); // <- also remove modal here if cancelled
-                }
-            } else {
-                alert("Error: " + (data.error || 'Unknown'));
-                document.body.removeChild(modalOverlay);
+        submitBtn.addEventListener("click", () => {
+            const sectionName = input.value.trim();
+            if (!sectionName) {
+                alert("Section name is required.");
+                return;
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Request failed");
-            document.body.removeChild(modalOverlay);
+
+            const createSection = (force = false) => {
+                const payload = {
+                    grade: selectedGrade,
+                    strand: selectedStrand,
+                    section_name: sectionName
+                };
+                if (force) payload.force = true;
+
+                return fetch('../php/assign_sections.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(res => res.json());
+            };
+
+            createSection()
+                .then(data => {
+                    if (data.success) {
+                        alert("Section created successfully!");
+                        document.body.removeChild(modalOverlay);
+                    } else if (data.error === "not_enough") {
+                        if (confirm(`There are only ${data.available} students left (need ${data.required}). Do you still want to create the section?`)) {
+                            return createSection(true).then(forceData => {
+                                if (forceData.success) {
+                                    alert("Section created successfully with fewer students.");
+                                    document.body.removeChild(modalOverlay); // <- remove modal here too
+                                } else {
+                                    alert("Error: " + (forceData.error || 'Unknown'));
+                                }
+                            });
+                        } else {
+                            alert("Section creation cancelled.");
+                            document.body.removeChild(modalOverlay); // <- also remove modal here if cancelled
+                        }
+                    } else {
+                        alert("Error: " + (data.error || 'Unknown'));
+                        document.body.removeChild(modalOverlay);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Request failed");
+                    document.body.removeChild(modalOverlay);
+                });
         });
-});
 
 
     });
@@ -911,57 +910,57 @@ submitBtn.addEventListener("click", () => {
                 document.querySelectorAll(".archive-btn").forEach(btn => {
                     btn.addEventListener("click", async function () {
                         const sectionId = this.dataset.id;
-                
+
                         try {
                             const res = await fetch("../php/get_active_schoolyear.php");
                             const data = await res.json();
-                
+
                             if (data.status === "success" && data.data) {
                                 alert("Cannot archive sections while the school year is active.");
                                 return; // STOP
                             }
-                
+
                         } catch (err) {
                             console.error("Error checking school year:", err);
                             // Removed alert here, allow archive to proceed
                         }
-                
+
                         if (!confirm("Are you sure you want to archive this section?")) return;
-                
+
                         try {
                             const archiveRes = await fetch("../php/archive_section.php", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ section_id: sectionId })
                             });
-                
+
                             const text = await archiveRes.text();
                             console.log("PHP response raw:", text);
-                
+
                             try {
                                 const resp = JSON.parse(text);
-                
+
                                 if (resp.success) {
                                     alert("Section archived successfully!");
                                     btn.closest("tr").remove();
                                 } else {
                                     alert("Failed to archive section: " + (resp.error || ""));
                                 }
-                
+
                             } catch (err) {
-                                console.warn("Invalid JSON, but archive probably succeeded."); 
+                                console.warn("Invalid JSON, but archive probably succeeded.");
                                 // Do not alert user
                                 btn.closest("tr").remove(); // optional: remove row anyway
                             }
-                
+
                         } catch (err) {
                             console.error("Error archiving section:", err);
                             // Removed alert here to prevent the annoying message
                         }
-                
+
                     });
                 });
-                
+
 
 
                 // Adviser modal elements
@@ -1057,25 +1056,55 @@ submitBtn.addEventListener("click", () => {
 
                             if (students.error) {
                                 studentsList.innerHTML = `<tr><td colspan="3" class="text-center">${students.error}</td></tr>`;
-                            } else if (students.length === 0) {
-                                studentsList.innerHTML = `<tr><td colspan="3" class="text-center">No students found</td></tr>`;
-                            } else {
-                                students.forEach(s => {
-                                    studentsList.innerHTML += `
-                        <tr>
-                            <td class="px-4 py-2 text-sm text-gray-700">${s.student_name}</td>
-                            <td class="px-4 py-2 text-sm text-gray-700">${s.strand}</td>
-                            <td class="px-4 py-2 text-sm text-gray-700 flex justify-between items-center">
-                                <span>${s.grade_level}</span>
-                                <div class="flex gap-2">
-                                    <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 drop-btn" data-student-id="${s.student_id}">Drop</button>
-                                    <button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 remove-btn" data-student-id="${s.student_id}">Remove</button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                                });
+                                return;
                             }
+
+                            if (students.length === 0) {
+                                studentsList.innerHTML = `<tr><td colspan="3" class="text-center">No students found</td></tr>`;
+                                return;
+                            }
+
+                            // ✅ Detect if "strand" exists (SHS)
+                            const hasStrand = "strand" in students[0];
+
+                            // ✅ Hide or show table header (assumes there's a <th id="strandHeader">)
+                            const strandHeader = document.getElementById("strandHeader");
+                            if (strandHeader) {
+                                strandHeader.style.display = hasStrand ? "" : "none";
+                            }
+
+                            // ✅ Render students
+                            students.forEach(s => {
+                                const row = document.createElement("tr");
+
+                                // Student Name
+                                const nameTd = document.createElement("td");
+                                nameTd.className = "px-4 py-2 text-sm text-gray-700";
+                                nameTd.textContent = s.student_name;
+                                row.appendChild(nameTd);
+
+                                // ✅ Add Strand only if SHS
+                                if (hasStrand) {
+                                    const strandTd = document.createElement("td");
+                                    strandTd.className = "px-4 py-2 text-sm text-gray-700";
+                                    strandTd.textContent = s.strand || "";
+                                    row.appendChild(strandTd);
+                                }
+
+                                // Grade + Actions
+                                const gradeTd = document.createElement("td");
+                                gradeTd.className = "px-4 py-2 text-sm text-gray-700 flex justify-between items-center";
+                                gradeTd.innerHTML = `
+                    <span>${s.grade_level}</span>
+                    <div class="flex gap-2">
+                        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 drop-btn" data-student-id="${s.student_id}">Drop</button>
+                        <button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 remove-btn" data-student-id="${s.student_id}">Remove</button>
+                    </div>
+                `;
+                                row.appendChild(gradeTd);
+
+                                studentsList.appendChild(row);
+                            });
 
                             modal.classList.remove("hidden");
 
@@ -1174,7 +1203,6 @@ submitBtn.addEventListener("click", () => {
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({ student_id: studentId })
                                         })
-
                                             .then(res => res.json())
                                             .then(resp => {
                                                 if (resp.success) {
@@ -1196,6 +1224,7 @@ submitBtn.addEventListener("click", () => {
                         }
                     });
                 });
+
                 // Add Student button handler
                 document.querySelectorAll(".add-student-btn").forEach(addBtn => {
                     addBtn.addEventListener("click", async function () {
@@ -1634,22 +1663,22 @@ function approveApplication() {
     fetch(`../php/approve_application.php?id=${currentApplicantId}`, {
         method: "POST"
     })
-    .then(response => response.json())
-    .then(data => {
-        document.body.removeChild(loadingOverlay);
+        .then(response => response.json())
+        .then(data => {
+            document.body.removeChild(loadingOverlay);
 
-        if (data.success) {
-            alert("Applicant approved successfully!");
-            closeApplicationModal();
-            loadPendingApplications();
-        } else {
-            alert("Error: " + data.error);
-        }
-    })
-    .catch(err => {
-        document.body.removeChild(loadingOverlay);
-        alert("Request failed: " + err.message);
-    });
+            if (data.success) {
+                alert("Applicant approved successfully!");
+                closeApplicationModal();
+                loadPendingApplications();
+            } else {
+                alert("Error: " + data.error);
+            }
+        })
+        .catch(err => {
+            document.body.removeChild(loadingOverlay);
+            alert("Request failed: " + err.message);
+        });
 }
 
 
@@ -1727,24 +1756,24 @@ function submitDecline() {
             reason: reason
         })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert("Application has been declined successfully.");
-            closeDeclineModal();
-            closeApplicationModal();
-            loadPendingApplications(); // refresh table
-        } else {
-            alert("Error: " + (data.error || "Unable to decline applicant."));
-        }
-    })
-    .catch(err => {
-        console.error("Error:", err);
-        alert("Something went wrong while declining the applicant.");
-    })
-    .finally(() => {
-        document.body.removeChild(overlay); // Remove spinner overlay
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Application has been declined successfully.");
+                closeDeclineModal();
+                closeApplicationModal();
+                loadPendingApplications(); // refresh table
+            } else {
+                alert("Error: " + (data.error || "Unable to decline applicant."));
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("Something went wrong while declining the applicant.");
+        })
+        .finally(() => {
+            document.body.removeChild(overlay); // Remove spinner overlay
+        });
 }
 
 
@@ -1952,9 +1981,26 @@ document.addEventListener("DOMContentLoaded", () => {
         modalElement.classList.add("hidden");
         modalElement.classList.remove("flex");
     });
+    let assignedLevel = "";
 
-    // Attach teacher listeners to all subject dropdowns
-    function attachTeacherListeners() {
+    async function getAssignedLevel() {
+        try {
+            const res = await fetch("../php/get_assigned_level.php", { credentials: "include" });
+            const data = await res.json();
+            if (data.success && data.assigned_level) {
+                assignedLevel = data.assigned_level;
+            } else {
+                console.warn("No assigned level found in session.");
+            }
+        } catch (err) {
+            console.error("Error fetching assigned level:", err);
+        }
+    }
+
+    async function attachTeacherListeners() {
+        // make sure we have assignedLevel ready before attaching
+        if (!assignedLevel) await getAssignedLevel();
+
         document.querySelectorAll(".subject-dropdown").forEach(subjectSelect => {
             subjectSelect.addEventListener("change", async function () {
                 const teacherSelect = this.closest("td").querySelector(".teacher-dropdown");
@@ -1966,7 +2012,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 try {
                     const subjectId = this.value;
-                    const res = await fetch(`../php/get_teachers.php?subject_id=${subjectId}`, { credentials: "include" });
+                    const res = await fetch(`../php/get_teachers.php?subject_id=${subjectId}&assigned_level=${encodeURIComponent(assignedLevel)}`, { credentials: "include" });
                     const data = await res.json();
 
                     if (data.status === "success" && Array.isArray(data.teachers) && data.teachers.length > 0) {
@@ -1982,6 +2028,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+
 
     // Helper: always fill subject dropdowns using cached subjectOptionsHTML
     function fillAllSubjectDropdowns() {
@@ -2204,7 +2251,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     scheduleForm.reset();
                     modalElement.classList.add("hidden");
                     modalElement.classList.remove("flex");
-                
+
                     const section_id = parseInt(document.getElementById("section_id").value, 10);
                     console.log("section_id:", section_id);
                     console.log("schedules:", schedules);
@@ -2217,23 +2264,23 @@ document.addEventListener("DOMContentLoaded", () => {
                         }),
                         credentials: "include"
                     })
-                    
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log("PHP response:", data); // <- see full response
-                        if (data.status === "success") {
-                            console.log(data.message);
-                        } else {
-                            console.error("Failed to initialize grades:", data.message);
-                            alert("Failed to initialize grades: " + data.message);
-                        }
-                    })                    
-                    .catch(err => console.error(err));
-                    
-                    
+
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log("PHP response:", data); // <- see full response
+                            if (data.status === "success") {
+                                console.log(data.message);
+                            } else {
+                                console.error("Failed to initialize grades:", data.message);
+                                alert("Failed to initialize grades: " + data.message);
+                            }
+                        })
+                        .catch(err => console.error(err));
+
+
                     // --- END initialize grades ---
                 }
-                 else if (data.status === "error" && data.conflicts) {
+                else if (data.status === "error" && data.conflicts) {
                     // Remove previous highlights and bubbles before setting new ones
                     rows.forEach((row, rIdx) => {
                         row.querySelectorAll("td").forEach(cell => {
@@ -3052,7 +3099,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 function filterTable() {
                     const query = searchInput.value.toLowerCase().trim();
-                    const filtered = students.filter(s => 
+                    const filtered = students.filter(s =>
                         `${s.firstname} ${s.lastname}`.toLowerCase().includes(query) ||
                         (s.emailaddress || "").toLowerCase().includes(query) ||
                         (s.grade_level || "").toLowerCase().includes(query)
@@ -3937,7 +3984,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function openStudentsModal(sectionId, sectionName, assignedLevel) {
         const studentModal = document.createElement("div");
         studentModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-50 overflow-auto";
-    
+
         studentModal.innerHTML = `
             <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl relative flex flex-col">
                 <h2 class="text-lg font-semibold mb-4">Students in ${sectionName}</h2>
@@ -3949,25 +3996,25 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `;
         document.body.appendChild(studentModal);
-    
+
         const studentListContainer = studentModal.querySelector("#student-list-container");
         const closeBtn = studentModal.querySelector("#student-close-btn");
         const reEnrollBtn = studentModal.querySelector("#student-re-enroll-btn");
         closeBtn.addEventListener("click", () => studentModal.remove());
         reEnrollBtn.style.display = "none";
-    
+
         try {
             // Fetch archived students
             const resStudents = await fetch(`../php/get_section_students_a.php?section_name=${encodeURIComponent(sectionName)}`);
             const studentsData = await resStudents.json();
-    
+
             if (!Array.isArray(studentsData) || studentsData.length === 0) {
                 studentListContainer.innerHTML = `<p class="text-gray-500">No students found in this archived section.</p>`;
                 return;
             }
-    
+
             const isSHS = assignedLevel === "Senior High";
-    
+
             // Build table
             const table = document.createElement("table");
             table.className = "min-w-full divide-y divide-gray-200 border";
@@ -3980,22 +4027,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 </thead>
             `;
             const tbody = document.createElement("tbody");
-    
+
             for (const student of studentsData) {
                 const fullName = student.student_name;
                 const displayText = isSHS
                     ? `${student.strand || "N/A"} ${student.grade_level || "N/A"}`
                     : `Grade ${student.grade_level || "N/A"}`;
-    
+
                 const row = document.createElement("tr");
-    
+
                 // Color rows based on remarks
                 const remark = student.remarks?.toLowerCase();
                 if (remark === "passed") row.classList.add("bg-green-200");
                 else if (remark === "failed") row.classList.add("bg-red-300");
-    
+
                 const isGraduated = student.status?.toLowerCase() === "graduated";
-    
+
                 row.innerHTML = `
                     <td class="px-4 py-2 border text-center">
                         <input type="checkbox" 
@@ -4015,11 +4062,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 tbody.appendChild(row);
             }
-    
+
             table.appendChild(tbody);
             studentListContainer.appendChild(table);
             reEnrollBtn.style.display = "inline-block";
-    
+
             // Select all checkbox
             const selectAll = studentModal.querySelector("#select-all");
             selectAll.addEventListener("change", e => {
@@ -4028,7 +4075,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (!cb.disabled) cb.checked = checked;
                 });
             });
-    
+
             // Re-enroll button
             reEnrollBtn.onclick = async () => {
                 const selectedCheckboxes = Array.from(studentListContainer.querySelectorAll(".student-checkbox:checked"));
@@ -4036,7 +4083,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert("Please select at least one student to re-enroll.");
                     return;
                 }
-    
+
                 const selectedStudents = selectedCheckboxes.map(cb => ({
                     id: Number(cb.dataset.applicantId),
                     grade_level: Number(cb.dataset.gradeLevel),
@@ -4045,21 +4092,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     strand: cb.dataset.strand,
                     status: cb.dataset.status
                 }));
-    
+
                 const firstStudent = selectedStudents[0];
                 let nextGrade = Number(firstStudent.grade_level);
                 let nextSemester = Number(firstStudent.semester);
                 const isFailed = firstStudent.remark.toLowerCase() === "failed";
                 const isGraduated = firstStudent.status?.toLowerCase() === "graduated";
-    
+
                 if (!isFailed && !isGraduated && firstStudent.remark.toLowerCase() === "passed") {
                     if (nextSemester === 1) nextSemester = 2;
-                    else if (nextSemester === 2 && nextGrade < 12) { 
-                        nextGrade += 1; 
-                        nextSemester = 1; 
+                    else if (nextSemester === 2 && nextGrade < 12) {
+                        nextGrade += 1;
+                        nextSemester = 1;
                     }
                 }
-    
+
                 let strandsOptions = '';
                 if (isSHS) {
                     let strands = [];
@@ -4070,13 +4117,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     } catch (err) {
                         console.error("Error loading strands:", err);
                     }
-    
+
                     strandsOptions = `<label class="block mb-2">Strand</label>
                         <select id="strand" class="w-full border p-2 rounded mb-4" ${isFailed ? 'disabled' : ''}>
                             ${strands.map(s => `<option value="${s}" ${s === firstStudent.strand ? 'selected' : ''}>${s}</option>`).join("")}
                         </select>`;
                 }
-    
+
                 const enrollModal = document.createElement("div");
                 enrollModal.className = "fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50";
                 enrollModal.innerHTML = `
@@ -4087,14 +4134,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         <input type="text" id="new-section-name" class="w-full border p-2 rounded mb-4" placeholder="Enter new section name">
     
                         <label class="block mb-2">Grade Level</label>
-                        <select id="grade-level" class="w-full border p-2 rounded mb-4" ${isFailed ? 'disabled' : ''}>
-                            ${[11,12].map(g => `<option value="${g}" ${g===nextGrade?'selected':''}>${g}</option>`).join('')}
-                        </select>
-    
+<select id="grade-level" class="w-full border p-2 rounded mb-4" ${isFailed ? 'disabled' : ''}>
+    ${isSHS
+                        ? [11, 12].map(g => `<option value="${g}" ${g === nextGrade ? 'selected' : ''}>${g}</option>`).join('')
+                        : [7, 8, 9, 10].map(g => `<option value="${g}" ${g === nextGrade ? 'selected' : ''}>${g}</option>`).join('')
+                    }
+</select>
+
                         ${isSHS ? `<label class="block mb-2">Semester</label>
                         <select id="semester" class="w-full border p-2 rounded mb-4" ${isFailed ? 'disabled' : ''}>
-                            <option value="1" ${nextSemester===1?'selected':''}>1st Semester</option>
-                            <option value="2" ${nextSemester===2?'selected':''}>2nd Semester</option>
+                            <option value="1" ${nextSemester === 1 ? 'selected' : ''}>1st Semester</option>
+                            <option value="2" ${nextSemester === 2 ? 'selected' : ''}>2nd Semester</option>
                         </select>` : ''}
     
                         ${strandsOptions}
@@ -4108,11 +4158,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 `;
-                
+
                 document.body.appendChild(enrollModal);
-    
+
                 enrollModal.querySelector("#cancel-enroll-modal").onclick = () => enrollModal.remove();
-    
+
                 enrollModal.querySelector("#confirm-enroll-modal").onclick = async () => {
                     const newSectionName = enrollModal.querySelector("#new-section-name").value.trim();
                     const schoolYear = enrollModal.querySelector("#school-year").value.trim();
@@ -4120,7 +4170,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         alert("Please enter both section name and school year.");
                         return;
                     }
-    
+
                     const payload = {
                         section_id: Number(sectionId),
                         students: selectedStudents.map(s => s.id),
@@ -4130,9 +4180,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         new_section_name: newSectionName,
                         school_year: schoolYear
                     };
-    
+
                     console.log("Payload sent to PHP:", payload);
-    
+
                     try {
                         const res = await fetch("../php/re_enroll_students.php", {
                             method: "POST",
@@ -4140,7 +4190,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             body: JSON.stringify(payload)
                         });
                         const result = await res.json();
-    
+
                         if (result.success) {
                             alert(result.message);
                             enrollModal.remove();
@@ -4155,14 +4205,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 };
             };
-    
+
         } catch (err) {
             console.error("Error loading students:", err);
             studentListContainer.innerHTML = `<p class="text-red-500">Failed to load students.</p>`;
         }
     }
-    
- 
+
+
 });
 
 

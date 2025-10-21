@@ -615,13 +615,14 @@
                     <div class="bg-white rounded-lg p-6 w-11/12 max-w-3xl max-h-[80vh] overflow-y-auto overflow-x-auto">
                         <h2 id="modal-section-name" class="text-xl font-bold mb-4">Students in Section</h2>
                         <table class="min-w-full divide-y divide-gray-200 mb-4">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Student Name</th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Strand</th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Grade Level</th>
-                                </tr>
-                            </thead>
+   <thead class="bg-gray-100">
+  <tr>
+    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Student Name</th>
+    <th id="strandHeader" class="px-4 py-2 text-left text-sm font-medium text-gray-700">Strand</th>
+    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Grade Level</th>
+  </tr>
+</thead>
+
                             <tbody id="students-list" class="bg-white divide-y divide-gray-200"></tbody>
                         </table>
                         <button id="close-modal"

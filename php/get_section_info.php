@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-// Database credentials
+// XAMPP Database credentials
 $servername = "localhost";
 $username   = "root";
 $password   = "";

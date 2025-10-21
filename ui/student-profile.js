@@ -1,100 +1,106 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // --- Elements ---
     const studentBtn = document.getElementById('studentProfileBtn');
-    const studentPanel = document.getElementById('studentPanel'); // wrap student info here
+    const studentPanel = document.getElementById('studentPanel');
     const studentBtnName = document.getElementById('studentBtnName');
+    const studentNameEl = document.getElementById('studentName');
+    const studentEmailEl = document.getElementById('studentEmail');
 
-// Fetch student info
-fetch('../php/get_student_info.php')
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            const fullname = `${data.firstname} ${data.lastname}`;
-            const email = data.email;
-
-            const studentNameEl = document.getElementById('studentName');
-            const studentEmailEl = document.getElementById('studentEmail');
-
-            if (studentNameEl) studentNameEl.textContent = fullname;
-            if (studentEmailEl) studentEmailEl.textContent = email;
-            if (studentBtnName) studentBtnName.textContent = fullname;
-        }
-    })
-    .catch(err => console.error("Error fetching student info:", err));
-
-
-  
-
-    // Toggle student panel
-    studentBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        studentPanel.classList.toggle('hidden');
-    });
-
-    // Close panel if clicked outside
-    document.addEventListener('click', (e) => {
-        if (!studentPanel.contains(e.target) && !studentBtn.contains(e.target)) {
-            studentPanel.classList.add('hidden');
-        }
-    });
-
-    // --- Change Password Logic ---
     const changePasswordLink = document.getElementById('changePasswordLink');
     const changePasswordModal = document.getElementById('changePasswordModal');
     const closeChangePassword = document.getElementById('closeChangePassword');
     const closeModalX = document.getElementById('closeModalX');
     const changePasswordForm = document.getElementById('changePasswordForm');
 
-    // Open modal
-    changePasswordLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        changePasswordModal.classList.remove('hidden');
-        changePasswordModal.classList.add('flex');
-    });
-
-    // Close modal
-    const closeModal = () => {
-        changePasswordModal.classList.add('hidden');
-        changePasswordModal.classList.remove('flex');
-    };
-    closeChangePassword.addEventListener('click', closeModal);
-    closeModalX.addEventListener('click', closeModal);
-
-    // Submit form
-    changePasswordForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const formData = new FormData(changePasswordForm);
-        const currentPassword = formData.get('current_password');
-        const newPassword = formData.get('new_password');
-        const confirmPassword = formData.get('confirm_password');
-
-        if (newPassword !== confirmPassword) {
-            alert("New passwords do not match!");
-            return;
-        }
-
+    // --- Fetch Student Info ---
+    async function loadStudentInfo() {
         try {
-            const res = await fetch('../php/change_password.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
-            });
-
+            const res = await fetch('../php/get_student_info.php', { credentials: 'include' });
             const data = await res.json();
+            console.log("Student info response:", data);
 
             if (data.success) {
-                alert("Password changed successfully!");
-                changePasswordForm.reset();
-                closeModal();
+                const fullname = `${data.firstname} ${data.lastname}`;
+                const email = data.email;
+
+                if (studentNameEl) studentNameEl.textContent = fullname;
+                if (studentEmailEl) studentEmailEl.textContent = email;
+                if (studentBtnName) studentBtnName.textContent = fullname;
             } else {
-                alert("Error: " + (data.message || "Unknown error"));
+                console.warn("Failed to fetch student info:", data.message);
+            }
+        } catch (err) {
+            console.error("Error fetching student info:", err);
+        }
+    }
+
+    loadStudentInfo();
+
+    // --- Toggle Profile Panel ---
+    if (studentBtn && studentPanel) {
+        studentBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            studentPanel.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!studentPanel.contains(e.target) && !studentBtn.contains(e.target)) {
+                studentPanel.classList.add('hidden');
+            }
+        });
+    }
+
+    // --- Change Password Modal ---
+    function closeModal() {
+        changePasswordModal.classList.add('hidden');
+        changePasswordModal.classList.remove('flex');
+    }
+
+    if (changePasswordLink && changePasswordModal) {
+        changePasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            changePasswordModal.classList.remove('hidden');
+            changePasswordModal.classList.add('flex');
+        });
+    }
+
+    if (closeChangePassword) closeChangePassword.addEventListener('click', closeModal);
+    if (closeModalX) closeModalX.addEventListener('click', closeModal);
+
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(changePasswordForm);
+            const currentPassword = formData.get('current_password');
+            const newPassword = formData.get('new_password');
+            const confirmPassword = formData.get('confirm_password');
+
+            if (newPassword !== confirmPassword) {
+                alert("New passwords do not match!");
+                return;
             }
 
-        } catch (err) {
-            console.error(err);
-            alert("Failed to change password.");
-        }
-    });
+            try {
+                const res = await fetch('../php/change_password.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert("Password changed successfully!");
+                    changePasswordForm.reset();
+                    closeModal();
+                } else {
+                    alert("Error: " + (data.message || "Unknown error"));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to change password.");
+            }
+        });
+    }
 });
 
 
@@ -136,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadContentIfNeeded(paneId);
         });
     });
-
+    
     // --- Logout handler ---
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
@@ -155,7 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-//schedule
 document.addEventListener("DOMContentLoaded", () => {
     const scheduleTableBody = document.querySelector("#scheduleTableBody");
     const scheduleTitle = document.querySelector("#scheduleTitle");
@@ -173,11 +178,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Get today's day name
-            const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+            console.log("Schedules from API:", data.schedules); // ✅ debug
 
-            // Filter today's schedule
-            const todaysSchedules = data.schedules.filter(s => s.day_of_week === today);
+            // Get today's day name in lowercase
+            const today = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+
+            // Filter today's schedule (case-insensitive)
+            const todaysSchedules = data.schedules.filter(
+                s => s.day_of_week && s.day_of_week.toLowerCase() === today
+            );
 
             // Populate today's schedule
             if (todaysSchedules.length === 0) {
@@ -204,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showFullScheduleModal(schedules) {
-        // Create modal
+        // Create modal overlay
         const modalOverlay = document.createElement("div");
         modalOverlay.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
 
@@ -236,12 +245,12 @@ document.addEventListener("DOMContentLoaded", () => {
         modalOverlay.appendChild(modalBox);
         document.body.appendChild(modalOverlay);
 
-        // Close button
+        // Close modal
         modalBox.querySelector("#closeModal").addEventListener("click", () => {
             document.body.removeChild(modalOverlay);
         });
 
-        // Prepare table data
+        // Prepare full schedule table
         const fullBody = modalBox.querySelector("#fullScheduleBody");
         const daysOfWeek = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
         const timeSlots = {};
@@ -255,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const sortedTimes = Object.keys(timeSlots).sort((a,b)=>{
             const [h1,m1] = a.split("-")[0].split(":").map(Number);
             const [h2,m2] = b.split("-")[0].split(":").map(Number);
-            return h1*60+m1 - (h2*60+m2);
+            return h1*60 + m1 - (h2*60 + m2);
         });
 
         fullBody.innerHTML = sortedTimes.map(time => {
@@ -269,6 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadSchedules();
 });
+
 
 //grades
 function loadGrades(studentId) {

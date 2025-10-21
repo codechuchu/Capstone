@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enrollment Form - Sulivan National High School</title>
   <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="icon" type="image/png" sizes="100x100" href="sulivanlogo.png">
+    <link rel="shortcut icon" type="image/png" href="sulivanlogo.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="enrollment.css" />
 </head>
@@ -64,60 +66,54 @@
         <input type="hidden" name="guardian_contact" id="hidden_guardian_contact">
 
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <label for="birth-certificate" class="block text-gray-700 text-lg font-medium mb-2">Birth
-              Certificate</label>
-            <div class="flex items-center space-x-4">
-              <input type="file" id="birth-certificate" name="birth_certificate" class="hidden"
-                accept=".pdf,.doc,.docx,.jpg,.png" required />
-              <button type="button"
-                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
-                data-target-input="birth-certificate">Attach file</button>
-              <span class="filename-text text-gray-600">No file chosen</span>
-            </div>
-          </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+  <div>
+    <label for="birth-certificate" class="block text-gray-700 text-lg font-medium mb-2">Birth Certificate</label>
+    <div class="flex items-center space-x-4">
+      <input type="file" id="birth-certificate" name="birth_certificate" class="hidden"
+        accept=".pdf,.doc,.docx,.jpg,.png" required />
+      <button type="button"
+        class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+        data-target-input="birth-certificate">Attach file</button>
+      <span class="filename-text text-gray-600">No file chosen</span>
+    </div>
+  </div>
 
-          <div>
-            <label for="original-form-138" class="block text-gray-700 text-lg font-medium mb-2">Original Form
-              138</label>
-            <div class="flex items-center space-x-4">
-              <!-- NAME matches PHP expectation: original_form_138 -->
-              <input type="file" id="original-form-138" name="original_form_138" class="hidden"
-                accept=".pdf,.doc,.docx,.jpg,.png" required />
-              <button type="button"
-                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
-                data-target-input="original-form-138">Attach file</button>
-              <span class="filename-text text-gray-600">No file chosen</span>
-            </div>
-          </div>
+  <div>
+    <label for="original-form-138" class="block text-gray-700 text-lg font-medium mb-2">Original Form 138</label>
+    <div class="flex items-center space-x-4">
+      <input type="file" id="original-form-138" name="original_form_138" class="hidden"
+        accept=".pdf,.doc,.docx,.jpg,.png" />
+      <button type="button"
+        class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+        data-target-input="original-form-138">Attach file</button>
+      <span class="filename-text text-gray-600">No file chosen</span>
+    </div>
+  </div>
 
-          <div>
-            <label for="good-moral" class="block text-gray-700 text-lg font-medium mb-2">Good Moral</label>
-            <div class="flex items-center space-x-4">
-              <input type="file" id="good-moral" name="good_moral" class="hidden" accept=".pdf,.doc,.docx,.jpg,.png"
-                required />
-              <button type="button"
-                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
-                data-target-input="good-moral">Attach file</button>
-              <span class="filename-text text-gray-600">No file chosen</span>
-            </div>
-          </div>
+  <div>
+    <label for="good-moral" class="block text-gray-700 text-lg font-medium mb-2">Good Moral</label>
+    <div class="flex items-center space-x-4">
+      <input type="file" id="good-moral" name="good_moral" class="hidden" accept=".pdf,.doc,.docx,.jpg,.png" />
+      <button type="button"
+        class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+        data-target-input="good-moral">Attach file</button>
+      <span class="filename-text text-gray-600">No file chosen</span>
+    </div>
+  </div>
 
-          <div>
-            <label for="original-form-137" class="block text-gray-700 text-lg font-medium mb-2">Original Form
-              137</label>
-            <div class="flex items-center space-x-4">
-              <!-- NAME matches PHP expectation: original_form_137 -->
-              <input type="file" id="original-form-137" name="original_form_137" class="hidden"
-                accept=".pdf,.doc,.docx,.jpg,.png" required />
-              <button type="button"
-                class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
-                data-target-input="original-form-137">Attach file</button>
-              <span class="filename-text text-gray-600">No file chosen</span>
-            </div>
-          </div>
-        </div>
+  <div>
+    <label for="original-form-137" class="block text-gray-700 text-lg font-medium mb-2">Original Form 137</label>
+    <div class="flex items-center space-x-4">
+      <input type="file" id="original-form-137" name="original_form_137" class="hidden"
+        accept=".pdf,.doc,.docx,.jpg,.png" />
+      <button type="button"
+        class="attach-file-btn bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+        data-target-input="original-form-137">Attach file</button>
+      <span class="filename-text text-gray-600">No file chosen</span>
+    </div>
+  </div>
+</div>
 
         <div class="flex justify-end mt-8">
           <button id="next-button" type="submit"

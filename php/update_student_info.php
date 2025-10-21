@@ -16,8 +16,8 @@ debugLog("Raw POST input: " . $rawInput);
 $data = json_decode($rawInput, true);
 $jsonError = json_last_error();
 if ($jsonError !== JSON_ERROR_NONE) {
-    debugLog("JSON Decode Error: " . json_last_error_msg($jsonError));
-    echo json_encode(["success" => false, "message" => "Invalid JSON payload: " . json_last_error_msg($jsonError)]);
+    debugLog("JSON Decode Error: " . json_last_error_msg());
+    echo json_encode(["success" => false, "message" => "Invalid JSON payload: " . json_last_error_msg()]);
     exit;
 }
 
@@ -58,11 +58,12 @@ if (!empty($cellphone) && !preg_match('/^\d{11}$/', $cellphone)) {
     exit;
 }
 
-if (!empty($email) && (!filter_var($email, FILTER_VALIDATE_EMAIL) || !str_contains($email, '.com'))) {
+if (!empty($email) && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strpos($email, '.com') === false)) {
     echo json_encode(["success" => false, "message" => "Invalid email"]);
     exit;
 }
 
+// ✅ XAMPP credentials
 $host = 'localhost';
 $db   = 'sulivannhs';
 $user = 'root';
@@ -143,7 +144,7 @@ try {
         exit;
     }
 
-    // ✅ Insert into audit trail
+    // ✅ Audit trail
     $ip_address = $_SERVER['REMOTE_ADDR'];
     $action = "Update Student Info";
     $details = "Updated student record (ID: $applicant_id, Level: $level)";

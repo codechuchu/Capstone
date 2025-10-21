@@ -50,3 +50,4 @@ try {
 } catch (Throwable $e) {
     echo json_encode([]);
 }
+?>

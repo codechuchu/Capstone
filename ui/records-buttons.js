@@ -1772,7 +1772,7 @@ if (recordsButtons) {
                 modalContent.appendChild(dropdownDiv);
 
                 const sectionsDiv = document.createElement("div");
-                sectionsDiv.className = "overflow-auto h-[400px]";
+                sectionsDiv.className = "overflow-auto h-[600px]";
                 modalContent.appendChild(sectionsDiv);
 
                 yearSelect.addEventListener("change", async () => {
@@ -1783,6 +1783,16 @@ if (recordsButtons) {
                     }
 
                     try {
+                        // ✅ Determine assigned level first
+                        const levelRes = await fetch("../php/get_assigned_level.php", { credentials: "include" });
+                        const levelData = await levelRes.json();
+
+                        if (!levelData.success) {
+                            sectionsDiv.innerHTML = "<p>Unable to determine assigned level.</p>";
+                            return;
+                        }
+
+                        // ✅ Fetch sections filtered by assigned_level (handled by PHP)
                         const res = await fetch("../php/fetch_completed_sections.php", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -1796,11 +1806,15 @@ if (recordsButtons) {
                             return;
                         }
 
-                        if (!data.sections || data.sections.length === 0) {
+                        // ✅ Only use sections that match the assigned level
+                        const allSections = data.sections || [];
+
+                        if (allSections.length === 0) {
                             sectionsDiv.innerHTML = "<p>No completed sections found for this year.</p>";
                             return;
                         }
 
+                        // ✅ Build table normally
                         let tableHTML = `
                         <table class="w-full border border-gray-600 text-sm text-gray-200">
                             <thead class="bg-gray-700 text-white sticky top-0">
@@ -1813,29 +1827,27 @@ if (recordsButtons) {
                                 </tr>
                             </thead>
                             <tbody>
-                    `;
-                    
-
-                    data.sections.forEach(s => {
-                        tableHTML += `
-                            <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                                <td class="px-2 py-1 text-left">${s.section_name}</td>
-                                <td class="px-2 py-1 text-center">${s.grade_level}</td>
-                                <td class="px-2 py-1 text-center">${s.assigned_level}</td>
-                                <td class="px-2 py-1 text-center">${s.total_students}</td>
-                                <td class="px-2 py-1 text-center">
-                                    <button class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-500 view-btn" data-section="${s.section_id}">View</button>
-                                    <button class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 pdf-btn" data-section="${s.section_id}" data-name="${s.section_name}">PDF</button>
-                                </td>
-                            </tr>
                         `;
-                    });
-                    
+
+                        allSections.forEach(s => {
+                            tableHTML += `
+                                <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                                    <td class="px-2 py-1 text-left">${s.section_name}</td>
+                                    <td class="px-2 py-1 text-center">${s.grade_level}</td>
+                                    <td class="px-2 py-1 text-center">${s.assigned_level}</td>
+                                    <td class="px-2 py-1 text-center">${s.total_students}</td>
+                                    <td class="px-2 py-1 text-center">
+                                        <button class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-500 view-btn" data-section="${s.section_id}">View</button>
+                                        <button class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 pdf-btn" data-section="${s.section_id}" data-name="${s.section_name}">PDF</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
 
                         tableHTML += "</tbody></table>";
                         sectionsDiv.innerHTML = tableHTML;
 
-                        // VIEW BUTTON
+                        // --- VIEW BUTTON ---
                         sectionsDiv.querySelectorAll(".view-btn").forEach(btn => {
                             btn.addEventListener("click", async () => {
                                 const sectionId = parseInt(btn.dataset.section, 10);
@@ -1854,7 +1866,6 @@ if (recordsButtons) {
                                         return;
                                     }
 
-                                    // Properly aligned table without the status column
                                     let studentHTML = `
                 <h3 class='text-white font-bold mb-2'>Students</h3>
                 <table class="w-full border border-gray-600 text-sm text-gray-200">
@@ -1896,12 +1907,12 @@ if (recordsButtons) {
                             });
                         });
 
-                        // PDF BUTTON
+                        // --- PDF BUTTON ---
                         sectionsDiv.querySelectorAll(".pdf-btn").forEach(btn => {
                             btn.addEventListener("click", async () => {
                                 const sectionId = parseInt(btn.dataset.section, 10);
                                 const sectionName = btn.dataset.name || "";
-                        
+
                                 try {
                                     const studentsRes = await fetch("../php/fetch_students_by_section.php", {
                                         method: "POST",
@@ -1909,23 +1920,22 @@ if (recordsButtons) {
                                         body: JSON.stringify({ section_id: sectionId })
                                     });
                                     const studentsData = await studentsRes.json();
-                        
+
                                     if (!studentsData || studentsData.error) {
                                         alert(studentsData?.error || "Failed to fetch students.");
                                         return;
                                     }
-                        
+
                                     const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
                                     const userData = await userRes.json();
                                     const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname}` : "N/A";
-                        
+
                                     const { jsPDF } = window.jspdf;
                                     const doc = new jsPDF({ orientation: "portrait" });
                                     const pageWidth = doc.internal.pageSize.getWidth();
                                     const pageHeight = doc.internal.pageSize.getHeight();
                                     let totalPagesExp = "{total_pages_count_string}";
-                        
-                                    // --- HEADER ---
+
                                     doc.setFont("helvetica", "bold");
                                     doc.setFontSize(14);
                                     doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 10, { align: "center" });
@@ -1933,8 +1943,7 @@ if (recordsButtons) {
                                     doc.setFontSize(10);
                                     doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 16, { align: "center" });
                                     doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 22, { align: "center" });
-                        
-                                    // --- TABLE ---
+
                                     const bodyData = studentsData.students.map((s, i) => [
                                         i + 1,
                                         String(s.lrn ?? "").padStart(12, "0"),
@@ -1942,12 +1951,11 @@ if (recordsButtons) {
                                         s.lastname || "",
                                         s.gender || ""
                                     ]);
-                        
-                                    // Center table
+
                                     const colWidths = [15, 35, 45, 45, 25];
                                     const tableWidth = colWidths.reduce((a, b) => a + b, 0);
                                     const marginLeft = (pageWidth - tableWidth) / 2;
-                        
+
                                     doc.autoTable({
                                         head: [["#", "LRN", "First Name", "Last Name", "Gender"]],
                                         body: bodyData,
@@ -1960,21 +1968,20 @@ if (recordsButtons) {
                                             const pageNum = doc.internal.getNumberOfPages();
                                             doc.setFontSize(9);
                                             doc.setTextColor(100);
-                        
+
                                             const exportDate = new Date().toLocaleString('en-US', { hour12: false });
                                             doc.text(`Prepared By: ${preparedBy}    Section: ${sectionName}`, 14, pageHeight - 10);
                                             doc.text(`Date: ${exportDate}    School Year: ${yearSelect.value || ""}`, 14, pageHeight - 5);
-                        
+
                                             const pageText = `Page ${pageNum} of ${totalPagesExp}`;
                                             const textWidth = doc.getTextWidth(pageText);
                                             doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
                                         }
                                     });
-                        
+
                                     doc.putTotalPages(totalPagesExp);
-                        
                                     window.open(doc.output("bloburl"), "_blank");
-                        
+
                                 } catch (err) {
                                     console.error(err);
                                     alert("Error generating PDF.");

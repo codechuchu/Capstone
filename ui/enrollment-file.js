@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
   // Populate hidden fields with sessionStorage data
   const personal = JSON.parse(sessionStorage.getItem("personalInfo") || "{}");
@@ -67,20 +66,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById('document-form');
   form.addEventListener('submit', async (e) => {
     e.preventDefault(); // Stop default POST
-  
-    // Validate required files
-    const allFileInputs = Array.from(form.querySelectorAll('input[type="file"][required]'));
-    const missingFiles = allFileInputs.filter(input => input.files.length === 0);
-  
-    if (missingFiles.length > 0) {
-      alert('Please attach all required documents before proceeding.');
-      missingFiles[0].focus();
+
+    // Require only the birth certificate
+    const birthCertificateInput = form.querySelector('input[name="birth_certificate"]');
+    if (!birthCertificateInput || birthCertificateInput.files.length === 0) {
+      alert('Please attach the Birth Certificate before proceeding.');
+      birthCertificateInput?.focus();
       return;
     }
-  
-    // Convert all files to Base64 so we can store them temporarily
+
+    // Convert all selected files to Base64
+    const allFileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
     const uploadedDocs = {};
     for (const input of allFileInputs) {
+      if (input.files.length === 0) continue; // skip unselected files
       const file = input.files[0];
       uploadedDocs[input.name] = {
         name: file.name,
@@ -88,32 +87,32 @@ document.addEventListener("DOMContentLoaded", () => {
         data: await fileToBase64(file)
       };
     }
-  
+
     // Store files in sessionStorage
     sessionStorage.setItem('uploadedDocs', JSON.stringify(uploadedDocs));
-  
+
     // Merge hidden fields with existing personalInfo
     const personalInfo = JSON.parse(sessionStorage.getItem("personalInfo") || "{}");
     form.querySelectorAll('input[type="hidden"]').forEach(hidden => {
       personalInfo[hidden.name] = hidden.value;
     });
     sessionStorage.setItem('personalInfo', JSON.stringify(personalInfo));
-  
-    // ✅ Always store strand, gradeLevel, and semester from hidden fields
+
+    // Store strand, gradeLevel, and semester
     sessionStorage.setItem('strand', document.getElementById("hidden_track")?.value || "");
     sessionStorage.setItem('gradeLevel', document.getElementById("hidden_grade_level")?.value || "");
     sessionStorage.setItem('semester', document.getElementById("hidden_semester")?.value || "");
-  
+
     console.log("Stored in sessionStorage:", {
       strand: sessionStorage.getItem('strand'),
       gradeLevel: sessionStorage.getItem('gradeLevel'),
       semester: sessionStorage.getItem('semester')
     });
-    console.log("Stored semester in sessionStorage:", sessionStorage.getItem('semester'));
+
     // Go to step 3
     window.location.href = 'validateInfo.html';
   });
-  
+
   // Helper function to convert file to Base64
   function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -123,5 +122,4 @@ document.addEventListener("DOMContentLoaded", () => {
       reader.readAsDataURL(file);
     });
   }
-  
 });

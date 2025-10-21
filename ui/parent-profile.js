@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+
     // --- Logout Button Logic ---
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
@@ -33,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = 'admin-login.html'; // Redirect to login
         });
     }
-
+    
     // --- Initial State Setup on Page Load ---
     const initialActiveNavItem = document.querySelector('.nav-item.active');
     if (initialActiveNavItem) {

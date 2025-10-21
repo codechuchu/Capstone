@@ -58,7 +58,7 @@ try {
     ");
 
     // mysqli for audit logging
-    $conn = new mysqli($host, $username, $password, $db);
+    $conn = new mysqli($host, $user, $pass, $db);
 
 
     foreach ($student_ids as $sid) {

@@ -12,6 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 include_once __DIR__ . '/log_audit.php';
 
+// ✅ XAMPP Credentials
 $host = 'localhost';
 $db   = 'sulivannhs';
 $user = 'root';
@@ -35,15 +36,15 @@ try {
         exit;
     }
 
-    // Try SHS first
-    $stmtCheckSHS = $pdo->prepare("SELECT section_id, CONCAT(firstname, ' ', lastname) AS name FROM shs_applicant WHERE applicant_id = :id LIMIT 1");
-    $stmtCheckSHS->execute([':id' => $student_id]);
-    $shsStudent = $stmtCheckSHS->fetch();
+    // ✅ Check SHS first
+    $stmtSHS = $pdo->prepare("SELECT section_id, CONCAT(firstname, ' ', lastname) AS name FROM shs_applicant WHERE applicant_id = :id LIMIT 1");
+    $stmtSHS->execute([':id' => $student_id]);
+    $shsStudent = $stmtSHS->fetch();
 
-    // Try JHS next if not found in SHS
-    $stmtCheckJHS = $pdo->prepare("SELECT section_id, CONCAT(firstname, ' ', lastname) AS name FROM jhs_applicants WHERE applicant_id = :id LIMIT 1");
-    $stmtCheckJHS->execute([':id' => $student_id]);
-    $jhsStudent = $stmtCheckJHS->fetch();
+    // ✅ Check JHS if not found
+    $stmtJHS = $pdo->prepare("SELECT section_id, CONCAT(firstname, ' ', lastname) AS name FROM jhs_applicants WHERE applicant_id = :id LIMIT 1");
+    $stmtJHS->execute([':id' => $student_id]);
+    $jhsStudent = $stmtJHS->fetch();
 
     $level = null;
     $section_id = null;
@@ -67,35 +68,32 @@ try {
         exit;
     }
 
-    // 1️⃣ Set section_id = NULL
+    // 1️⃣ Remove student from section table first
+    $stmtDelete = $pdo->prepare("DELETE FROM section WHERE student_id = :id AND section_id = :sid");
+    $stmtDelete->execute([
+        ':id' => $student_id,
+        ':sid' => $section_id
+    ]);
+
+    // 2️⃣ Set section_id = NULL in the applicant table
     if ($level === 'shs') {
         $pdo->prepare("UPDATE shs_applicant SET section_id = NULL WHERE applicant_id = :id")->execute([':id' => $student_id]);
     } else {
         $pdo->prepare("UPDATE jhs_applicants SET section_id = NULL WHERE applicant_id = :id")->execute([':id' => $student_id]);
     }
 
-    // 2️⃣ Remove student from section table
-    $pdo->prepare("DELETE FROM section WHERE student_id = :id AND section_id = :sid")->execute([
-        ':id' => $student_id,
-        ':sid' => $section_id
-    ]);
+    // 3️⃣ Recalculate total_students based on actual section table
+    $stmtCount = $pdo->prepare("SELECT COUNT(*) AS total FROM section WHERE section_id = :sid");
+    $stmtCount->execute([':sid' => $section_id]);
+    $newTotal = $stmtCount->fetch()['total'] ?? 0;
 
-    // 3️⃣ Recalculate total_students
-    if ($level === 'shs') {
-        $recalc = $pdo->prepare("SELECT COUNT(*) AS total FROM shs_applicant WHERE section_id = :sid AND status = 'enrolled'");
-    } else {
-        $recalc = $pdo->prepare("SELECT COUNT(*) AS total FROM jhs_applicants WHERE section_id = :sid AND status = 'enrolled'");
-    }
-
-    $recalc->execute([':sid' => $section_id]);
-    $newTotal = $recalc->fetch()['total'] ?? 0;
-
+    // 4️⃣ Update total_students in sections_list
     $pdo->prepare("UPDATE sections_list SET total_students = :total WHERE section_id = :sid")->execute([
         ':total' => $newTotal,
         ':sid' => $section_id
     ]);
 
-    // 4️⃣ Log action
+    // 5️⃣ Log audit trail
     $action = "Removed Student from Section";
     $details = "Student {$student_name} (ID: {$student_id}) removed from Section ID {$section_id}";
     logAction($conn, $_SESSION['user_id'], $_SESSION['email'], $_SESSION['role'], $action, $details);
@@ -103,5 +101,6 @@ try {
     echo json_encode(["success" => true, "new_total" => $newTotal]);
 
 } catch (PDOException $e) {
-    echo json_encode(["success" => false, "error" => "Database error"]);
+    echo json_encode(["success" => false, "error" => "Database error: " . $e->getMessage()]);
 }
+?>

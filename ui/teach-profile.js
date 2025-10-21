@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ---- added logout handler (minimal, redirects to admin-login.html) ----
+
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function () {
@@ -599,42 +599,55 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch(err => console.error("Error fetching sections:", err));
 
-    function showSectionStudents(sectionId, subjectName, subjectId) {
-        currentSectionId = sectionId;
-        currentSubjectName = subjectName;
+function showSectionStudents(sectionId, subjectName, subjectId) {
+    currentSectionId = sectionId;
+    currentSubjectName = subjectName;
+    currentSubjectId = subjectId; // ✅ Store subject_id globally
 
-        sectionsContainer.classList.add("hidden");
-        backBtn.classList.remove("hidden");
-        if (viewGradesBtn) viewGradesBtn.classList.remove("hidden");
+    sectionsContainer.classList.add("hidden");
+    backBtn.classList.remove("hidden");
+    if (viewGradesBtn) viewGradesBtn.classList.remove("hidden");
 
-        fetch(`../php/get_section_student.php?section_id=${encodeURIComponent(sectionId)}`, { credentials: "include" })
-            .then(res => res.json())
-            .then(students => {
-                studentsTitle.textContent = `Students in ${subjectName}`;
-                studentsTableBody.innerHTML = "";
-                if (students.error || students.length === 0) {
-                    studentsTableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">${students.error || "No students found"}</td></tr>`;
-                    studentsList.classList.remove("hidden");
-                    return;
-                }
-                students.forEach(st => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">
-                            <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
+    // Fetch students for this section
+    fetch(`../php/get_section_student.php?section_id=${encodeURIComponent(sectionId)}`, { credentials: "include" })
+        .then(res => res.json())
+        .then(students => {
+            studentsTitle.textContent = `Students in ${subjectName}`;
+            studentsTableBody.innerHTML = "";
+
+            if (students.error || students.length === 0) {
+                studentsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                            ${students.error || "No students found"}
                         </td>
-                    `;
-                    tr.querySelector(".encode-btn").addEventListener("click", () =>
-                        openModal(st.student_id, st.student_name, sectionId, subjectId, subjectName)
-                    );
-                    studentsTableBody.appendChild(tr);
-                });
+                    </tr>`;
                 studentsList.classList.remove("hidden");
-            })
-            .catch(err => console.error("Error fetching students:", err));
-    }
+                return;
+            }
+
+            students.forEach(st => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
+                    </td>
+                `;
+
+                tr.querySelector(".encode-btn").addEventListener("click", () =>
+                    openModal(st.student_id, st.student_name, sectionId, subjectId, subjectName)
+                );
+
+                studentsTableBody.appendChild(tr);
+            });
+
+            studentsList.classList.remove("hidden");
+        })
+        .catch(err => console.error("Error fetching students:", err));
+}
+
 
     // ================= VIEW GRADES MODAL =================
     const viewGradesModal = document.createElement("div");
@@ -746,7 +759,8 @@ exportPdfBtn.addEventListener("click", async () => {
                     }
 
                     const assignedLevel = data.assigned_level;
-                    fetch(`../php/get_section_grades.php?section_id=${currentSectionId}&level=${assignedLevel}`, { credentials: "include" })
+                    fetch(`../php/get_section_grades.php?section_id=${currentSectionId}&subject_id=${currentSubjectId}&level=${assignedLevel}`, { credentials: "include" })
+
                         .then(res => res.json())
                         .then(grades => {
                             let tableHTML = `<table class="min-w-full border-collapse border border-gray-300">
@@ -798,99 +812,101 @@ exportPdfBtn.addEventListener("click", async () => {
     document.getElementById("view-grades-close-btn").addEventListener("click", () => viewGradesModal.classList.add("hidden"));
     viewGradesModal.addEventListener("click", e => { if (e.target === viewGradesModal) viewGradesModal.classList.add("hidden"); });
 
-    // ================== GRADE MODAL & SAVE LOGIC ==================
-    function openModal(studentId, studentName, sectionId, subjectId, subjectName) {
-        fetch("../php/get_assigned_level.php", { credentials: "include" })
-            .then(res => res.json())
-            .then(data => {
-                if (!data.success) { alert("No assigned level detected."); return; }
-                const assignedLevel = data.assigned_level;
+// ================== GRADE MODAL & SAVE LOGIC ==================
+// ================== GRADE MODAL & SAVE LOGIC ==================
+function openModal(studentId, studentName, sectionId, subjectId, subjectName) {
+    fetch("../php/get_assigned_level.php", { credentials: "include" })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) { alert("No assigned level detected."); return; }
+            const assignedLevel = (data.assigned_level || "").trim().toLowerCase();
 
-                if (jhsModal) jhsModal.classList.add("hidden");
-                if (shsModal) shsModal.classList.add("hidden");
+            if (jhsModal) jhsModal.classList.add("hidden");
+            if (shsModal) shsModal.classList.add("hidden");
 
-                if (assignedLevel === "Junior High") {
-                    modalStudentName.textContent = `Encode JHS Grade for ${studentName}`;
-                    studentIdInput.value = studentId;
-                    sectionIdInput.value = sectionId;
-                    subjectIdInput.value = subjectId;
+            if (assignedLevel === "junior high") {
+                modalStudentName.textContent = `Encode JHS Grade for ${studentName}`;
+                studentIdInput.value = studentId;
+                sectionIdInput.value = sectionId;
+                subjectIdInput.value = subjectId;
 
-                    const q1 = document.getElementById("q1");
-                    const q2 = document.getElementById("q2");
-                    const q3 = document.getElementById("q3");
-                    const q4 = document.getElementById("q4");
-                    const avg = document.getElementById("average");
-                    [q1, q2, q3, q4].forEach(i => i.value = "");
-                    avg.value = "";
+                const q1 = document.getElementById("q1");
+                const q2 = document.getElementById("q2");
+                const q3 = document.getElementById("q3");
+                const q4 = document.getElementById("q4");
+                const avg = document.getElementById("average");
+                [q1, q2, q3, q4].forEach(i => i.value = "");
+                avg.value = "";
 
-                    function computeAverage() {
-                        const vals = [q1, q2, q3, q4].map(i => parseFloat(i.value)).filter(v => !isNaN(v));
-                        avg.value = vals.length === 4 ? (vals.reduce((a,b)=>a+b,0)/4).toFixed(2) : "";
-                    }
-                    [q1, q2, q3, q4].forEach(i => i.addEventListener("input", computeAverage));
-
-                    fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (Array.isArray(data) && data.length > 0) {
-                                q1.value = data[0].q1 || "";
-                                q2.value = data[0].q2 || "";
-                                q3.value = data[0].q3 || "";
-                                q4.value = data[0].q4 || "";
-                                computeAverage();
-                            }
-                        });
-
-                    jhsModal.classList.remove("hidden");
-                } else {
-                    shsStudentName.textContent = `Encode SHS Grade for ${studentName}`;
-                    shsStudentIdInput.value = studentId;
-                    shsSectionIdInput.value = sectionId;
-                    shsSubjectIdInput.value = subjectId;
-                    shsSubjectNameInput.value = subjectName || "";
-                    shsSubjectNameInput.readOnly = true;
-
-                    const q1 = document.getElementById("q1-grade");
-                    const q2 = document.getElementById("q2-grade");
-                    const finalGrade = document.getElementById("final-grade");
-                    const remarks = document.getElementById("remarks");
-                    [q1, q2, finalGrade, remarks].forEach(i => i.value = "");
-
-                    function computeFinal() {
-                        const a = parseFloat(q1.value);
-                        const b = parseFloat(q2.value);
-                        if (!isNaN(a) && !isNaN(b)) {
-                            const avg = ((a+b)/2).toFixed(2);
-                            finalGrade.value = avg;
-                            remarks.value = avg >= 75 ? "Passed":"Failed";
-                        } else {
-                            finalGrade.value = "";
-                            remarks.value = "";
-                        }
-                    }
-                    q1.addEventListener("input", computeFinal);
-                    q2.addEventListener("input", computeFinal);
-
-                    fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (Array.isArray(data) && data.length > 0) {
-                                q1.value = data[0].q1_grade || "";
-                                q2.value = data[0].q2_grade || "";
-                                if (q1.value !== "" && q2.value !== "") {
-                                    const avg = ((parseFloat(q1.value)+parseFloat(q2.value))/2).toFixed(2);
-                                    finalGrade.value = avg;
-                                    remarks.value = avg>=75?"Passed":"Failed";
-                                }
-                            }
-                        })
-                        .catch(err => console.error("Error fetching SHS grades:", err));
-
-                    shsModal.classList.remove("hidden");
+                function computeAverage() {
+                    const vals = [q1, q2, q3, q4].map(i => parseFloat(i.value)).filter(v => !isNaN(v));
+                    avg.value = vals.length === 4 ? (vals.reduce((a,b)=>a+b,0)/4).toFixed(2) : "";
                 }
-            })
-            .catch(err => { console.error("Error fetching assigned level:", err); alert("Failed to open grade modal."); });
-    }
+                [q1, q2, q3, q4].forEach(i => i.addEventListener("input", computeAverage));
+
+                fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            q1.value = data[0].q1 || "";
+                            q2.value = data[0].q2 || "";
+                            q3.value = data[0].q3 || "";
+                            q4.value = data[0].q4 || "";
+                            computeAverage();
+                        }
+                    });
+
+                jhsModal.classList.remove("hidden");
+            } else {
+                shsStudentName.textContent = `Encode SHS Grade for ${studentName}`;
+                shsStudentIdInput.value = studentId;
+                shsSectionIdInput.value = sectionId;
+                shsSubjectIdInput.value = subjectId;
+                shsSubjectNameInput.value = subjectName || "";
+                shsSubjectNameInput.readOnly = true;
+
+                const q1 = document.getElementById("q1-grade");
+                const q2 = document.getElementById("q2-grade");
+                const finalGrade = document.getElementById("final-grade");
+                const remarks = document.getElementById("remarks");
+                [q1, q2, finalGrade, remarks].forEach(i => i.value = "");
+
+                function computeFinal() {
+                    const a = parseFloat(q1.value);
+                    const b = parseFloat(q2.value);
+                    if (!isNaN(a) && !isNaN(b)) {
+                        const avg = ((a+b)/2).toFixed(2);
+                        finalGrade.value = avg;
+                        remarks.value = avg >= 75 ? "Passed":"Failed";
+                    } else {
+                        finalGrade.value = "";
+                        remarks.value = "";
+                    }
+                }
+                q1.addEventListener("input", computeFinal);
+                q2.addEventListener("input", computeFinal);
+
+                fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            q1.value = data[0].q1_grade || "";
+                            q2.value = data[0].q2_grade || "";
+                            if (q1.value !== "" && q2.value !== "") {
+                                const avg = ((parseFloat(q1.value)+parseFloat(q2.value))/2).toFixed(2);
+                                finalGrade.value = avg;
+                                remarks.value = avg>=75?"Passed":"Failed";
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Error fetching SHS grades:", err));
+
+                shsModal.classList.remove("hidden");
+            }
+        })
+        .catch(err => { console.error("Error fetching assigned level:", err); alert("Failed to open grade modal."); });
+}
+
 
     if (closeJhsBtn) closeJhsBtn.addEventListener("click", ()=>jhsModal.classList.add("hidden"));
     if (closeShsBtn) closeShsBtn.addEventListener("click", ()=>shsModal.classList.add("hidden"));
@@ -1579,9 +1595,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         { key: 'original_form_137', label: 'Original Form 137' }
                     ].map(doc => {
                         const rawPath = documents[doc.key] || "";
-                        const fixedPath = rawPath.startsWith("uploads/")
-                            ? `${window.location.origin}/capstone/${rawPath}`
-                            : rawPath;
+                        const fixedPath = rawPath
+                            ? rawPath.startsWith("uploads/") // match your actual folder
+                                ? `${window.location.origin}/${rawPath}`
+                                : rawPath
+                            : "";
+                        
                         return `
                             <div>
                                 <label class="block text-sm">${doc.label}</label>
@@ -1591,6 +1610,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <input type="file" name="${doc.key}" accept=".pdf,.jpg,.jpeg,.png" class="w-full border rounded p-1 bg-white">
                             </div>
                         `;
+
                     }).join('')}
                 </div>
             </section>

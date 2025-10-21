@@ -10,6 +10,7 @@ session_start();
 require_once "log_audit.php";
 
 try {
+    // ✅ XAMPP credentials
     $servername = "localhost";
     $username   = "root";
     $password   = "";
@@ -58,7 +59,6 @@ try {
         ? $strand_upper . ' ' . $grade_level . '-' . $new_section_name_input
         : 'Grade ' . $grade_level . '-' . $new_section_name_input;
 
-    // ------------------- Fetch student IDs from archived_students -------------------
     $idsString = implode(',', array_map('intval', $applicant_ids));
     $sql = "SELECT applicant_id FROM archived_students WHERE applicant_id IN ($idsString)";
     $result = $conn->query($sql);
@@ -71,7 +71,6 @@ try {
         exit;
     }
 
-    // ------------------- Fetch full student info -------------------
     $idsString = implode(',', $studentIds);
     $sql = "SELECT $pkField, firstname, middlename, lastname FROM $studentTable WHERE $pkField IN ($idsString)";
     $result = $conn->query($sql);
@@ -82,7 +81,6 @@ try {
                                       $row['lastname'];
     }
 
-    // ------------------- Insert new section -------------------
     $sqlInsertSection = ($assigned_level === 'Senior High')
         ? "INSERT INTO sections_list (section_name, grade_level, semester, strand, strand_id, assigned_level, total_students, is_archived, school_year)
            VALUES ('$full_section_name', $grade_level, $semester, '$strand_upper', $strand_id, '$assigned_level', " . count($studentIds) . ", 0, '$school_year')"
@@ -92,13 +90,11 @@ try {
     if (!$conn->query($sqlInsertSection)) throw new Exception('Failed to create new section: ' . $conn->error);
     $new_section_id = $conn->insert_id;
 
-    // ------------------- Update student status and assign to new section -------------------
     $sqlUpdate = "UPDATE $studentTable SET status='enrolled', grade_level=$grade_level, section_id=$new_section_id";
     if ($assigned_level === 'Senior High') $sqlUpdate .= ", semester=$semester, strand='$strand_upper'";
     $sqlUpdate .= " WHERE $pkField IN ($idsString)";
     if (!$conn->query($sqlUpdate)) throw new Exception('Failed to update students: ' . $conn->error);
 
-    // ------------------- Insert into section table -------------------
     $values = [];
     foreach ($studentIds as $sid) {
         $name = $conn->real_escape_string($studentMap[$sid]);
@@ -111,7 +107,6 @@ try {
 
     $conn->query("UPDATE sections_list SET total_students = (SELECT COUNT(*) FROM section WHERE section_id = $new_section_id) WHERE section_id = $new_section_id");
 
-    // ------------------- Log audit -------------------
     try {
         $user_id = $_SESSION['user_id'] ?? 0;
         $username = $_SESSION['email'] ?? 'unknown';
