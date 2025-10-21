@@ -34,51 +34,64 @@ try {
         exit;
     }
 
+    $section_id = $section['section_id'];
     $level = strtolower($section['assigned_level'] ?? 'jhs');
-    $gradeLevel = $section['grade_level'];
-    $semester = $section['semester'];
 
+    // Step 1: Get student IDs from archived_section_students table
+    $stmt = $pdo->prepare("SELECT student_id FROM archived_section_students WHERE section_name = ?");
+    $stmt->execute([$sectionName]);
+    $studentIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (!$studentIds) {
+        echo json_encode(["error" => "No matching students found in the archived section"]);
+        exit;
+    }
+
+    $idsPlaceholder = implode(',', array_fill(0, count($studentIds), '?'));
+
+    // Step 2: Fetch full student info from main applicant tables, including status
     if ($level === 'senior high') {
-        $stmt = $pdo->prepare("
+        $table = 'shs_applicant';
+        $remarksTable = 'shs_studentgrade';
+        $sql = "
             SELECT 
                 a.applicant_id,
                 CONCAT(a.firstname, ' ', IFNULL(CONCAT(SUBSTRING(a.middlename,1,1),'. '),''), a.lastname) AS student_name,
                 a.strand,
                 a.grade_level,
                 a.semester,
+                a.status,  -- added status
                 COALESCE(
-                    (SELECT remarks FROM shs_studentgrade g 
-                     WHERE g.student_id = a.applicant_id 
-                     ORDER BY g.grade_id DESC LIMIT 1),
+                    (SELECT remarks FROM $remarksTable g WHERE g.student_id = a.applicant_id ORDER BY g.grade_id DESC LIMIT 1),
                     'passed'
                 ) AS remarks
-            FROM shs_applicant a
-            WHERE a.section_id = ? 
+            FROM $table a
+            WHERE a.applicant_id IN ($idsPlaceholder)
             ORDER BY a.lastname, a.firstname
-        ");
-        $stmt->execute([$section['section_id']]);
+        ";
     } else {
-        $stmt = $pdo->prepare("
+        $table = 'jhs_applicants';
+        $remarksTable = 'studentgrade';
+        $sql = "
             SELECT 
                 a.applicant_id,
                 CONCAT(a.firstname, ' ', IFNULL(CONCAT(SUBSTRING(a.middlename,1,1),'. '),''), a.lastname) AS student_name,
                 NULL AS strand,
                 a.grade_level,
-                a.semester,
+                NULL AS semester,
+                a.status,  -- added status
                 COALESCE(
-                    (SELECT remarks FROM studentgrade g 
-                     WHERE g.student_id = a.applicant_id 
-                     ORDER BY g.grade_id DESC LIMIT 1),
+                    (SELECT remarks FROM $remarksTable g WHERE g.student_id = a.applicant_id ORDER BY g.grade_id DESC LIMIT 1),
                     'passed'
                 ) AS remarks
-            FROM jhs_applicants a
-            WHERE a.section_id = ?
+            FROM $table a
+            WHERE a.applicant_id IN ($idsPlaceholder)
             ORDER BY a.lastname, a.firstname
-        ");
-        $stmt->execute([$section['section_id']]);
+        ";
     }
-    
 
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($studentIds);
     $students = $stmt->fetchAll();
 
     echo json_encode($students);
@@ -86,3 +99,4 @@ try {
 } catch (Throwable $e) {
     echo json_encode(["error" => $e->getMessage()]);
 }
+?>

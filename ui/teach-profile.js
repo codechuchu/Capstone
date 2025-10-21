@@ -95,18 +95,11 @@ changePasswordForm.addEventListener('submit', async (e) => {
 
 function loadPendingApplications() {
     const tbody = document.getElementById('pending-applications-body');
-
     if (!tbody) return;
 
-    // Always clear out any existing rows (including leftover <th> header rows)
-    while (tbody.firstChild) {
-        tbody.removeChild(tbody.firstChild);
-    }
-
-    // Show loading state
     tbody.innerHTML = `
         <tr>
-            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
                 Loading pending applications...
             </td>
         </tr>
@@ -121,41 +114,42 @@ function loadPendingApplications() {
                 data.forEach(applicant => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-strand="${applicant.strand}">${applicant.strand}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-grade-level="${applicant.grade_level}">${applicant.grade_level}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-name="${applicant.name}">${applicant.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-contact="${applicant.cellphone}">${applicant.cellphone}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-email="${applicant.emailaddress}">${applicant.emailaddress}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <button onclick="viewApplicationDetails(${applicant.applicant_id})" 
-                    class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    View
-                </button>
-                    </td>
-                `;
-
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${applicant.strand || ""}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${applicant.grade_level || ""}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${applicant.name || ""}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${applicant.cellphone || ""}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${applicant.emailaddress || ""}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <button onclick="viewApplicationDetails(${applicant.applicant_id})" 
+                                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                View
+                            </button>
+                        </td>
+                    `;
                     tbody.appendChild(row);
                 });
             } else {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
                             No pending applications found.
                         </td>
                     </tr>
                 `;
             }
         })
-        .catch(() => {
+        .catch(err => {
+            console.error("Error:", err);
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">
                         Error loading pending applications.
                     </td>
                 </tr>
             `;
         });
 }
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -385,27 +379,170 @@ function viewApplicationDetails(applicantId) {
     // Show modal
     document.getElementById("applicationModal").classList.remove("hidden");
 }
-
 function approveApplication() {
     if (!currentApplicantId) {
         alert("No applicant selected.");
         return;
     }
 
+    // Add spinner animation CSS if not already added
+    if (!document.getElementById('spinnerStyle')) {
+        const style = document.createElement('style');
+        style.id = 'spinnerStyle';
+        style.innerHTML = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .spinner {
+                border: 6px solid #f3f3f3;
+                border-top: 6px solid #3498db;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Create loading overlay
+    let loadingOverlay = document.createElement("div");
+    loadingOverlay.id = "loadingOverlay";
+    loadingOverlay.style.position = "fixed";
+    loadingOverlay.style.top = 0;
+    loadingOverlay.style.left = 0;
+    loadingOverlay.style.width = "100%";
+    loadingOverlay.style.height = "100%";
+    loadingOverlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+    loadingOverlay.style.display = "flex";
+    loadingOverlay.style.flexDirection = "column";
+    loadingOverlay.style.justifyContent = "center";
+    loadingOverlay.style.alignItems = "center";
+    loadingOverlay.style.zIndex = 10000;
+
+    loadingOverlay.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; background: #fff; padding: 20px 30px; border-radius: 8px;">
+            <div class="spinner"></div>
+            <p style="margin: 0; font-weight: bold;">Approving...</p>
+        </div>
+    `;
+
+    document.body.appendChild(loadingOverlay);
+
     fetch(`../php/approve_application.php?id=${currentApplicantId}`, {
         method: "POST"
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Applicant approved successfully!");
-                closeApplicationModal();
-                loadPendingApplications(); // refresh table
-            } else {
-                alert("Error: " + data.error);
-            }
+    .then(response => response.json())
+    .then(data => {
+        document.body.removeChild(loadingOverlay);
+
+        if (data.success) {
+            alert("Applicant approved successfully!");
+            closeApplicationModal();
+            loadPendingApplications();
+        } else {
+            alert("Error: " + data.error);
+        }
+    })
+    .catch(err => {
+        document.body.removeChild(loadingOverlay);
+        alert("Request failed: " + err.message);
+    });
+}
+
+function denyApplication() {
+    if (!currentApplicantId) {
+        alert("No applicant selected.");
+        return;
+    }
+    document.getElementById("declineModal").classList.remove("hidden");
+}
+
+function closeDeclineModal() {
+    document.getElementById("declineModal").classList.add("hidden");
+    document.getElementById("declineReason").value = "";
+}
+
+function submitDecline() {
+    const reason = document.getElementById("declineReason").value.trim();
+
+    if (!reason) {
+        alert("Please enter a reason for declining this application.");
+        return;
+    }
+
+    // Create loading overlay
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = 9999;
+
+    // Spinner
+    const spinner = document.createElement("div");
+    spinner.style.width = "50px";
+    spinner.style.height = "50px";
+    spinner.style.border = "6px solid #f3f3f3";
+    spinner.style.borderTop = "6px solid #3498db";
+    spinner.style.borderRadius = "50%";
+    spinner.style.animation = "spin 1s linear infinite";
+    overlay.appendChild(spinner);
+
+    // Text
+    const text = document.createElement("div");
+    text.innerText = "Declining application...";
+    text.style.color = "#fff";
+    text.style.fontSize = "18px";
+    text.style.marginTop = "10px";
+    overlay.appendChild(text);
+
+    // Keyframes for spinner
+    const style = document.createElement("style");
+    style.innerHTML = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Add overlay to body
+    document.body.appendChild(overlay);
+
+    fetch("../php/decline_applicant.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            applicant_id: currentApplicantId,
+            reason: reason
         })
-        .catch(err => alert("Request failed: " + err.message));
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Application has been declined successfully.");
+            closeDeclineModal();
+            closeApplicationModal();
+            loadPendingApplications(); // refresh table
+        } else {
+            alert("Error: " + (data.error || "Unable to decline applicant."));
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Something went wrong while declining the applicant.");
+    })
+    .finally(() => {
+        document.body.removeChild(overlay); // Remove spinner overlay
+    });
 }
 
 function closeApplicationModal() {

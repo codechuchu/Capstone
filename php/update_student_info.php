@@ -53,12 +53,12 @@ if (!is_numeric($applicant_id) || $applicant_id <= 0) {
     exit;
 }
 
-if (!preg_match('/^\d{11}$/', $cellphone)) {
+if (!empty($cellphone) && !preg_match('/^\d{11}$/', $cellphone)) {
     echo json_encode(["success" => false, "message" => "Cellphone must be exactly 11 digits"]);
     exit;
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !str_contains($email, '.com')) {
+if (!empty($email) && (!filter_var($email, FILTER_VALIDATE_EMAIL) || !str_contains($email, '.com'))) {
     echo json_encode(["success" => false, "message" => "Invalid email"]);
     exit;
 }
@@ -81,24 +81,29 @@ try {
     if (strtolower($level) === "senior high") {
         $table = "shs_applicant";
 
-        if (!empty($strand)) {
-            $stmtStrand = $pdo->query("SELECT DISTINCT strand FROM $table");
-            $validStrands = $stmtStrand->fetchAll(PDO::FETCH_COLUMN);
-            if (!in_array($strand, $validStrands)) {
-                echo json_encode(["success" => false, "message" => "Invalid strand"]);
-                debugLog("=== REQUEST END (STRAND ERROR) ===");
-                exit;
-            }
+        $fields = [];
+        $values = [];
+
+        if (isset($data['firstname'])) { $fields[] = "firstname = ?"; $values[] = $firstname; }
+        if (isset($data['lastname'])) { $fields[] = "lastname = ?"; $values[] = $lastname; }
+        if (isset($data['strand'])) { $fields[] = "strand = ?"; $values[] = $strand; }
+        if (isset($data['grade_level'])) { $fields[] = "grade_level = ?"; $values[] = $grade_level; }
+        if (isset($data['semester'])) { $fields[] = "semester = ?"; $values[] = $semester; }
+        if (isset($data['barangay'])) { $fields[] = "barangay = ?"; $values[] = $barangay; }
+        if (isset($data['municipal_city'])) { $fields[] = "municipal_city = ?"; $values[] = $municipal_city; }
+        if (isset($data['province'])) { $fields[] = "province = ?"; $values[] = $province; }
+        if (isset($data['cellphone'])) { $fields[] = "cellphone = ?"; $values[] = $cellphone; }
+        if (isset($data['emailaddress'])) { $fields[] = "emailaddress = ?"; $values[] = $email; }
+
+        if (empty($fields)) {
+            echo json_encode(["success" => false, "message" => "No fields to update."]);
+            debugLog("=== REQUEST END (NO FIELDS) ===");
+            exit;
         }
 
-        $stmt = $pdo->prepare("
-            UPDATE $table SET 
-                firstname = ?, lastname = ?, strand = ?, grade_level = ?, 
-                semester = ?, barangay = ?, municipal_city = ?, province = ?, 
-                cellphone = ?, emailaddress = ?
-            WHERE applicant_id = ?
-        ");
-        $stmt->execute([$firstname, $lastname, $strand, $grade_level, $semester, $barangay, $municipal_city, $province, $cellphone, $email, (int)$applicant_id]);
+        $values[] = (int)$applicant_id;
+        $stmt = $pdo->prepare("UPDATE $table SET " . implode(", ", $fields) . " WHERE applicant_id = ?");
+        $stmt->execute($values);
 
         $rowsAffected = $stmt->rowCount();
         debugLog("SHS Update: rowsAffected=$rowsAffected for applicant_id=$applicant_id");
@@ -106,14 +111,27 @@ try {
     } else {
         $table = "jhs_applicants";
 
-        $stmt = $pdo->prepare("
-            UPDATE $table SET 
-                firstname = ?, lastname = ?, grade_level = ?, 
-                barangay = ?, municipal_city = ?, province = ?, 
-                cellphone = ?, emailaddress = ?
-            WHERE applicant_id = ?
-        ");
-        $stmt->execute([$firstname, $lastname, $grade_level, $barangay, $municipal_city, $province, $cellphone, $email, (int)$applicant_id]);
+        $fields = [];
+        $values = [];
+
+        if (isset($data['firstname'])) { $fields[] = "firstname = ?"; $values[] = $firstname; }
+        if (isset($data['lastname'])) { $fields[] = "lastname = ?"; $values[] = $lastname; }
+        if (isset($data['grade_level'])) { $fields[] = "grade_level = ?"; $values[] = $grade_level; }
+        if (isset($data['barangay'])) { $fields[] = "barangay = ?"; $values[] = $barangay; }
+        if (isset($data['municipal_city'])) { $fields[] = "municipal_city = ?"; $values[] = $municipal_city; }
+        if (isset($data['province'])) { $fields[] = "province = ?"; $values[] = $province; }
+        if (isset($data['cellphone'])) { $fields[] = "cellphone = ?"; $values[] = $cellphone; }
+        if (isset($data['emailaddress'])) { $fields[] = "emailaddress = ?"; $values[] = $email; }
+
+        if (empty($fields)) {
+            echo json_encode(["success" => false, "message" => "No fields to update."]);
+            debugLog("=== REQUEST END (NO FIELDS) ===");
+            exit;
+        }
+
+        $values[] = (int)$applicant_id;
+        $stmt = $pdo->prepare("UPDATE $table SET " . implode(", ", $fields) . " WHERE applicant_id = ?");
+        $stmt->execute($values);
 
         $rowsAffected = $stmt->rowCount();
         debugLog("JHS Update: rowsAffected=$rowsAffected for applicant_id=$applicant_id");

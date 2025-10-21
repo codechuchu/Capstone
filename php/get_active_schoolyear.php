@@ -1,5 +1,8 @@
 <?php
 header('Content-Type: application/json');
+error_reporting(0);
+date_default_timezone_set('Asia/Manila');
+
 $servername = "localhost";
 $username = "root";
 $password = "";

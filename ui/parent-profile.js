@@ -150,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeLrnModal = document.getElementById('closeLrnModal');
     const cancelLrn = document.getElementById('cancelLrn');
     const lrnForm = document.getElementById('lrnForm');
+    const lrnInput = document.getElementById('childLrn'); // Updated to match your input ID
 
     // Open modal
     addLrnLink.addEventListener('click', e => {
@@ -163,14 +164,39 @@ document.addEventListener("DOMContentLoaded", () => {
         lrnModal.classList.add('hidden');
         lrnModal.classList.remove('flex');
         lrnForm.reset();
+        lrnInput.classList.remove('border-red-500');
     };
 
     closeLrnModal.addEventListener('click', closeModal);
     cancelLrn.addEventListener('click', closeModal);
 
+    // --- LRN input validation ---
+    lrnInput.addEventListener('input', () => {
+        // Remove non-digit characters
+        lrnInput.value = lrnInput.value.replace(/\D/g, "");
+
+        // Limit to 12 digits
+        if (lrnInput.value.length > 12) {
+            lrnInput.value = lrnInput.value.slice(0, 12);
+        }
+
+        // Remove error highlight if valid
+        if (lrnInput.value.length === 12) {
+            lrnInput.classList.remove('border-red-500');
+        }
+    });
+
     // Submit LRN form
     lrnForm.addEventListener('submit', e => {
         e.preventDefault();
+
+        // Validate LRN before submission
+        if (lrnInput.value.length !== 12) {
+            alert("⚠️ LRN must be exactly 12 digits.");
+            lrnInput.classList.add('border-red-500');
+            lrnInput.focus();
+            return;
+        }
 
         fetch('../php/add-lrn.php', {
             method: 'POST',
@@ -489,103 +515,120 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // "View Full Schedule" button (modal)
-    if (viewFullScheduleBtn) {
-        viewFullScheduleBtn.addEventListener('click', async () => {
-            const lrn = childSelect.value;
-            if (!lrn) {
-                alert("Please select a child first");
-                return;
-            }
+// "View Full Schedule" button (modal)
+if (viewFullScheduleBtn) {
+    viewFullScheduleBtn.addEventListener('click', async () => {
+        const lrn = childSelect.value;
+        if (!lrn) {
+            alert("Please select a child first");
+            return;
+        }
 
-            const data = await fetchSchedule(lrn, true);
-            if (data.status !== 'success' || !Array.isArray(data.schedules) || data.schedules.length === 0) {
-                alert(data.message || "No full schedule available");
-                return;
-            }
+        const data = await fetchSchedule(lrn, true);
+        if (data.status !== 'success' || !Array.isArray(data.schedules) || data.schedules.length === 0) {
+            alert(data.message || "No full schedule available");
+            return;
+        }
 
-            // Create modal
-            const modalOverlay = document.createElement('div');
-            modalOverlay.style.position = 'fixed';
-            modalOverlay.style.top = 0;
-            modalOverlay.style.left = 0;
-            modalOverlay.style.width = '100%';
-            modalOverlay.style.height = '100%';
-            modalOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-            modalOverlay.style.display = 'flex';
-            modalOverlay.style.justifyContent = 'center';
-            modalOverlay.style.alignItems = 'center';
-            modalOverlay.style.zIndex = 1000;
+        const modalOverlay = document.createElement('div');
+        modalOverlay.style.position = 'fixed';
+        modalOverlay.style.top = 0;
+        modalOverlay.style.left = 0;
+        modalOverlay.style.width = '100%';
+        modalOverlay.style.height = '100%';
+        modalOverlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modalOverlay.style.display = 'flex';
+        modalOverlay.style.justifyContent = 'center';
+        modalOverlay.style.alignItems = 'center';
+        modalOverlay.style.zIndex = 1000;
 
-            const modalBox = document.createElement('div');
-            modalBox.style.backgroundColor = '#fff';
-            modalBox.style.padding = '20px';
-            modalBox.style.borderRadius = '10px';
-            modalBox.style.maxHeight = '80vh';
-            modalBox.style.overflowY = 'auto';
-            modalBox.style.width = '1600px';
-            modalBox.style.maxWidth = '1600px';
+        const modalBox = document.createElement('div');
+        modalBox.style.backgroundColor = '#fff';
+        modalBox.style.padding = '20px';
+        modalBox.style.borderRadius = '10px';
+        modalBox.style.width = '1600px';
+        modalBox.style.height = '700px';
+        modalBox.style.overflow = 'hidden'; 
+        modalBox.style.display = 'flex';
+        modalBox.style.flexDirection = 'column';
 
-            const title = document.createElement('h2');
-            title.textContent = 'Full Schedule';
-            title.className = 'text-xl font-semibold mb-4';
+        const title = document.createElement('h2');
+        title.textContent = 'Full Schedule';
+        title.className = 'text-xl font-semibold mb-4';
 
-            const table = document.createElement('table');
-            table.className = 'min-w-full divide-y divide-gray-200';
-            table.innerHTML = `
-                <thead class="bg-pink-100">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Time</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monday</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tuesday</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wednesday</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thursday</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">Friday</th>
-                    </tr>
-                </thead>
-                <tbody id="fullScheduleBody" class="bg-white divide-y divide-pink-200"></tbody>
-            `;
-            modalBox.appendChild(title);
-            modalBox.appendChild(table);
+        const tableContainer = document.createElement('div');
+        tableContainer.style.flex = '1';
+        tableContainer.style.overflow = 'hidden';
+        tableContainer.style.width = '100%';
 
-            const closeBtn = document.createElement('button');
-            closeBtn.textContent = 'Close';
-            closeBtn.className = 'mt-4 px-4 py-2 bg-red-500 text-white rounded';
-            closeBtn.addEventListener('click', () => document.body.removeChild(modalOverlay));
-            modalBox.appendChild(closeBtn);
+        const table = document.createElement('table');
+        table.className = 'min-w-full divide-y divide-gray-200 table-fixed';
+        table.style.wordWrap = 'break-word';
+        table.style.whiteSpace = 'normal';
+        table.innerHTML = `
+            <thead class="bg-pink-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg w-[15%]">Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">Monday</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">Tuesday</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">Wednesday</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">Thursday</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg w-[17%]">Friday</th>
+                </tr>
+            </thead>
+            <tbody id="fullScheduleBody" class="bg-white divide-y divide-pink-200"></tbody>
+        `;
+        tableContainer.appendChild(table);
 
-            modalOverlay.appendChild(modalBox);
-            document.body.appendChild(modalOverlay);
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.className = 'mt-4 px-4 py-2 bg-red-500 text-white rounded self-end';
+        closeBtn.addEventListener('click', () => document.body.removeChild(modalOverlay));
 
-            // Populate full schedule table
-            const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-            const fullScheduleBody = document.getElementById('fullScheduleBody');
+        modalBox.appendChild(title);
+        modalBox.appendChild(tableContainer);
+        modalBox.appendChild(closeBtn);
 
-            // Unique time slots
-            const timeSlots = [...new Set(data.schedules.map(s => s.time_start + " - " + s.time_end))];
+        modalOverlay.appendChild(modalBox);
+        document.body.appendChild(modalOverlay);
 
-            timeSlots.forEach(time => {
-                const tr = document.createElement('tr');
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+        const fullScheduleBody = document.getElementById('fullScheduleBody');
 
-                // Time column
-                const timeTd = document.createElement('td');
-                timeTd.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                timeTd.textContent = time;
-                tr.appendChild(timeTd);
+        // Function to convert 24-hour time to 12-hour format
+        function formatTime(timeStr) {
+            const [hour, minute] = timeStr.split(':').map(Number);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+        }
 
-                // Day columns
-                weekdays.forEach(day => {
-                    const td = document.createElement('td');
-                    td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    const entry = data.schedules.find(s => (s.time_start + " - " + s.time_end) === time && s.day_of_week === day);
-                    if (entry) {
-                        td.innerHTML = `<div>${entry.subject_name}<br><span class="text-xs text-gray-600">${entry.teacher_name}</span></div>`;
-                    }
-                    tr.appendChild(td);
-                });
+        // Unique time slots
+        const timeSlots = [...new Set(data.schedules.map(s => s.time_start + " - " + s.time_end))];
 
-                fullScheduleBody.appendChild(tr);
+        timeSlots.forEach(time => {
+            const [start, end] = time.split(' - ');
+            const formattedTime = `${formatTime(start)} - ${formatTime(end)}`;
+
+            const tr = document.createElement('tr');
+            const timeTd = document.createElement('td');
+            timeTd.className = 'px-6 py-4 text-sm text-gray-900 align-top';
+            timeTd.textContent = formattedTime;
+            tr.appendChild(timeTd);
+
+            weekdays.forEach(day => {
+                const td = document.createElement('td');
+                td.className = 'px-6 py-4 text-sm text-gray-900 align-top break-words whitespace-normal';
+                const entry = data.schedules.find(s => (s.time_start + " - " + s.time_end) === time && s.day_of_week === day);
+                if (entry) {
+                    td.innerHTML = `<div class="break-words whitespace-normal">${entry.subject_name}<br><span class="text-xs text-gray-600">${entry.teacher_name}</span></div>`;
+                }
+                tr.appendChild(td);
             });
+
+            fullScheduleBody.appendChild(tr);
         });
-    }
+    });
+}
+
 });

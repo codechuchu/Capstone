@@ -181,3 +181,5 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in C:\xampp\htdocs\Capstone\php\update_applicant_full.php on line 82
+[19-Oct-2025 13:08:16 Europe/Berlin] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'grade_level' in 'field list'
+[19-Oct-2025 16:49:50 Europe/Berlin] PHP Warning:  Undefined variable $old_section_name in C:\xampp\htdocs\Capstone\php\re_enroll_students.php on line 68
