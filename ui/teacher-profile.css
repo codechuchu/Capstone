@@ -137,3 +137,31 @@ body {
 
 
 
+table.table-fixed th, table.table-fixed td {
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #ddd;
+    padding: 4px;
+    font-size: 13px;
+}
+
+table.table-fixed th:first-child,
+table.table-fixed td:first-child {
+    text-align: left; /* Student name aligned left */
+}
+
+input[type="number"], input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 3px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+/* Make grade columns same width */
+.q1, .q2, .q3, .q4, .q1-grade, .q2-grade, .final-grade, .remarks, .average {
+    width: 60px; /* same width for all */
+    max-width: 60px;
+    min-width: 60px;
+}

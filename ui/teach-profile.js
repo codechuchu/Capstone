@@ -197,9 +197,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function () {
-            // optional: add a confirmation here if you want
-            // if (confirm('Are you sure you want to log out?')) { ... }
-            window.location.href = 'admin-login.html';
+            console.log('Admin Logout button clicked. Redirecting to admin-login.html...');
+            window.location.href = 'admin-login.html'; // Redirect to admin login page
         });
     }
 });
@@ -555,32 +554,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const studentsList = document.getElementById("students-list");
     const studentsTitle = document.getElementById("students-title");
     const studentsTableBody = document.getElementById("students-table-body");
+    const studentsTableHead = document.getElementById("students-table-head");
     const backBtn = document.getElementById("back-to-sections-btn");
     const viewGradesBtn = document.getElementById("view-grades-btn");
 
-    // ====== JHS Modal Elements ======
-    const jhsModal = document.getElementById("encode-grade-modal");
-    const modalStudentName = document.getElementById("modal-student-name");
-    const studentIdInput = document.getElementById("student-id");
-    const sectionIdInput = document.getElementById("section-id");
-    const subjectIdInput = document.getElementById("subject-id");
-    const closeJhsBtn = document.getElementById("close-modal");
-    const jhsForm = document.getElementById("encode-grade-form");
-
-    // ====== SHS Modal Elements ======
-    const shsModal = document.getElementById("encode-shs-grade-modal");
-    const shsStudentName = document.getElementById("shs-modal-student-name");
-    const shsStudentIdInput = document.getElementById("shs-student-id");
-    const shsSectionIdInput = document.getElementById("shs-section-id");
-    const shsSubjectIdInput = document.getElementById("shs-subject-id");
-    const shsSubjectNameInput = document.getElementById("subject-name");
-    const closeShsBtn = document.getElementById("close-shs-modal");
-    const shsForm = document.getElementById("encode-shs-grade-form");
-
     let currentSectionId = null;
-    let currentSubjectName = null;
+    let currentSubjectId = null;
+    let assignedLevelGlobal = null;
 
-    // Load teacher sections
+    // ===== Load teacher sections =====
     fetch("../php/teacher_get_sections.php", { credentials: "include" })
         .then(res => res.json())
         .then(sections => {
@@ -593,342 +575,241 @@ document.addEventListener("DOMContentLoaded", () => {
                 const btn = document.createElement("button");
                 btn.className = "bg-pink-100 hover:bg-pink-200 text-left px-4 py-2 rounded font-medium transition";
                 btn.textContent = `${section.section_name} (${section.subject_name})`;
-                btn.addEventListener("click", () => showSectionStudents(section.section_id, section.subject_name, section.subject_id));
+                btn.addEventListener("click", () =>
+                    showSectionStudents(section.section_id, section.subject_name, section.subject_id)
+                );
                 sectionsContainer.appendChild(btn);
             });
         })
         .catch(err => console.error("Error fetching sections:", err));
 
-function showSectionStudents(sectionId, subjectName, subjectId) {
-    currentSectionId = sectionId;
-    currentSubjectName = subjectName;
-    currentSubjectId = subjectId; // ✅ Store subject_id globally
+    // ===== Show students for a section =====
+    function showSectionStudents(sectionId, subjectName, subjectId) {
+        currentSectionId = sectionId;
+        currentSubjectId = subjectId;
 
-    sectionsContainer.classList.add("hidden");
-    backBtn.classList.remove("hidden");
-    if (viewGradesBtn) viewGradesBtn.classList.remove("hidden");
+        sectionsContainer.classList.add("hidden");
+        backBtn.classList.remove("hidden");
+        if (viewGradesBtn) viewGradesBtn.classList.remove("hidden");
 
-    // Fetch students for this section
-    fetch(`../php/get_section_student.php?section_id=${encodeURIComponent(sectionId)}`, { credentials: "include" })
-        .then(res => res.json())
-        .then(students => {
-            studentsTitle.textContent = `Students in ${subjectName}`;
-            studentsTableBody.innerHTML = "";
+        fetch("../php/get_assigned_level.php", { credentials: "include" })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) { alert("Failed to detect assigned level."); return; }
+                assignedLevelGlobal = data.assigned_level;
+                buildTableHeader();
+                loadStudents();
+            })
+            .catch(err => console.error(err));
+    }
 
-            if (students.error || students.length === 0) {
-                studentsTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="px-6 py-4 text-center text-gray-500">
-                            ${students.error || "No students found"}
-                        </td>
-                    </tr>`;
-                studentsList.classList.remove("hidden");
-                return;
-            }
-
-            students.forEach(st => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="px-6 py-4 text-sm text-gray-900">${st.student_name}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">${st.strand}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">
-                        <button class="encode-btn px-3 py-1 bg-pink-500 text-white rounded">Encode Grade</button>
-                    </td>
-                `;
-
-                tr.querySelector(".encode-btn").addEventListener("click", () =>
-                    openModal(st.student_id, st.student_name, sectionId, subjectId, subjectName)
-                );
-
-                studentsTableBody.appendChild(tr);
+    // ===== Build dynamic table header =====
+    function buildTableHeader() {
+        studentsTableHead.innerHTML = "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Student Name</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Strand</th>
+        `;
+        if (assignedLevelGlobal.toLowerCase() === "junior high") {
+            ["Q1","Q2","Q3","Q4","Average"].forEach(q => {
+                tr.innerHTML += `<th class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase">${q}</th>`;
             });
-
-            studentsList.classList.remove("hidden");
-        })
-        .catch(err => console.error("Error fetching students:", err));
-}
-
-
-    // ================= VIEW GRADES MODAL =================
-    const viewGradesModal = document.createElement("div");
-    viewGradesModal.id = "view-grades-modal";
-    viewGradesModal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden";
-    viewGradesModal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-auto">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-lg font-semibold" id="view-grades-title">Grades</h3>
-                <div>
-                    <button id="export-pdf-btn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ml-2">Export PDF</button>
-                    <button id="view-grades-close-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ml-2">Close</button>
-                </div>
-            </div>
-            <div class="p-4 overflow-auto max-h-[60vh]" id="view-grades-table-container"></div>
-        </div>
-    `;
-    document.body.appendChild(viewGradesModal);
-
-    const exportPdfBtn = document.getElementById("export-pdf-btn");
-
-exportPdfBtn.addEventListener("click", async () => {
-    const table = document.querySelector("#view-grades-table-container table");
-    if (!table) {
-        alert("No table to export.");
-        return;
+        } else {
+            ["Q1","Q2","Final"].forEach(q => {
+                tr.innerHTML += `<th class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase">${q}</th>`;
+            });
+        }
+        tr.innerHTML += `<th class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase">Action</th>`;
+        studentsTableHead.appendChild(tr);
     }
 
-    try {
-        const { jsPDF } = window.jspdf;
-        if (!jsPDF) return alert("jsPDF not loaded!");
-
-        const doc = new jsPDF({ orientation: "landscape" });
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let totalPagesExp = "{total_pages_count_string}";
-
-        // Fetch logged-in user info
-        let preparedBy = "Admin";
-        try {
-            const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
-            const userData = await userRes.json();
-            if (userData.success) preparedBy = `${userData.firstname} ${userData.lastname} (${userData.role || "Staff"})`;
-        } catch {}
-
-        // --- HEADER ---
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(11);
-        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
-        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
-
-        // --- TABLE TITLE ---
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        const gradeLevel = currentSubjectName || "N/A";
-        doc.text(`Subject: ${gradeLevel}`, pageWidth / 2, 40, { align: "center" });
-
-        // --- TABLE DATA ---
-        doc.autoTable({
-            html: table,
-            startY: 45,
-            styles: { fontSize: 10, halign: "center" },
-            headStyles: { fillColor: [200, 200, 200], halign: "center", fontStyle: "bold" },
-            margin: { bottom: 20 },
-            didDrawPage: function (data) {
-                const pageNum = doc.internal.getNumberOfPages();
-                doc.setFontSize(10);
-
-                // Left footer (slightly transparent)
-                doc.setTextColor(150);
-                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
-                doc.text(`Time and Date: ${new Date().toLocaleString()}`, 14, pageHeight - 8);
-
-                // Right footer
-                doc.setTextColor(100);
-                const pageText = `Page ${pageNum} of ${totalPagesExp}`;
-                const textWidth = doc.getTextWidth(pageText);
-                doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
-            }
-        });
-
-        doc.putTotalPages(totalPagesExp);
-
-        window.open(doc.output("bloburl"), "_blank");
-    } catch (err) {
-        console.error("Error exporting PDF:", err);
-        alert("Failed to export PDF.");
-    }
-});
-
-
-    if (viewGradesBtn) {
-        viewGradesBtn.addEventListener("click", () => {
-            if (!currentSectionId) {
-                alert("Please select a section first.");
-                return;
-            }
-
-            fetch("../php/get_assigned_level.php", { credentials: "include" })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        alert("Failed to detect assigned level.");
-                        return;
-                    }
-
-                    const assignedLevel = data.assigned_level;
-                    fetch(`../php/get_section_grades.php?section_id=${currentSectionId}&subject_id=${currentSubjectId}&level=${assignedLevel}`, { credentials: "include" })
-
-                        .then(res => res.json())
-                        .then(grades => {
-                            let tableHTML = `<table class="min-w-full border-collapse border border-gray-300">
-                                <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="border border-gray-300 px-4 py-2 text-left">Student</th>
-                                    <th class="border border-gray-300 px-4 py-2 text-left">Subject</th>`;
-                            if (assignedLevel === "Junior High") {
-                                tableHTML += `<th class="border border-gray-300 px-4 py-2">Q1</th>
-                                              <th class="border border-gray-300 px-4 py-2">Q2</th>
-                                              <th class="border border-gray-300 px-4 py-2">Q3</th>
-                                              <th class="border border-gray-300 px-4 py-2">Q4</th>
-                                              <th class="border border-gray-300 px-4 py-2">Average</th>`;
-                            } else {
-                                tableHTML += `<th class="border border-gray-300 px-4 py-2">Q1</th>
-                                              <th class="border border-gray-300 px-4 py-2">Q2</th>
-                                              <th class="border border-gray-300 px-4 py-2">Final</th>`;
-                            }
-                            tableHTML += `</tr></thead><tbody>`;
-
-                            grades.forEach(g => {
-                                tableHTML += `<tr>
-                                    <td class="border border-gray-300 px-4 py-2">${g.student_name}</td>
-                                    <td class="border border-gray-300 px-4 py-2">${g.subject_name}</td>`;
-                                if (assignedLevel === "Junior High") {
-                                    tableHTML += `<td class="border border-gray-300 px-4 py-2">${g.q1 || ""}</td>
-                                                  <td class="border border-gray-300 px-4 py-2">${g.q2 || ""}</td>
-                                                  <td class="border border-gray-300 px-4 py-2">${g.q3 || ""}</td>
-                                                  <td class="border border-gray-300 px-4 py-2">${g.q4 || ""}</td>
-                                                  <td class="border border-gray-300 px-4 py-2">${g.average || ""}</td>`;
-                                } else {
-                                    tableHTML += `<td class="border border-gray-300 px-4 py-2">${g.q1_grade || ""}</td>
-                                                  <td class="border border-gray-300 px-4 py-2">${g.q2_grade || ""}</td>
-                                                  <td class="border border-gray-300 px-4 py-2">${g.final_grade || ""}</td>`;
-                                }
-                                tableHTML += `</tr>`;
-                            });
-
-                            tableHTML += `</tbody></table>`;
-                            document.getElementById("view-grades-table-container").innerHTML = tableHTML;
-                            viewGradesModal.classList.remove("hidden");
-                        })
-                        .catch(err => { console.error("Error fetching grades:", err); alert("Failed to fetch grades."); });
-                })
-                .catch(err => { console.error("Error fetching assigned level:", err); alert("Failed to fetch assigned level."); });
-        });
+    // ===== Helper to check if input is editable by encoding date =====
+    function isWithinDateRange(startStr, endStr) {
+        if (!startStr || !endStr) return false; // disable if no date
+        const today = new Date();
+        const start = new Date(startStr.replace(" ", "T") + ""); // ensure proper parsing
+        const end = new Date(endStr.replace(" ", "T") + "T23:59:59"); // include full end day
+        return today >= start && today <= end;
     }
 
-    document.getElementById("view-grades-close-btn").addEventListener("click", () => viewGradesModal.classList.add("hidden"));
-    viewGradesModal.addEventListener("click", e => { if (e.target === viewGradesModal) viewGradesModal.classList.add("hidden"); });
-
-// ================== GRADE MODAL & SAVE LOGIC ==================
-// ================== GRADE MODAL & SAVE LOGIC ==================
-function openModal(studentId, studentName, sectionId, subjectId, subjectName) {
-    fetch("../php/get_assigned_level.php", { credentials: "include" })
-        .then(res => res.json())
-        .then(data => {
-            if (!data.success) { alert("No assigned level detected."); return; }
-            const assignedLevel = (data.assigned_level || "").trim().toLowerCase();
-
-            if (jhsModal) jhsModal.classList.add("hidden");
-            if (shsModal) shsModal.classList.add("hidden");
-
-            if (assignedLevel === "junior high") {
-                modalStudentName.textContent = `Encode JHS Grade for ${studentName}`;
-                studentIdInput.value = studentId;
-                sectionIdInput.value = sectionId;
-                subjectIdInput.value = subjectId;
-
-                const q1 = document.getElementById("q1");
-                const q2 = document.getElementById("q2");
-                const q3 = document.getElementById("q3");
-                const q4 = document.getElementById("q4");
-                const avg = document.getElementById("average");
-                [q1, q2, q3, q4].forEach(i => i.value = "");
-                avg.value = "";
-
-                function computeAverage() {
-                    const vals = [q1, q2, q3, q4].map(i => parseFloat(i.value)).filter(v => !isNaN(v));
-                    avg.value = vals.length === 4 ? (vals.reduce((a,b)=>a+b,0)/4).toFixed(2) : "";
-                }
-                [q1, q2, q3, q4].forEach(i => i.addEventListener("input", computeAverage));
-
-                fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
+    function loadStudents() {
+        // Map assigned level to PHP level
+        const phpLevel = assignedLevelGlobal.toLowerCase().includes("junior") ? "jhs" : "shs";
+    
+        // Fetch encoding dates first
+        fetch(`../php/get_encoding_dates.php?level=${phpLevel}`, { credentials: "include" })
+            .then(res => res.json())
+            .then(encodingData => {
+                const dates = encodingData.success ? encodingData.dates : {};
+    
+                // Fetch students
+                fetch(`../php/get_section_grades.php?section_id=${currentSectionId}&subject_id=${currentSubjectId}&level=${assignedLevelGlobal}`, { credentials: "include" })
                     .then(res => res.json())
-                    .then(data => {
-                        if (Array.isArray(data) && data.length > 0) {
-                            q1.value = data[0].q1 || "";
-                            q2.value = data[0].q2 || "";
-                            q3.value = data[0].q3 || "";
-                            q4.value = data[0].q4 || "";
-                            computeAverage();
+                    .then(students => {
+                        studentsTitle.textContent = `Students`;
+                        studentsTableBody.innerHTML = "";
+    
+                        if (!Array.isArray(students) || students.length === 0) {
+                            studentsTableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">No students found</td></tr>`;
+                            studentsList.classList.remove("hidden");
+                            return;
                         }
-                    });
-
-                jhsModal.classList.remove("hidden");
-            } else {
-                shsStudentName.textContent = `Encode SHS Grade for ${studentName}`;
-                shsStudentIdInput.value = studentId;
-                shsSectionIdInput.value = sectionId;
-                shsSubjectIdInput.value = subjectId;
-                shsSubjectNameInput.value = subjectName || "";
-                shsSubjectNameInput.readOnly = true;
-
-                const q1 = document.getElementById("q1-grade");
-                const q2 = document.getElementById("q2-grade");
-                const finalGrade = document.getElementById("final-grade");
-                const remarks = document.getElementById("remarks");
-                [q1, q2, finalGrade, remarks].forEach(i => i.value = "");
-
-                function computeFinal() {
-                    const a = parseFloat(q1.value);
-                    const b = parseFloat(q2.value);
-                    if (!isNaN(a) && !isNaN(b)) {
-                        const avg = ((a+b)/2).toFixed(2);
-                        finalGrade.value = avg;
-                        remarks.value = avg >= 75 ? "Passed":"Failed";
-                    } else {
-                        finalGrade.value = "";
-                        remarks.value = "";
-                    }
-                }
-                q1.addEventListener("input", computeFinal);
-                q2.addEventListener("input", computeFinal);
-
-                fetch(`../php/get_student_grades.php?student_id=${studentId}&section_id=${sectionId}&subject_id=${subjectId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (Array.isArray(data) && data.length > 0) {
-                            q1.value = data[0].q1_grade || "";
-                            q2.value = data[0].q2_grade || "";
-                            if (q1.value !== "" && q2.value !== "") {
-                                const avg = ((parseFloat(q1.value)+parseFloat(q2.value))/2).toFixed(2);
-                                finalGrade.value = avg;
-                                remarks.value = avg>=75?"Passed":"Failed";
+    
+                        const today = new Date();
+    
+                        function editableByDate(start, end) {
+                            if (!start || !end) return true; // editable if no date defined
+                            const startDate = new Date(start + "T00:00:00");
+                            const endDate = new Date(end + "T23:59:59");
+                            return today >= startDate && today <= endDate;
+                        }
+    
+                        students.forEach(st => {
+                            const tr = document.createElement("tr");
+                            tr.dataset.studentId = st.student_id;
+    
+                            // Name
+                            const tdName = document.createElement("td");
+                            tdName.className = "px-3 py-2 text-sm text-gray-900 text-left";
+                            const nameParts = st.student_name.trim().split(" ");
+                            const lastName = nameParts.slice(-1)[0];
+                            const firstNames = nameParts.slice(0, -1).join(" ");
+                            tdName.textContent = `${lastName}, ${firstNames}`;
+                            tr.appendChild(tdName);
+    
+                            // Strand (SHS only)
+                            const tdStrand = document.createElement("td");
+                            tdStrand.className = "px-3 py-2 text-sm text-gray-900";
+                            tdStrand.textContent = assignedLevelGlobal.toLowerCase().includes("senior") ? (st.strand || '') : '';
+                            tr.appendChild(tdStrand);
+    
+                            if (assignedLevelGlobal.toLowerCase().includes("junior")) {
+                                ["Q1","Q2","Q3","Q4"].forEach(q => {
+                                    const td = document.createElement("td");
+                                    const input = document.createElement("input");
+                                    input.type = "number";
+                                    input.min = 0;
+                                    input.max = 100;
+                                    input.className = `w-16 ${q.toLowerCase()} border rounded px-1 py-0.5 text-center`;
+                                    input.value = st[q.toLowerCase()] ?? '';
+    
+                                    input.disabled = !editableByDate(dates[q]?.start, dates[q]?.end);
+                                    if (!input.disabled) input.addEventListener("input", ()=>updateJHAverage(tr));
+    
+                                    td.appendChild(input);
+                                    tr.appendChild(td);
+                                });
+    
+                                const tdAvg = document.createElement("td");
+                                const avgInput = document.createElement("input");
+                                avgInput.type = "text";
+                                avgInput.readOnly = true;
+                                avgInput.className = "w-16 average border rounded px-1 py-0.5 text-center";
+                                avgInput.value = st.average ?? '';
+                                tdAvg.appendChild(avgInput);
+                                tr.appendChild(tdAvg);
+    
+                            } else { // SHS
+                                ["Q1","Q2"].forEach(q => {
+                                    const field = q.toLowerCase() + "_grade"; // q1_grade
+                                    const td = document.createElement("td");
+                                    const input = document.createElement("input");
+                                    input.type = "number";
+                                    input.min = 0;
+                                    input.max = 100;
+                                    input.className = `w-16 ${field.replace("_", "-")} border rounded px-1 py-0.5 text-center`; // q1-grade
+                                    input.value = st[field] ?? '';
+                                
+                                    input.disabled = !editableByDate(dates[q]?.start, dates[q]?.end);
+                                    if (!input.disabled) input.addEventListener("input", ()=>updateSHSFinal(tr));
+                                
+                                    td.appendChild(input);
+                                    tr.appendChild(td);
+                                });
+                                
+    
+                                const tdFinal = document.createElement("td");
+                                const finalInput = document.createElement("input");
+                                finalInput.type = "text";
+                                finalInput.readOnly = true;
+                                finalInput.className = "w-16 final-grade border rounded px-1 py-0.5 text-center";
+                                finalInput.value = st.final_grade ?? '';
+                                tdFinal.appendChild(finalInput);
+                                tr.appendChild(tdFinal);
                             }
-                        }
+    
+                            // Action button
+                            const tdAction = document.createElement("td");
+                            tdAction.className = "text-center px-2";
+                            const btn = document.createElement("button");
+                            btn.className = "save-row-btn px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600";
+                            btn.textContent = "Save";
+                            btn.addEventListener("click", ()=>saveRow(tr));
+                            tdAction.appendChild(btn);
+                            tr.appendChild(tdAction);
+    
+                            studentsTableBody.appendChild(tr);
+                        });
+    
+                        studentsList.classList.remove("hidden");
                     })
-                    .catch(err => console.error("Error fetching SHS grades:", err));
+                    .catch(err => console.error(err));
+            })
+            .catch(err => console.error("Error fetching encoding dates:", err));
+    }
+    
 
-                shsModal.classList.remove("hidden");
-            }
-        })
-        .catch(err => { console.error("Error fetching assigned level:", err); alert("Failed to open grade modal."); });
-}
-
-
-    if (closeJhsBtn) closeJhsBtn.addEventListener("click", ()=>jhsModal.classList.add("hidden"));
-    if (closeShsBtn) closeShsBtn.addEventListener("click", ()=>shsModal.classList.add("hidden"));
-
-    if (jhsForm) {
-        jhsForm.addEventListener("submit", e => {
-            e.preventDefault();
-            fetch("../php/save_grades.php", { method:"POST", body:new FormData(jhsForm), credentials:"include" })
-                .then(res=>res.json())
-                .then(data=>{ alert(data.message||"JHS grade saved!"); jhsModal.classList.add("hidden"); })
-                .catch(err=>{ console.error(err); alert("Failed to save JHS grade."); });
-        });
+    function updateJHAverage(row) {
+        const vals = ["q1","q2","q3","q4"].map(cls => parseFloat(row.querySelector(`.${cls}`).value)).filter(v=>!isNaN(v));
+        row.querySelector(".average").value = vals.length === 4 ? (vals.reduce((a,b)=>a+b,0)/4).toFixed(2) : "";
     }
 
-    if (shsForm) {
-        shsForm.addEventListener("submit", e => {
-            e.preventDefault();
-            fetch("../php/save_grades.php", { method:"POST", body:new FormData(shsForm), credentials:"include" })
-                .then(res=>res.json())
-                .then(data=>{ alert(data.message||"SHS grade saved!"); shsModal.classList.add("hidden"); })
-                .catch(err=>{ console.error(err); alert("Failed to save SHS grade."); });
-        });
+    function updateSHSFinal(row) {
+        const q1 = parseFloat(row.querySelector(".q1-grade").value);
+        const q2 = parseFloat(row.querySelector(".q2-grade").value);
+        const finalInput = row.querySelector(".final-grade");
+        if (!isNaN(q1) && !isNaN(q2)) {
+            finalInput.value = ((q1+q2)/2).toFixed(2);
+        } else {
+            finalInput.value = "";
+        }
+    }
+
+    function saveRow(row) {
+        const studentId = row.dataset.studentId;
+        let payload = {};
+        if (assignedLevelGlobal.toLowerCase() === "junior high") {
+            payload = {
+                student_id: studentId,
+                section_id: currentSectionId,
+                subject_id: currentSubjectId,
+                q1: row.querySelector(".q1").value,
+                q2: row.querySelector(".q2").value,
+                q3: row.querySelector(".q3").value,
+                q4: row.querySelector(".q4").value,
+                average: row.querySelector(".average").value
+            };
+        } else {
+            payload = {
+                student_id: studentId,
+                section_id: currentSectionId,
+                subject_id: currentSubjectId,
+                q1_grade: row.querySelector(".q1-grade").value,
+                q2_grade: row.querySelector(".q2-grade").value,
+                final_grade: row.querySelector(".final-grade").value
+            };
+        }
+
+        fetch("../php/save_grades.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify([payload]),
+            credentials: "include"
+        })
+        .then(res => res.json())
+        .then(data => alert(data.message || "Grade saved successfully!"))
+        .catch(err => { console.error(err); alert("Failed to save grade."); });
     }
 
     backBtn.addEventListener("click", ()=>{

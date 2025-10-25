@@ -12,27 +12,58 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeModalX = document.getElementById('closeModalX');
     const changePasswordForm = document.getElementById('changePasswordForm');
 
-    // --- Fetch Student Info ---
-    async function loadStudentInfo() {
-        try {
-            const res = await fetch('../php/get_student_info.php', { credentials: 'include' });
-            const data = await res.json();
-            console.log("Student info response:", data);
 
-            if (data.success) {
-                const fullname = `${data.firstname} ${data.lastname}`;
-                const email = data.email;
+// --- Fetch Student Info ---
+async function loadStudentInfo() {
+    try {
+        const res = await fetch('../php/get_student_info.php', { credentials: 'include' });
+        const data = await res.json();
+        console.log("Student info response:", data);
 
-                if (studentNameEl) studentNameEl.textContent = fullname;
-                if (studentEmailEl) studentEmailEl.textContent = email;
-                if (studentBtnName) studentBtnName.textContent = fullname;
+        if (data.success) {
+            const fullname = `${data.firstname} ${data.lastname}`;
+            const email = data.email;
+
+            if (studentNameEl) studentNameEl.textContent = fullname;
+            if (studentEmailEl) studentEmailEl.textContent = email;
+            if (studentBtnName) studentBtnName.textContent = fullname;
+
+            // --- Check documents ---
+            const missingDocs = [];
+            if (!data.birth_certificate) missingDocs.push("Birth Certificate");
+            if (!data.original_form_138) missingDocs.push("Original Form 138");
+            if (!data.good_moral) missingDocs.push("Good Moral");
+            if (!data.original_form_137) missingDocs.push("Original Form 137");
+
+            // --- Add warning icon if documents are missing ---
+            let warningIcon = document.getElementById("documentWarningIcon");
+
+            if (missingDocs.length > 0) {
+                if (!warningIcon) {
+                    warningIcon = document.createElement("span");
+                    warningIcon.id = "documentWarningIcon";
+                    warningIcon.className = "ml-2 text-red-600 cursor-pointer";
+                    warningIcon.innerHTML = "⚠️";
+                    warningIcon.title = "Please submit: " + missingDocs.join(", ");
+
+                    if (studentNameEl) studentNameEl.appendChild(warningIcon);
+                } else {
+                    warningIcon.title = "Please submit: " + missingDocs.join(", ");
+                }
+
+                // Optional: change student name color to red
+                if (studentNameEl) studentNameEl.classList.add("text-red-600");
             } else {
-                console.warn("Failed to fetch student info:", data.message);
+                if (warningIcon) warningIcon.remove();
+                if (studentNameEl) studentNameEl.classList.remove("text-red-600");
             }
-        } catch (err) {
-            console.error("Error fetching student info:", err);
+        } else {
+            console.warn("Failed to fetch student info:", data.message);
         }
+    } catch (err) {
+        console.error("Error fetching student info:", err);
     }
+}
 
     loadStudentInfo();
 
@@ -293,11 +324,18 @@ function loadGrades(studentId) {
     jhsTableBody.innerHTML = "";
     shsTableBody.innerHTML = "";
 
-    fetch(`../php/get_my_grades.php?student_id=${encodeURIComponent(studentId)}`, { credentials: "include" })
-        .then(res => res.json())
+    // Function to fetch grades with optional grade_level & semester
+    const fetchGrades = (grade_level = null, semester = null) => {
+        let url = `../php/get_my_grades.php?student_id=${encodeURIComponent(studentId)}`;
+        if (grade_level) url += `&grade_level=${encodeURIComponent(grade_level)}`;
+        if (semester) url += `&semester=${encodeURIComponent(semester)}`;
+
+        return fetch(url, { credentials: "include" }).then(res => res.json());
+    };
+
+    fetchGrades()
         .then(data => {
             if (data.error || !Array.isArray(data.grades) || data.grades.length === 0) {
-                // Show message in both panes
                 jhsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">${data.error || "No grades found."}</td></tr>`;
                 shsTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">${data.error || "No grades found."}</td></tr>`;
                 return;
@@ -306,35 +344,92 @@ function loadGrades(studentId) {
             const level = data.level || "JHS";
 
             if (level === "SHS") {
-                // Populate SHS table
-                data.grades.forEach(row => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1_grade ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2_grade ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.final_grade ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.encoded_by ?? '-'}</td>
+                // SHS semester dropdown
+                let shsDropdown = document.getElementById("shs-semester-dropdown");
+                if (!shsDropdown) {
+                    shsDropdown = document.createElement("select");
+                    shsDropdown.id = "shs-semester-dropdown";
+                    shsDropdown.className = "mb-2 px-3 py-2 rounded border border-gray-600";
+                    shsDropdown.innerHTML = `
+                        <option value="11-1">Grade 11, 1st Semester</option>
+                        <option value="11-2">Grade 11, 2nd Semester</option>
+                        <option value="12-1">Grade 12, 1st Semester</option>
+                        <option value="12-2">Grade 12, 2nd Semester</option>
                     `;
-                    shsTableBody.appendChild(tr);
+                    shsPane.prepend(shsDropdown);
+                }
+
+                const populateSHSTable = (grades) => {
+                    shsTableBody.innerHTML = "";
+                    grades.forEach(row => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1_grade ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2_grade ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.final_grade ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.encoded_by ?? '-'}</td>
+                        `;
+                        shsTableBody.appendChild(tr);
+                    });
+                    shsPane.classList.remove("hidden");
+                };
+
+                // Initial population
+                populateSHSTable(data.grades);
+
+                // On change of semester dropdown
+                shsDropdown.addEventListener("change", () => {
+                    const [grade_level, semester] = shsDropdown.value.split("-");
+                    fetchGrades(grade_level, semester).then(newData => {
+                        populateSHSTable(newData.grades || []);
+                    });
                 });
-                shsPane.classList.remove("hidden");
+
             } else {
-                // Populate JHS table
-                data.grades.forEach(row => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1 ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2 ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q3 ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q4 ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.average ?? '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.teacher_name ?? '-'}</td>
+                // JHS grade dropdown
+                let jhsDropdown = document.getElementById("jhs-grade-dropdown");
+                if (!jhsDropdown) {
+                    jhsDropdown = document.createElement("select");
+                    jhsDropdown.id = "jhs-grade-dropdown";
+                    jhsDropdown.className = "mb-2 px-3 py-2 rounded border border-gray-600";
+                    jhsDropdown.innerHTML = `
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
                     `;
-                    jhsTableBody.appendChild(tr);
+                    jhsPane.prepend(jhsDropdown);
+                }
+
+                const populateJHSTable = (grades) => {
+                    jhsTableBody.innerHTML = "";
+                    grades.forEach(row => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.subject_name || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q1 ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q2 ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q3 ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.q4 ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.average ?? '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.teacher_name ?? '-'}</td>
+                        `;
+                        jhsTableBody.appendChild(tr);
+                    });
+                    jhsPane.classList.remove("hidden");
+                };
+
+                // Initial population
+                populateJHSTable(data.grades);
+
+                // On change of grade dropdown
+                jhsDropdown.addEventListener("change", () => {
+                    const grade_level = jhsDropdown.value;
+                    fetchGrades(grade_level).then(newData => {
+                        populateJHSTable(newData.grades || []);
+                    });
                 });
-                jhsPane.classList.remove("hidden");
             }
         })
         .catch(err => {
@@ -343,7 +438,6 @@ function loadGrades(studentId) {
             shsTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">⚠️ Something went wrong while fetching grades.</td></tr>`;
         });
 }
-
 
 
 //banner

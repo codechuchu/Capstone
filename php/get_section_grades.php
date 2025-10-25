@@ -54,6 +54,7 @@ try {
             SELECT 
                 a.applicant_id AS student_id,
                 CONCAT(a.firstname, ' ', a.lastname) AS student_name,
+                a.strand,
                 s.name AS subject_name,
                 g.q1_grade, g.q2_grade, g.final_grade
             FROM shs_applicant a

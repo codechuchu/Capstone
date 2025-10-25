@@ -283,145 +283,30 @@
                 </div>
             </div>
 
-
-            <div id="grade-submission-pane" class="content-pane hidden p-4">
+            <div id="grade-submission-pane" class="content-pane p-4">
                 <!-- Back Button -->
-                <button id="back-to-sections-btn"
-                    class="hidden mb-4 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">
+                <button id="back-to-sections-btn" class="hidden mb-4 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">
                     ← Back to Sections
                 </button>
-                <!-- View grades -->
-                <button id="view-grades-btn"
-                    class="hidden mb-4 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">
-                    View Grades
-                </button>
+            
                 <!-- Section buttons container -->
-                <div id="sections-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Buttons will be dynamically inserted here -->
-                </div>
-
-                <!-- Student list -->
+                <div id="sections-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            
                 <div id="students-list" class="mt-6 hidden">
                     <h3 id="students-title" class="text-md font-semibold mb-2"></h3>
-                    <div class="overflow-x-auto overflow-y-auto max-h-[600px] rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-pink-100">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student
-                                        Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Strand
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action
-                                    </th>
-                                </tr>
-                            </thead>
+                    <div class="overflow-auto max-h-[600px] border rounded-lg border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200 table-fixed border-collapse border border-gray-300">
+                            <thead id="students-table-head" class="bg-pink-100 sticky top-0 z-10"></thead>
                             <tbody id="students-table-body" class="bg-white divide-y divide-pink-200"></tbody>
                         </table>
-
                     </div>
                 </div>
-
-                <!-- Encode Grade Modal -->
-                <div id="encode-grade-modal"
-                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-                    <div class="bg-white p-6 rounded-lg w-96">
-                        <h3 id="modal-student-name" class="text-lg font-semibold mb-4">Encode Grade</h3>
-                        <form id="encode-grade-form" class="space-y-3">
-                            <!-- Hidden inputs MUST have these exact IDs -->
-                            <input type="hidden" id="student-id" name="student_id">
-                            <input type="hidden" id="section-id" name="section_id">
-                            <input type="hidden" id="subject-id" name="subject_id">
-
-                            <div>
-                                <label class="block text-sm font-medium">1st Quarter</label>
-                                <input type="number" id="q1" name="q1" class="w-full border rounded px-2 py-1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium">2nd Quarter</label>
-                                <input type="number" id="q2" name="q2" class="w-full border rounded px-2 py-1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium">3rd Quarter</label>
-                                <input type="number" id="q3" name="q3" class="w-full border rounded px-2 py-1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium">4th Quarter</label>
-                                <input type="number" id="q4" name="q4" class="w-full border rounded px-2 py-1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium">Average</label>
-                                <input type="number" id="average" name="average"
-                                    class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
-                            </div>
-
-
-                            <div class="flex justify-end space-x-2 mt-4">
-                                <button type="button" id="close-modal"
-                                    class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                                <button type="submit" class="px-4 py-2 bg-pink-500 text-white rounded">Save</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Encode SHS Grade Modal -->
-                <div id="encode-shs-grade-modal"
-                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-                    <div class="bg-white p-6 rounded-lg w-[28rem]">
-                        <h3 id="shs-modal-student-name" class="text-lg font-semibold mb-4">Encode SHS Grades</h3>
-
-                        <form id="encode-shs-grade-form" class="space-y-4">
-                            <!-- Hidden inputs -->
-                            <input type="hidden" id="shs-student-id" name="student_id">
-                            <input type="hidden" id="shs-section-id" name="section_id">
-                            <input type="hidden" id="shs-subject-id" name="subject_id">
-
-                            <!-- Grade Encoding -->
-                            <div class="border p-3 rounded">
-                                <div class="space-y-2">
-                                    <div>
-                                        <label class="block text-sm font-medium">Subject</label>
-                                        <input type="text" id="subject-name" name="subject_name"
-                                            class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
-                                      </div>
-                                      
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="block text-sm font-medium">Q1 Grade</label>
-                                            <input type="number" step="0.01" id="q1-grade" name="q1_grade"
-                                                class="w-full border rounded px-2 py-1">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium">Q2 Grade</label>
-                                            <input type="number" step="0.01" id="q2-grade" name="q2_grade"
-                                                class="w-full border rounded px-2 py-1">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium">Final Grade</label>
-                                        <input type="number" step="0.01" id="final-grade" name="final_grade"
-                                            class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium">Remarks</label>
-                                        <input type="text" id="remarks" name="remarks"
-                                            class="w-full border rounded px-2 py-1 bg-gray-100" readonly>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Action buttons -->
-                            <div class="flex justify-end space-x-2 mt-4">
-                                <button type="button" id="close-shs-modal"
-                                    class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                                <button type="submit" class="px-4 py-2 bg-pink-500 text-white rounded">Save</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                
+                
             </div>
-
-
+            
+            
+            
 
 
             <div id="class-schedules-pane" class="content-pane hidden">

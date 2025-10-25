@@ -1,0 +1,146 @@
+[STEP] Fetch applicant ID 15
+[STEP] Student inserted: 15
+[STEP] Guardian inserted: naed@gmail.com
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 15
+[STEP] Fetch applicant ID 252
+[STEP] Student inserted: 252
+[24-Oct-2025 07:59:19 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'parent_id' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:99
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(99): PDOStatement->execute(Array)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\approve_application.php on line 99
+[FATAL] Array
+(
+    [type] => 1
+    [message] => Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'parent_id' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:99
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(99): PDOStatement->execute(Array)
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\Capstone\php\approve_application.php
+    [line] => 99
+)
+[STEP] Fetch applicant ID 252
+[STEP] Student already exists: 252
+[24-Oct-2025 07:59:24 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'parent_id' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:99
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(99): PDOStatement->execute(Array)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\approve_application.php on line 99
+[FATAL] Array
+(
+    [type] => 1
+    [message] => Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'parent_id' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:99
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(99): PDOStatement->execute(Array)
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\Capstone\php\approve_application.php
+    [line] => 99
+)
+[STEP] Fetch applicant ID 252
+[STEP] Student already exists: 252
+[24-Oct-2025 08:01:36 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student_ids' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:101
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(101): PDOStatement->execute(Array)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\approve_application.php on line 101
+[FATAL] Array
+(
+    [type] => 1
+    [message] => Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student_ids' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:101
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(101): PDOStatement->execute(Array)
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\Capstone\php\approve_application.php
+    [line] => 101
+)
+[STEP] Fetch applicant ID 252
+[STEP] Student already exists: 252
+[STEP] LRN added to existing parent: guardian86@example.com
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 252
+[STEP] Fetch applicant ID 251
+[STEP] Student inserted: 251
+[STEP] New parent created: asdf@gmail.com with LRN 251
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 251
+[STEP] Fetch applicant ID 252
+[STEP] Student inserted: 252
+[STEP] Added LRN 252 to existing parent guardian86@example.com
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 252
+[STEP] Fetch applicant ID 252
+[STEP] Student inserted with LRN: 103018080080 and level: Senior High
+[STEP] Added LRN 103018080080 to existing parent guardian86@example.com
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 252
+[STEP] Fetch applicant ID 252
+[STEP] Student inserted with LRN: 103018080080 and level: Senior High
+[24-Oct-2025 08:14:37 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'assigned_level' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:99
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(99): PDOStatement->execute(Array)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\approve_application.php on line 99
+[FATAL] Array
+(
+    [type] => 1
+    [message] => Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'assigned_level' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:99
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(99): PDOStatement->execute(Array)
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\Capstone\php\approve_application.php
+    [line] => 99
+)
+[STEP] Fetch applicant ID 252
+[STEP] Student inserted with LRN: 103018080080 and level: Senior High
+[STEP] Added LRN 103018080080 to existing parent guardian86@example.com
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 252
+[STEP] Fetch applicant ID 252
+[24-Oct-2025 08:19:03 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lrn' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:98
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(98): PDOStatement->execute(Array)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\approve_application.php on line 98
+[FATAL] Array
+(
+    [type] => 1
+    [message] => Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lrn' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:98
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(98): PDOStatement->execute(Array)
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\Capstone\php\approve_application.php
+    [line] => 98
+)
+[STEP] Fetch applicant ID 252
+[24-Oct-2025 08:20:00 Europe/Berlin] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lrn' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:98
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(98): PDOStatement->execute(Array)
+#1 {main}
+  thrown in C:\xampp\htdocs\Capstone\php\approve_application.php on line 98
+[FATAL] Array
+(
+    [type] => 1
+    [message] => Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lrn' in 'field list' in C:\xampp\htdocs\Capstone\php\approve_application.php:98
+Stack trace:
+#0 C:\xampp\htdocs\Capstone\php\approve_application.php(98): PDOStatement->execute(Array)
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\Capstone\php\approve_application.php
+    [line] => 98
+)
+[STEP] Fetch applicant ID 252
+[STEP] Student inserted with applicant_id: 252 and level: Senior High
+[STEP] Added LRN 103018080080 to existing parent guardian86@example.com
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 252
+[STEP] Fetch applicant ID 253
+[STEP] Student inserted with applicant_id: 253 and level: Senior High
+[STEP] New parent created: amy.tolentino12@gamil.com with LRN 105017091231
+[STEP] Determined school year: 2025-2026
+[STEP] Applicant status updated: 253

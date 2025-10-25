@@ -26,11 +26,12 @@ if (!isset($_SESSION['assigned_level'])) {
     exit;
 }
 
-// ✅ XAMPP credentials
+
+// ✅ XAMPP credentials 
 $host = 'localhost';
-$db   = 'sulivannhs';
-$user = 'root';
-$pass = '';
+$db = 'sulivannhs'; 
+$user = 'root'; 
+$pass = ''; 
 $charset = 'utf8mb4';
 
 try {
@@ -58,55 +59,100 @@ try {
 
     file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Fetch applicant ID $id\n", FILE_APPEND);
 
-    // Fetch applicant
-    $stmt = $pdo->prepare("SELECT applicant_id, firstname, lastname, emailaddress FROM $applicantTable WHERE applicant_id = ?");
-    $stmt->execute([$id]);
-    $applicant = $stmt->fetch();
-    if (!$applicant) {
-        echo json_encode(["error" => "Applicant not found"]);
-        exit;
-    }
+// --- Fetch applicant details ---
+$stmt = $pdo->prepare("SELECT applicant_id, lrn, firstname, lastname, emailaddress FROM $applicantTable WHERE applicant_id = ?");
+$stmt->execute([$id]);
+$applicant = $stmt->fetch();
 
-    $studentId = $applicant['applicant_id'];
-    $email     = $applicant['emailaddress'];
-    $password  = $applicant['lastname'] . "123";
+if (!$applicant) {
+    echo json_encode(["error" => "Applicant not found"]);
+    exit;
+}
 
-    // Insert student if not exists
-    $checkStudent = $pdo->prepare("SELECT student_id FROM students WHERE student_id = ?");
-    $checkStudent->execute([$studentId]);
-    if (!$checkStudent->fetch()) {
-        $insert = $pdo->prepare("INSERT INTO students (student_id, email, password) VALUES (?, ?, ?)");
-        $insert->execute([$studentId, $email, $password]);
-        file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Student inserted: $studentId\n", FILE_APPEND);
-    } else {
-        file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Student already exists: $studentId\n", FILE_APPEND);
-    }
+// ✅ Use the actual LRN (not applicant_id)
+$lrn = trim($applicant['lrn']);
+$email = $applicant['emailaddress'];
+$password = $applicant['lastname'] . "123";
+$assignedLevel = $_SESSION['assigned_level'] ?? null;
 
-    // Fetch guardian
-    $guardianStmt = $pdo->prepare("SELECT firstname, lastname, email FROM $guardianTable WHERE applicant_id = ?");
-    $guardianStmt->execute([$studentId]);
-    $guardian = $guardianStmt->fetch();
+if (!$assignedLevel) {
+    echo json_encode(["error" => "Assigned level missing"]);
+    exit;
+}
 
-    $guardianEmail = '';
-    $guardianPassword = '';
+if (empty($lrn)) {
+    file_put_contents(__DIR__ . '/approve_error.log', "[ERROR] Missing LRN for applicant ID {$id}\n", FILE_APPEND);
+    echo json_encode(["error" => "Missing LRN for applicant"]);
+    exit;
+}
+
+// --- Insert or update student record (using applicant_id as student_id) ---
+$checkStudent = $pdo->prepare("SELECT student_id FROM students WHERE student_id = ?");
+$checkStudent->execute([$id]);
+$existingStudent = $checkStudent->fetch();
+
+if (!$existingStudent) {
+    $insertStudent = $pdo->prepare("
+        INSERT INTO students (student_id, email, password, assigned_level)
+        VALUES (?, ?, ?, ?)
+    ");
+    $insertStudent->execute([$id, $email, $password, $assignedLevel]);
+    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Student inserted with applicant_id: {$id} and level: {$assignedLevel}\n", FILE_APPEND);
+} else {
+    $updateStudent = $pdo->prepare("UPDATE students SET assigned_level = ? WHERE student_id = ?");
+    $updateStudent->execute([$assignedLevel, $id]);
+    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Student already exists, updated applicant_id: {$id} with level: {$assignedLevel}\n", FILE_APPEND);
+}
+
+
+// --- Fetch guardian ---
+$guardianStmt = $pdo->prepare("SELECT firstname, lastname, email FROM $guardianTable WHERE applicant_id = ?");
+$guardianStmt->execute([$id]);
+$guardian = $guardianStmt->fetch();
+
+try {
     if ($guardian) {
         $guardianFirstName = $guardian['firstname'];
         $guardianLastName  = $guardian['lastname'];
-        $guardianEmail     = $guardian['email'];
+        $guardianEmail     = trim($guardian['email']);
         $guardianPassword  = $guardianLastName . "123";
 
         if (!empty($guardianEmail) && filter_var($guardianEmail, FILTER_VALIDATE_EMAIL)) {
-            $checkParent = $pdo->prepare("SELECT student_id FROM parents WHERE student_id = ? AND email = ?");
-            $checkParent->execute([$studentId, $guardianEmail]);
-            if (!$checkParent->fetch()) {
-                $insertParent = $pdo->prepare("INSERT INTO parents (student_id, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)");
-                $insertParent->execute([$studentId, $guardianFirstName, $guardianLastName, $guardianEmail, $guardianPassword]);
-                file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Guardian inserted: $guardianEmail\n", FILE_APPEND);
+            // Check if parent already exists
+            $checkParent = $pdo->prepare("SELECT id, lrn FROM parents WHERE email = ?");
+            $checkParent->execute([$guardianEmail]);
+            $existingParent = $checkParent->fetch();
+
+            if ($existingParent) {
+                // Append LRN if not already included
+                $lrnList = !empty($existingParent['lrn']) ? explode(',', $existingParent['lrn']) : [];
+                if (!in_array($lrn, $lrnList)) {
+                    $lrnList[] = $lrn;
+                    $updatedLrn = implode(',', $lrnList);
+                    $updateParent = $pdo->prepare("UPDATE parents SET lrn = ? WHERE id = ?");
+                    $updateParent->execute([$updatedLrn, $existingParent['id']]);
+                    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Added LRN {$lrn} to existing parent {$guardianEmail}\n", FILE_APPEND);
+                } else {
+                    file_put_contents(__DIR__ . '/approve_error.log', "[STEP] LRN {$lrn} already linked to parent {$guardianEmail}\n", FILE_APPEND);
+                }
             } else {
-                file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Guardian already exists: $guardianEmail\n", FILE_APPEND);
+                // Insert new parent record
+                $insertParent = $pdo->prepare("
+                    INSERT INTO parents (lrn, firstname, lastname, email, password)
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                $insertParent->execute([$lrn, $guardianFirstName, $guardianLastName, $guardianEmail, $guardianPassword]);
+                file_put_contents(__DIR__ . '/approve_error.log', "[STEP] New parent created: {$guardianEmail} with LRN {$lrn}\n", FILE_APPEND);
             }
+        } else {
+            file_put_contents(__DIR__ . '/approve_error.log', "[STEP] Invalid or empty guardian email: {$guardianEmail}\n", FILE_APPEND);
         }
+    } else {
+        file_put_contents(__DIR__ . '/approve_error.log', "[STEP] No guardian found for applicant ID {$id}\n", FILE_APPEND);
     }
+} catch (Exception $e) {
+    file_put_contents(__DIR__ . '/approve_error.log', "[GUARDIAN ERROR] " . $e->getMessage() . "\n", FILE_APPEND);
+}
 
     // Determine school year
     $today = date('Y-m-d');

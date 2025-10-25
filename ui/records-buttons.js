@@ -108,82 +108,82 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // PDF button click handler
             // Export PDF button click handler
-pdfBtn.addEventListener("click", async () => {
-    const table = document.getElementById("records-table");
-    if (!table) {
-        alert("No table to export.");
-        return;
-    }
+            pdfBtn.addEventListener("click", async () => {
+                const table = document.getElementById("records-table");
+                if (!table) {
+                    alert("No table to export.");
+                    return;
+                }
 
-    try {
-        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
-        const userData = await userRes.json();
+                try {
+                    const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+                    const userData = await userRes.json();
 
-        const preparedBy = (userData.success)
-            ? `${userData.firstname} ${userData.lastname} (${userData.role || "Staff"})`
-            : "N/A";
-        const gradeLevel = select.value ? `Grade ${select.value}` : "N/A";
-        const now = new Date();
-        const formattedDate = now.toLocaleDateString();
-        const formattedTime = now.toLocaleTimeString();
+                    const preparedBy = (userData.success)
+                        ? `${userData.firstname} ${userData.lastname} (${userData.role || "Staff"})`
+                        : "N/A";
+                    const gradeLevel = select.value ? `Grade ${select.value}` : "N/A";
+                    const now = new Date();
+                    const formattedDate = now.toLocaleDateString();
+                    const formattedTime = now.toLocaleTimeString();
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: "landscape" });
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const totalPagesExp = "{total_pages_count_string}";
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: "landscape" });
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const totalPagesExp = "{total_pages_count_string}";
 
-        // --- HEADER ---
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(18);
-        doc.text("Sulivan National High School", pageWidth / 2, 18, { align: "center" });
+                    // --- HEADER ---
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(18);
+                    doc.text("Sulivan National High School", pageWidth / 2, 18, { align: "center" });
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(11);
-        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 25, { align: "center" });
-        doc.text("(044) 816 7731 (mobile)", pageWidth / 2, 31, { align: "center" });
-        doc.text("300778@deped.gov.ph (email)", pageWidth / 2, 37, { align: "center" });
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(11);
+                    doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 25, { align: "center" });
+                    doc.text("(044) 816 7731 (mobile)", pageWidth / 2, 31, { align: "center" });
+                    doc.text("300778@deped.gov.ph (email)", pageWidth / 2, 37, { align: "center" });
 
-        // --- TABLE TITLE ---
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        doc.text(`Grade Level: ${gradeLevel}`, pageWidth / 2, 48, { align: "center" });
+                    // --- TABLE TITLE ---
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(13);
+                    doc.text(`Grade Level: ${gradeLevel}`, pageWidth / 2, 48, { align: "center" });
 
-        // --- TABLE ---
-        doc.autoTable({
-            html: "#records-table",
-            startY: 55,
-            styles: { halign: "center", font: "helvetica", fontSize: 10 },
-            headStyles: { fillColor: [240, 240, 240], textColor: 0, halign: "center", fontStyle: "bold" },
-            alternateRowStyles: { fillColor: [250, 250, 250] },
-            margin: { bottom: 20 },
-            didDrawPage: function (data) {
-                const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
+                    // --- TABLE ---
+                    doc.autoTable({
+                        html: "#records-table",
+                        startY: 55,
+                        styles: { halign: "center", font: "helvetica", fontSize: 10 },
+                        headStyles: { fillColor: [240, 240, 240], textColor: 0, halign: "center", fontStyle: "bold" },
+                        alternateRowStyles: { fillColor: [250, 250, 250] },
+                        margin: { bottom: 20 },
+                        didDrawPage: function (data) {
+                            const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
 
-                // --- FOOTER ---
-                doc.setFontSize(9);
-                doc.setTextColor(150);
-                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
-                doc.text(`Time and Date: ${formattedDate} ${formattedTime}`, 14, pageHeight - 8);
+                            // --- FOOTER ---
+                            doc.setFontSize(9);
+                            doc.setTextColor(150);
+                            doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
+                            doc.text(`Time and Date: ${formattedDate} ${formattedTime}`, 14, pageHeight - 8);
 
-                doc.setTextColor(100);
-                const pageText = `Page ${pageNum} of ${totalPagesExp}`;
-                const textWidth = doc.getTextWidth(pageText);
-                doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
-            }
-        });
+                            doc.setTextColor(100);
+                            const pageText = `Page ${pageNum} of ${totalPagesExp}`;
+                            const textWidth = doc.getTextWidth(pageText);
+                            doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
+                        }
+                    });
 
-        // Replace placeholder with total pages
-        doc.putTotalPages(totalPagesExp);
+                    // Replace placeholder with total pages
+                    doc.putTotalPages(totalPagesExp);
 
-        // --- OPEN PDF ---
-        window.open(doc.output("bloburl"), "_blank");
+                    // --- OPEN PDF ---
+                    window.open(doc.output("bloburl"), "_blank");
 
-    } catch (err) {
-        console.error(err);
-        alert("Failed to generate PDF.");
-    }
-});
+                } catch (err) {
+                    console.error(err);
+                    alert("Failed to generate PDF.");
+                }
+            });
 
 
 
@@ -292,87 +292,87 @@ pdfBtn.addEventListener("click", async () => {
                 modalContent.appendChild(container);
 
                 // PDF button click handler
-pdfBtn.addEventListener("click", async () => {
-    const table = document.getElementById("records-table");
-    if (!table) {
-        alert("No table to export.");
-        return;
-    }
+                pdfBtn.addEventListener("click", async () => {
+                    const table = document.getElementById("records-table");
+                    if (!table) {
+                        alert("No table to export.");
+                        return;
+                    }
 
-    const sectionName = select.value;
-    if (!sectionName) {
-        alert("Please select a section first.");
-        return;
-    }
+                    const sectionName = select.value;
+                    if (!sectionName) {
+                        alert("Please select a section first.");
+                        return;
+                    }
 
-    try {
-        // Fetch user info
-        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
-        const userData = await userRes.json();
-        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname} (${userData.role})` : "N/A";
+                    try {
+                        // Fetch user info
+                        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+                        const userData = await userRes.json();
+                        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname} (${userData.role})` : "N/A";
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: "landscape" });
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const totalPagesExp = "{total_pages_count_string}";
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF({ orientation: "landscape" });
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+                        const totalPagesExp = "{total_pages_count_string}";
 
-        // --- HEADER ---
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
+                        // --- HEADER ---
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(14);
+                        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(11);
-        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
-        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(11);
+                        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
+                        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
 
-        // --- TITLE ---
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        doc.text(sectionName, pageWidth / 2, 40, { align: "center" });
+                        // --- TITLE ---
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(13);
+                        doc.text(sectionName, pageWidth / 2, 40, { align: "center" });
 
-        // --- TABLE ---
-        doc.autoTable({
-            html: "#records-table",
-            startY: 48,
-            styles: { halign: "center", valign: "middle" },
-            headStyles: { fillColor: [41, 128, 185] },
-            theme: "grid",
-            tableWidth: "auto",
-            margin: { bottom: 20 },
-            didDrawPage: function (data) {
-                const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+                        // --- TABLE ---
+                        doc.autoTable({
+                            html: "#records-table",
+                            startY: 48,
+                            styles: { halign: "center", valign: "middle" },
+                            headStyles: { fillColor: [41, 128, 185] },
+                            theme: "grid",
+                            tableWidth: "auto",
+                            margin: { bottom: 20 },
+                            didDrawPage: function (data) {
+                                const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
 
-                // Footer
-                doc.setFontSize(10);
-                doc.setTextColor(100);
+                                // Footer
+                                doc.setFontSize(10);
+                                doc.setTextColor(100);
 
-                const now = new Date();
-                const formattedDate = now.toLocaleString();
+                                const now = new Date();
+                                const formattedDate = now.toLocaleString();
 
-                // Left side (Prepared by & Time)
-                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
-                doc.text(`Time and Date: ${formattedDate}`, 14, pageHeight - 8);
+                                // Left side (Prepared by & Time)
+                                doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
+                                doc.text(`Time and Date: ${formattedDate}`, 14, pageHeight - 8);
 
-                // Right side (Page number)
-                const pageText = `Page ${currentPage} of ${totalPagesExp}`;
-                const textWidth = doc.getTextWidth(pageText);
-                doc.text(pageText, pageWidth - textWidth - 14, pageHeight - 10);
-            }
-        });
+                                // Right side (Page number)
+                                const pageText = `Page ${currentPage} of ${totalPagesExp}`;
+                                const textWidth = doc.getTextWidth(pageText);
+                                doc.text(pageText, pageWidth - textWidth - 14, pageHeight - 10);
+                            }
+                        });
 
-        // Replace placeholder with total pages
-        doc.putTotalPages(totalPagesExp);
+                        // Replace placeholder with total pages
+                        doc.putTotalPages(totalPagesExp);
 
-        // --- OPEN IN NEW TAB ---
-        window.open(doc.output("bloburl"), "_blank");
+                        // --- OPEN IN NEW TAB ---
+                        window.open(doc.output("bloburl"), "_blank");
 
-    } catch (err) {
-        console.error(err);
-        alert("Failed to generate PDF.");
-    }
-});
+                    } catch (err) {
+                        console.error(err);
+                        alert("Failed to generate PDF.");
+                    }
+                });
 
 
 
@@ -445,7 +445,7 @@ pdfBtn.addEventListener("click", async () => {
     });
 
 
-    //enrollment audit
+    //students list
     const auditBtn = recordsButtons.querySelector("button:nth-child(3)"); // Audit button
 
     if (auditBtn) {
@@ -473,7 +473,22 @@ pdfBtn.addEventListener("click", async () => {
                     return;
                 }
 
-                const students = studentsData.students;
+                let students = studentsData.students;
+
+                // --- Sort students by last name ---
+                students.sort((a, b) => {
+                    const lastA = (a.lastname || "").toLowerCase();
+                    const lastB = (b.lastname || "").toLowerCase();
+                    if (lastA < lastB) return -1;
+                    if (lastA > lastB) return 1;
+                    return 0;
+                });
+
+                // --- Display total students ---
+                const totalCountDiv = document.createElement("div");
+                totalCountDiv.className = "mb-2 text-white font-semibold";
+                totalCountDiv.textContent = `Total Students: ${students.length}`;
+                modalContent.appendChild(totalCountDiv);
 
                 // 3. Dropdown for export
                 const exportDiv = document.createElement("div");
@@ -494,8 +509,8 @@ pdfBtn.addEventListener("click", async () => {
                 table.innerHTML = `
                 <thead class="bg-gray-700 text-white">
                     <tr>
-                        <th class="px-3 py-2 border border-gray-600">First Name</th>
                         <th class="px-3 py-2 border border-gray-600">Last Name</th>
+                        <th class="px-3 py-2 border border-gray-600">First Name</th>
                         ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Strand</th>' : ''}
                         <th class="px-3 py-2 border border-gray-600">Grade Level</th>
                         ${assignedLevel === 'senior high' ? '<th class="px-3 py-2 border border-gray-600">Semester</th>' : ''}
@@ -509,8 +524,8 @@ pdfBtn.addEventListener("click", async () => {
                 <tbody>
                     ${students.map(s => `
                         <tr>
-                            <td class="px-3 py-2 border border-gray-600">${s.firstname || ''}</td>
                             <td class="px-3 py-2 border border-gray-600">${s.lastname || ''}</td>
+                            <td class="px-3 py-2 border border-gray-600">${s.firstname || ''}</td>
                             ${assignedLevel === 'senior high' ? `<td class="px-3 py-2 border border-gray-600">${s.strand || ''}</td>` : ''}
                             <td class="px-3 py-2 border border-gray-600">${s.grade_level || ''}</td>
                             ${assignedLevel === 'senior high' ? `<td class="px-3 py-2 border border-gray-600">${s.semester || ''}</td>` : ''}
@@ -549,6 +564,11 @@ pdfBtn.addEventListener("click", async () => {
                         doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
                         doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
 
+                        // --- TOTAL STUDENTS ---
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(12);
+                        doc.text(`Total Students: ${students.length}`, pageWidth / 2, 35, { align: "center" });
+
                         // --- TABLE TITLE ---
                         doc.setFont("helvetica", "bold");
                         doc.setFontSize(13);
@@ -556,14 +576,14 @@ pdfBtn.addEventListener("click", async () => {
                         doc.text(tableTitle, pageWidth / 2, 40, { align: "center" });
 
                         // --- TABLE DATA ---
-                        const headers = ["First Name", "Last Name"];
+                        const headers = ["Last Name", "First Name"];
                         if (assignedLevel === 'senior high') headers.push("Strand");
                         headers.push("Grade Level");
                         if (assignedLevel === 'senior high') headers.push("Semester");
                         headers.push("Barangay", "Municipal/City", "Province", "Cellphone", "Email");
 
                         const bodyData = students.map(s => {
-                            const row = [s.firstname || '', s.lastname || ''];
+                            const row = [s.lastname || '', s.firstname || ''];
                             if (assignedLevel === 'senior high') row.push(s.strand || '');
                             row.push(s.grade_level || '');
                             if (assignedLevel === 'senior high') row.push(s.semester || '');
@@ -611,7 +631,6 @@ pdfBtn.addEventListener("click", async () => {
             }
         });
     }
-
 
 
     // Example function to open edit modal
@@ -988,35 +1007,35 @@ pdfBtn.addEventListener("click", async () => {
                 pdfBtn.addEventListener("click", async () => {
                     const { jsPDF } = window.jspdf;
                     if (!jsPDF) return alert("jsPDF not loaded!");
-                
+
                     const doc = new jsPDF({ orientation: "landscape" });
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     let totalPagesExp = "{total_pages_count_string}";
-                
+
                     // Fetch logged-in user info
                     let preparedBy = "Admin";
                     try {
                         const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
                         const userData = await userRes.json();
                         if (userData.success) preparedBy = `${userData.firstname} ${userData.lastname} (${userData.role})`;
-                    } catch {}
-                
+                    } catch { }
+
                     // --- HEADER ---
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(14);
                     doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
-                
+
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(11);
                     doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
                     doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
-                
+
                     // --- TABLE TITLE ---
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(13);
                     doc.text("Teachers List", pageWidth / 2, 40, { align: "center" });
-                
+
                     // --- TABLE DATA ---
                     const headers = [["First Name", "Middle Name", "Last Name", "Assigned Level", "Subjects"]];
                     const body = Array.from(table.querySelectorAll("tbody tr")).map(row => [
@@ -1026,7 +1045,7 @@ pdfBtn.addEventListener("click", async () => {
                         row.querySelector('select[name="assigned_level"]').value,
                         row.querySelector('input[name="subjects"]').value
                     ]);
-                
+
                     doc.autoTable({
                         startY: 45,
                         head: headers,
@@ -1037,12 +1056,12 @@ pdfBtn.addEventListener("click", async () => {
                         didDrawPage: function () {
                             const pageNum = doc.internal.getNumberOfPages();
                             doc.setFontSize(10);
-                
+
                             // Left footer (slightly transparent)
                             doc.setTextColor(150);
                             doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
                             doc.text(`Time and Date: ${new Date().toLocaleString()}`, 14, pageHeight - 8);
-                
+
                             // Right footer (far right)
                             doc.setTextColor(100);
                             const pageText = `Page ${pageNum} of ${totalPagesExp}`;
@@ -1050,15 +1069,15 @@ pdfBtn.addEventListener("click", async () => {
                             doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
                         }
                     });
-                
+
                     // Replace placeholder with total pages
                     doc.putTotalPages(totalPagesExp);
-                
+
                     // Open PDF in new tab
                     window.open(doc.output('bloburl'), '_blank');
                 });
-                
-                
+
+
 
 
                 // --- Existing edit logic remains unchanged ---
@@ -1318,34 +1337,34 @@ pdfBtn.addEventListener("click", async () => {
                 exportBtn.addEventListener("click", async () => {
                     const { jsPDF } = window.jspdf;
                     if (!jsPDF) return alert("jsPDF not loaded!");
-                
+
                     const doc = new jsPDF({ orientation: "landscape" });
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     let totalPagesExp = "{total_pages_count_string}";
-                
+
                     // Fetch logged-in user info
                     let preparedBy = "Admin";
                     try {
                         const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
                         const userData = await userRes.json();
                         if (userData.success) preparedBy = `${userData.firstname} ${userData.lastname} (${userData.role})`;
-                    } catch {}
-                
+                    } catch { }
+
                     // --- HEADER ---
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(14);
                     doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 15, { align: "center" });
-                
+
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(11);
                     doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
                     doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
-                
+
                     // --- TABLE TITLE ---
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(13);
-                
+
                     let title = "Subject List";
                     if (assignedLevel === "senior high") {
                         const strand = strandSelect?.value || "All Strands";
@@ -1354,7 +1373,7 @@ pdfBtn.addEventListener("click", async () => {
                         title = `Subjects - ${strand} | ${year} | ${sem}`;
                     }
                     doc.text(title, pageWidth / 2, 40, { align: "center" });
-                
+
                     // --- TABLE ---
                     doc.autoTable({
                         html: "#subjects-table",
@@ -1364,12 +1383,12 @@ pdfBtn.addEventListener("click", async () => {
                         didDrawPage: function () {
                             const pageNum = doc.internal.getNumberOfPages();
                             doc.setFontSize(10);
-                
+
                             // Left footer (slightly transparent)
                             doc.setTextColor(150);
                             doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
                             doc.text(`Time and Date: ${new Date().toLocaleString()}`, 14, pageHeight - 8);
-                
+
                             // Right footer (far right)
                             doc.setTextColor(100);
                             const pageText = `Page ${pageNum} of ${totalPagesExp}`;
@@ -1377,14 +1396,14 @@ pdfBtn.addEventListener("click", async () => {
                             doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
                         }
                     });
-                
+
                     // Replace placeholder with total pages
                     doc.putTotalPages(totalPagesExp);
-                
+
                     // Open PDF in new tab
                     window.open(doc.output("bloburl"), "_blank");
                 });
-            }catch (err) {
+            } catch (err) {
                 console.error(err);
                 alert("Error loading subjects.");
             }
@@ -1430,20 +1449,20 @@ pdfBtn.addEventListener("click", async () => {
                     exportBtn.addEventListener("click", async () => {
                         const sectionId = sectionSelect.value;
                         if (!sectionId) return alert("Please select a section.");
-                    
+
                         try {
                             const res = await fetch(`../php/fetch_classlist.php?section_id=${sectionId}`, { credentials: "include" });
                             const data = await res.json();
-                    
+
                             if (!data.success) return alert(data.message || "Failed to fetch class list.");
-                    
+
                             const { schoolYear, gradeLevel, section, adviser, students, preparedBy, date } = data;
                             const { jsPDF } = window.jspdf;
                             const doc = new jsPDF('landscape');
                             const pageWidth = doc.internal.pageSize.getWidth();
                             const pageHeight = doc.internal.pageSize.getHeight();
                             let totalPagesExp = "{total_pages_count_string}";
-                    
+
                             // --- HEADER ---
                             doc.setFont("helvetica", "bold");
                             doc.setFontSize(14);
@@ -1452,24 +1471,24 @@ pdfBtn.addEventListener("click", async () => {
                             doc.setFontSize(11);
                             doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
                             doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
-                    
+
                             // --- TABLE TITLE ---
                             doc.setFont("helvetica", "bold");
                             doc.setFontSize(13);
                             doc.text(`Class List - Section ${section} | Grade ${gradeLevel} | SY ${schoolYear}`, pageWidth / 2, 40, { align: "center" });
-                    
+
                             // Separate students by gender
                             const maleStudents = students.filter(s => s.gender?.toLowerCase() === 'male');
                             const femaleStudents = students.filter(s => s.gender?.toLowerCase() === 'female');
                             const maxRows = Math.max(maleStudents.length, femaleStudents.length);
-                    
+
                             const tableBody = [];
                             for (let i = 0; i < maxRows; i++) {
                                 const male = maleStudents[i]?.student_name || "";
                                 const female = femaleStudents[i]?.student_name || "";
                                 tableBody.push([i + 1, male, i + 1, female]);
                             }
-                    
+
                             // --- TABLE ---
                             doc.autoTable({
                                 head: [["No.", "Male Student", "No.", "Female Student"]],
@@ -1483,20 +1502,20 @@ pdfBtn.addEventListener("click", async () => {
                                     2: { halign: 'center', cellWidth: 15 },
                                     3: { halign: 'left', cellWidth: 80 }
                                 },
-                                margin: { 
-                                    top: 45, 
-                                    bottom: 20, 
+                                margin: {
+                                    top: 45,
+                                    bottom: 20,
                                     left: (pageWidth - (15 + 80 + 15 + 80)) / 2 // Center table horizontally
                                 },
                                 didDrawPage: function () {
                                     const pageNum = doc.internal.getNumberOfPages();
                                     doc.setFontSize(10);
-                            
+
                                     // Left footer (slightly transparent)
                                     doc.setTextColor(150);
                                     doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
                                     doc.text(`Time and Date: ${date}`, 14, pageHeight - 8);
-                            
+
                                     // Right footer (very right)
                                     doc.setTextColor(100);
                                     const pageText = `Page ${pageNum} of ${totalPagesExp}`;
@@ -1504,18 +1523,18 @@ pdfBtn.addEventListener("click", async () => {
                                     doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
                                 }
                             });
-                            
+
                             // Replace placeholder with total pages
                             doc.putTotalPages(totalPagesExp);
-                    
+
                             window.open(doc.output("bloburl"), "_blank");
-                    
+
                         } catch (err) {
                             console.error(err);
                             alert("Error generating PDF.");
                         }
                     });
-                 } catch (err) {
+                } catch (err) {
                     console.error(err);
                     modalContent.innerHTML = `<p>Error loading class list.</p>`;
                 }
@@ -1647,21 +1666,21 @@ if (recordsButtons) {
                 exportBtn.addEventListener("click", async () => {
                     const sectionId = sectionSelect.value;
                     if (!sectionId || currentSchedules.length === 0) return alert("Please select a section first.");
-                
+
                     try {
                         const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
                         const userData = await userRes.json();
                         const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname}` : "Admin";
-                
+
                         const sectionName = sectionSelect.options[sectionSelect.selectedIndex]?.text || "";
                         const currentDate = new Date().toLocaleString();
-                
+
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF({ orientation: "landscape" });
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const pageHeight = doc.internal.pageSize.getHeight();
                         let totalPagesExp = "{total_pages_count_string}";
-                
+
                         // --- HEADER ---
                         doc.setFont("helvetica", "bold");
                         doc.setFontSize(14);
@@ -1670,16 +1689,16 @@ if (recordsButtons) {
                         doc.setFontSize(11);
                         doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 22, { align: "center" });
                         doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 29, { align: "center" });
-                
+
                         // --- TABLE TITLE ---
                         doc.setFont("helvetica", "bold");
                         doc.setFontSize(13);
                         doc.text(`Class Schedule - Section ${sectionName}`, pageWidth / 2, 40, { align: "center" });
-                
+
                         // --- TABLE DATA ---
                         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
                         const times = [...new Set(currentSchedules.map(s => s.time_start + " - " + s.time_end))].sort();
-                
+
                         const bodyData = times.map(time => {
                             return [
                                 time,
@@ -1689,12 +1708,12 @@ if (recordsButtons) {
                                 })
                             ];
                         });
-                
+
                         // Calculate total table width for centering
                         const colWidths = [30, 50, 50, 50, 50, 50]; // Adjust widths as needed
                         const tableWidth = colWidths.reduce((a, b) => a + b, 0);
                         const marginLeft = (pageWidth - tableWidth) / 2;
-                
+
                         doc.autoTable({
                             head: [["Time", ...days]],
                             body: bodyData,
@@ -1707,29 +1726,29 @@ if (recordsButtons) {
                                 const pageNum = doc.internal.getNumberOfPages();
                                 doc.setFontSize(10);
                                 doc.setTextColor(150);
-                
+
                                 // Left footer
                                 doc.text(`Prepared by: ${preparedBy}`, 14, pageHeight - 15);
                                 doc.text(`Time and Date: ${currentDate}`, 14, pageHeight - 8);
-                
+
                                 // Right footer
                                 const pageText = `Page ${pageNum} of ${totalPagesExp}`;
                                 const textWidth = doc.getTextWidth(pageText);
                                 doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
                             }
                         });
-                
+
                         // Replace placeholder with total pages
                         doc.putTotalPages(totalPagesExp);
-                
+
                         window.open(doc.output("bloburl"), "_blank");
-                
+
                     } catch (err) {
                         console.error(err);
                         alert("Error generating PDF.");
                     }
                 });
-                
+
             } catch (err) {
                 console.error(err);
                 modalContent.innerHTML = `<p>Error loading sections.</p>`;
@@ -1738,6 +1757,214 @@ if (recordsButtons) {
     }
 }
 
+
+//classlist teacherss
+// classlist teachers
+if (recordsButtons) {
+    const classListTeachersBtn = recordsButtons.querySelector("button:nth-child(9)");
+    if (classListTeachersBtn) {
+        classListTeachersBtn.addEventListener("click", async () => {
+            const modal = document.getElementById("records-modal");
+            const modalContent = document.getElementById("records-modal-content");
+            modalContent.innerHTML = "";
+            modal.classList.remove("hidden");
+
+            try {
+                const res = await fetch("../php/fetch_teachers.php", { credentials: "include" });
+                const data = await res.json();
+
+                if (!data.success || !data.teachers) {
+                    modalContent.innerHTML = `<p class='text-red-400'>Failed to load teachers: ${data.message || "Unknown error"}</p>`;
+                    return;
+                }
+
+                const teachers = data.teachers;
+                const table = document.createElement("table");
+                table.className = "min-w-full bg-gray-800 text-gray-200 border border-gray-600 rounded-lg overflow-hidden";
+
+                const thead = document.createElement("thead");
+                thead.innerHTML = `
+                    <tr class="bg-gray-700 text-white">
+                        <th class="py-2 px-4 text-left border-b border-gray-600 w-12">#</th>
+                        <th class="py-2 px-4 text-left border-b border-gray-600">Teacher Name</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+
+                const tbody = document.createElement("tbody");
+
+                teachers.forEach((t, index) => {
+                    const row = document.createElement("tr");
+                    row.className = index % 2 === 0 ? "bg-gray-800 hover:bg-gray-700 cursor-pointer" : "bg-gray-700 hover:bg-gray-600 cursor-pointer";
+                    row.innerHTML = `
+                        <td class="py-2 px-4 border-b border-gray-600">${index + 1}</td>
+                        <td class="py-2 px-4 border-b border-gray-600 font-medium">${t.lastname}, ${t.firstname} ${t.middlename || ""}</td>
+                    `;
+
+                    // expandable section row (hidden by default)
+                    const sectionRow = document.createElement("tr");
+                    const sectionCell = document.createElement("td");
+                    sectionCell.colSpan = 2;
+                    sectionCell.className = "py-2 px-4 border-b border-gray-600 bg-gray-900 hidden";
+                    sectionRow.appendChild(sectionCell);
+
+                    row.addEventListener("click", async () => {
+                        if (!sectionCell.classList.contains("hidden")) {
+                            sectionCell.classList.add("hidden");
+                            sectionCell.innerHTML = "";
+                            return;
+                        }
+
+                        sectionCell.innerHTML = `<p class='text-blue-400 text-sm'>Loading sections...</p>`;
+                        sectionCell.classList.remove("hidden");
+
+                        try {
+                            const res = await fetch(`../php/fetch_teacher_sections.php?teacher_id=${t.teacher_id || t.id}`, { credentials: "include" });
+                            const data = await res.json();
+                        
+                            if (!data.success || !data.sections?.length) {
+                                sectionCell.innerHTML = `<p class='text-gray-400 text-sm'>No sections found.</p>`;
+                                return;
+                            }
+                        
+                            const sectionsDiv = document.createElement("div");
+                            sectionsDiv.className = "flex flex-wrap gap-2 mt-2";
+                        
+                            data.sections.forEach(s => {
+                                const btn = document.createElement("button");
+                                btn.className = "px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 text-sm";
+                                btn.textContent = `${s.section_name} (${s.grade_level}) - ${s.subjects.length ? s.subjects.join(", ") : "No subjects"}`;
+                                sectionsDiv.appendChild(btn);
+                        
+                                btn.addEventListener("click", async () => {
+                                    try {
+                                        const sectionId = s.section_id;
+                                        const sectionName = s.section_name;
+                                        const gradeLevel = s.grade_level;
+                                        const subjects = s.subjects.join(", ") || "No Subject";
+                                        const teacherName = s.teacher_name || "Unknown Teacher";
+                        
+                                        // Fetch students
+                                        const studentsRes = await fetch("../php/fetch_students_by_sections.php", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ section_id: sectionId })
+                                        });
+                                        const studentsData = await studentsRes.json();
+                        
+                                        if (!studentsData || studentsData.error) {
+                                            alert(studentsData?.error || "Failed to fetch students.");
+                                            return;
+                                        }
+                        
+                                        const studentsList = Array.isArray(studentsData.students) ? studentsData.students : [];
+                                        const maleStudents = studentsList.filter(st => st.gender?.toLowerCase() === "male");
+                                        const femaleStudents = studentsList.filter(st => st.gender?.toLowerCase() === "female");
+                        
+                                        // Fetch preparer info
+                                        const userRes = await fetch("../php/get_user_info.php", { credentials: "include" });
+                                        const userData = await userRes.json();
+                                        const preparedBy = userData.success ? `${userData.firstname} ${userData.lastname}` : "N/A";
+                        
+                                        const { jsPDF } = window.jspdf;
+                                        const doc = new jsPDF({ orientation: "landscape" });
+                                        const pageWidth = doc.internal.pageSize.getWidth();
+                                        const pageHeight = doc.internal.pageSize.getHeight();
+                                        let totalPagesExp = "{total_pages_count_string}";
+                        
+                                        // Header
+                                        doc.setFont("helvetica", "bold");
+                                        doc.setFontSize(14);
+                                        doc.text("SULIVAN NATIONAL HIGH SCHOOL", pageWidth / 2, 10, { align: "center" });
+                                        doc.setFont("helvetica", "normal");
+                                        doc.setFontSize(10);
+                                        doc.text("Sulivan, Baliwag, Baliuag, Philippines, 3006", pageWidth / 2, 16, { align: "center" });
+                                        doc.text("(044) 816 7731 | 300778@deped.gov.ph", pageWidth / 2, 22, { align: "center" });
+                        
+                                        // Title
+                                        doc.setFont("helvetica", "bold");
+                                        doc.setFontSize(12);
+                                        doc.text(`Student List - ${sectionName} (${gradeLevel})`, pageWidth / 2, 30, { align: "center" });
+                                        doc.setFont("helvetica", "italic");
+                                        doc.setFontSize(10);
+                                        doc.text(`Subject(s): ${subjects}`, pageWidth / 2, 36, { align: "center" });
+                                        doc.text(`Teacher: ${teacherName}`, pageWidth / 2, 42, { align: "center" });
+                        
+                                        const startY = 48;
+                                        const maxRows = Math.max(maleStudents.length, femaleStudents.length);
+                                        const combinedRows = [];
+                        
+                                        for (let i = 0; i < maxRows; i++) {
+                                            combinedRows.push([
+                                                i + 1,
+                                                maleStudents[i]?.student_name || "",
+                                                i + 1,
+                                                femaleStudents[i]?.student_name || ""
+                                            ]);
+                                        }
+                        
+                                        doc.autoTable({
+                                            head: [["#", "Male", "#", "Female"]],
+                                            body: combinedRows,
+                                            startY,
+                                            styles: { fontSize: 9 },
+                                            headStyles: { fillColor: [55, 65, 81], textColor: 255, halign: "center" },
+                                            columnStyles: {
+                                                0: { cellWidth: 15 },
+                                                1: { cellWidth: (pageWidth / 2) - 30 },
+                                                2: { cellWidth: 15 },
+                                                3: { cellWidth: (pageWidth / 2) - 30 }
+                                            },
+                                            margin: { left: 14 },
+                                            didDrawPage: function () {
+                                                const pageNum = doc.internal.getNumberOfPages();
+                                                doc.setFontSize(9);
+                                                doc.setTextColor(100);
+                        
+                                                const exportDate = new Date().toLocaleString('en-US', { hour12: false });
+                                                doc.text(`Prepared By: ${preparedBy}`, 14, pageHeight - 10);
+                                                doc.text(`Date: ${exportDate}`, 14, pageHeight - 5);
+                        
+                                                const pageText = `Page ${pageNum} of ${totalPagesExp}`;
+                                                const textWidth = doc.getTextWidth(pageText);
+                                                doc.text(pageText, pageWidth - textWidth - 5, pageHeight - 10);
+                                            }
+                                        });
+                        
+                                        doc.putTotalPages(totalPagesExp);
+                                        window.open(doc.output("bloburl"), "_blank");
+                        
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert("Error generating PDF.");
+                                    }
+                                });
+                            });
+                        
+                            sectionCell.innerHTML = "";
+                            sectionCell.appendChild(sectionsDiv);
+                        
+                        } catch (err) {
+                            console.error(err);
+                            sectionCell.innerHTML = `<p class='text-red-400 text-sm'>Error loading sections.</p>`;
+                        }
+                        
+                    });
+
+                    tbody.appendChild(row);
+                    tbody.appendChild(sectionRow);
+                });
+
+                table.appendChild(tbody);
+                modalContent.appendChild(table);
+
+            } catch (err) {
+                console.error(err);
+                modalContent.innerHTML = `<p class='text-red-400'>Error loading teachers.</p>`;
+            }
+        });
+    }
+}
 
 //completed
 if (recordsButtons) {

@@ -2,12 +2,12 @@
 session_start();
 header('Content-Type: application/json');
 
-// ✅ Enable debugging in XAMPP
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// --- Get student ID from URL (priority) or session
 $student_id = $_GET['student_id'] ?? ($_SESSION['user_id'] ?? null);
+$filter_grade_level = $_GET['grade_level'] ?? null; // For JHS and SHS
+$filter_semester = $_GET['semester'] ?? null;       // Only for SHS
 
 if (!$student_id) {
     echo json_encode(["error" => "No student_id provided or student not logged in"]);
@@ -15,7 +15,6 @@ if (!$student_id) {
 }
 
 try {
-    // ✅ XAMPP connection settings
     $host = 'localhost';
     $db   = 'sulivannhs';
     $user = 'root';
@@ -28,26 +27,28 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    // --- Check if SHS ---
+    // Check if SHS
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM shs_studentgrade WHERE student_id = ?");
     $stmt->execute([$student_id]);
     $shs_count = (int)$stmt->fetchColumn();
 
-    // --- Check if JHS ---
+    // Check if JHS
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM studentgrade WHERE student_id = ?");
     $stmt->execute([$student_id]);
     $jhs_count = (int)$stmt->fetchColumn();
 
-    // Debug info (so you can confirm what’s found)
     $debug_info = [
         "student_id" => $student_id,
         "shs_count" => $shs_count,
-        "jhs_count" => $jhs_count
+        "jhs_count" => $jhs_count,
+        "filter_grade_level" => $filter_grade_level,
+        "filter_semester" => $filter_semester
     ];
 
     if ($shs_count > 0) {
         $grade_level = "SHS";
-        $stmt = $pdo->prepare("
+
+        $sql = "
             SELECT 
                 sg.section_id,
                 sg.subject_id,
@@ -63,13 +64,29 @@ try {
             INNER JOIN subjects s ON sg.subject_id = s.subject_id
             LEFT JOIN teachers t ON sg.encoded_by = t.teacher_id
             WHERE sg.student_id = ?
-            ORDER BY sg.section_id ASC, s.name ASC
-        ");
-        $stmt->execute([$student_id]);
+        ";
+
+        $params = [$student_id];
+
+        if ($filter_grade_level) {
+            $sql .= " AND sg.grade_level = ?";
+            $params[] = $filter_grade_level;
+        }
+        if ($filter_semester) {
+            $sql .= " AND sg.semester = ?";
+            $params[] = $filter_semester;
+        }
+
+        $sql .= " ORDER BY sg.section_id ASC, s.name ASC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         $grades = $stmt->fetchAll();
+
     } elseif ($jhs_count > 0) {
         $grade_level = "JHS";
-        $stmt = $pdo->prepare("
+
+        $sql = "
             SELECT 
                 sg.section_id,
                 sg.subject_id,
@@ -85,9 +102,19 @@ try {
             INNER JOIN subjects s ON sg.subject_id = s.subject_id
             LEFT JOIN teachers t ON sg.encoded_by = t.teacher_id
             WHERE sg.student_id = ?
-            ORDER BY sg.section_id ASC, s.name ASC
-        ");
-        $stmt->execute([$student_id]);
+        ";
+
+        $params = [$student_id];
+
+        if ($filter_grade_level) {
+            $sql .= " AND sg.grade_level = ?";
+            $params[] = $filter_grade_level;
+        }
+
+        $sql .= " ORDER BY sg.section_id ASC, s.name ASC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         $grades = $stmt->fetchAll();
 
         foreach ($grades as &$row) {
@@ -102,6 +129,7 @@ try {
             $row['average'] = $count > 0 ? round($total / $count, 2) : null;
         }
         unset($row);
+
     } else {
         echo json_encode([
             "status" => "success",

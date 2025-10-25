@@ -28,15 +28,6 @@ if (!$data || empty($data['section_id']) || !is_array($data['schedules'])) {
 $section_id = intval($data['section_id']);
 $schedules = $data['schedules'];
 
-// === NEW: Delete all schedules for this section before inserting ===
-$deleteStmt = $conn->prepare("DELETE FROM class_schedules WHERE section_id = ?");
-if ($deleteStmt) {
-    $deleteStmt->bind_param("i", $section_id);
-    $deleteStmt->execute();
-    $deleteStmt->close();
-}
-// === END DELETE ===
-
 // Prepare insert statement
 $stmt = $conn->prepare("INSERT INTO class_schedules (section_id, subject_id, teacher_id, day_of_week, time_start, time_end) VALUES (?, ?, ?, ?, ?, ?)");
 if (!$stmt) {
@@ -45,13 +36,62 @@ if (!$stmt) {
     exit;
 }
 
-// Function to check overlap (kept for possible future server-side checks)
+// Function to check overlap
 function isOverlap($start1, $end1, $start2, $end2) {
     return (strtotime($start1) < strtotime($end2) && strtotime($end1) > strtotime($start2));
 }
 
 $conflicts = [];
 
+// --- In-memory conflict check within submitted schedules ---
+for ($i = 0; $i < count($schedules); $i++) {
+    $s1 = $schedules[$i];
+    $start1 = strtotime($s1['time_start']);
+    $end1 = strtotime($s1['time_end']);
+    $day1 = $s1['day_of_week'];
+
+    for ($j = $i + 1; $j < count($schedules); $j++) {
+        $s2 = $schedules[$j];
+        $start2 = strtotime($s2['time_start']);
+        $end2 = strtotime($s2['time_end']);
+        $day2 = $s2['day_of_week'];
+
+        // Same day and overlapping time
+        if ($day1 === $day2 && !($end1 <= $start2 || $start1 >= $end2)) {
+            $conflicts[] = [
+                'row_index'    => $j,
+                'subject_id'   => intval($s2['subject_id']),
+                'teacher_id'   => intval($s2['teacher_id']),
+                'day_of_week'  => $day2,
+                'time_start'   => date("H:i:s", $start2),
+                'time_end'     => date("H:i:s", $end2),
+                'subject_name' => '',
+                'teacher_name' => ''
+            ];
+        }
+    }
+}
+
+// If conflicts exist, reject submission **before touching anything**
+if (!empty($conflicts)) {
+    http_response_code(409); // Conflict
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Conflict detected! Some schedules overlap on the same day.',
+        'conflicts' => $conflicts
+    ]);
+    exit;
+}
+
+// --- DELETE OLD SCHEDULES NOW, after confirming no conflicts ---
+$deleteStmt = $conn->prepare("DELETE FROM class_schedules WHERE section_id = ?");
+if ($deleteStmt) {
+    $deleteStmt->bind_param("i", $section_id);
+    $deleteStmt->execute();
+    $deleteStmt->close();
+}
+
+// --- Insert new schedules ---
 foreach ($schedules as $index => $s) {
     $subject_id = intval($s['subject_id']);
     $teacher_id = intval($s['teacher_id']);
@@ -85,7 +125,6 @@ foreach ($schedules as $index => $s) {
     $result = $checkStmt->get_result();
 
     if ($result && $result->num_rows > 0) {
-        // Fetch subject name and teacher full name using prepared statements.
         $subjectName = "";
         $teacherName = "";
 
@@ -137,13 +176,10 @@ foreach ($schedules as $index => $s) {
 }
 
 // ✅ Update teacher_ids in sections_list (merge instead of overwrite)
-
-// Collect teacher IDs from schedules
 $teacherIds = array_map(function($s) {
     return intval($s['teacher_id']);
 }, $schedules);
 
-// Fetch existing teacher_ids from sections_list
 $existingIds = [];
 $fetchStmt = $conn->prepare("SELECT teacher_ids FROM sections_list WHERE section_id = ? LIMIT 1");
 if ($fetchStmt) {
@@ -156,11 +192,11 @@ if ($fetchStmt) {
     $fetchStmt->close();
 }
 
-// Merge and deduplicate
 $allTeacherIds = array_unique(array_merge($existingIds, $teacherIds));
-$teacherIdsStr = implode(',', $allTeacherIds);
+// Just use the new schedule teacher IDs (replace old ones)
+$teacherIdsStr = implode(',', array_unique($teacherIds));
 
-// Update sections_list with merged teacher_ids
+
 $updateStmt = $conn->prepare("UPDATE sections_list SET teacher_ids = ? WHERE section_id = ?");
 if ($updateStmt) {
     $updateStmt->bind_param("si", $teacherIdsStr, $section_id);
@@ -169,7 +205,7 @@ if ($updateStmt) {
 }
 
 if (!empty($conflicts)) {
-    http_response_code(409); // Conflict
+    http_response_code(409);
     echo json_encode([
         'status' => 'error',
         'message' => 'Conflict detected! Some schedules were not saved.',
@@ -178,7 +214,7 @@ if (!empty($conflicts)) {
     exit;
 }
 
-// ✅ AUDIT TRAIL (added section)
+// ✅ AUDIT TRAIL
 if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     $username = $_SESSION['username'] ?? $_SESSION['email'] ?? 'Unknown User';
     $details = "Updated class schedule for Section ID: $section_id";

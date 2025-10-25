@@ -8,9 +8,18 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    $student_id = intval($_POST['student_id'] ?? 0);
-    $section_id = intval($_POST['section_id'] ?? 0);
-    $subject_id = intval($_POST['subject_id'] ?? 0);
+    // Read JSON input
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!is_array($input) || count($input) === 0) {
+        echo json_encode(['status' => 'error', 'message' => 'No data received']);
+        exit;
+    }
+
+    $data = $input[0]; // single row payload
+    $student_id = intval($data['student_id'] ?? 0);
+    $section_id = intval($data['section_id'] ?? 0);
+    $subject_id = intval($data['subject_id'] ?? 0);
 
     if (!$student_id || !$section_id || !$subject_id) {
         echo json_encode(['status' => 'error', 'message' => 'Missing student, section, or subject ID']);
@@ -35,11 +44,10 @@ try {
         $stmt->execute([$student_id]);
         $grade_level = $stmt->fetchColumn();
 
-        $q1 = $_POST['q1'] !== '' ? (float)$_POST['q1'] : null;
-        $q2 = $_POST['q2'] !== '' ? (float)$_POST['q2'] : null;
-        $q3 = $_POST['q3'] !== '' ? (float)$_POST['q3'] : null;
-        $q4 = $_POST['q4'] !== '' ? (float)$_POST['q4'] : null;
-
+        $q1 = isset($data['q1']) ? (float)$data['q1'] : null;
+        $q2 = isset($data['q2']) ? (float)$data['q2'] : null;
+        $q3 = isset($data['q3']) ? (float)$data['q3'] : null;
+        $q4 = isset($data['q4']) ? (float)$data['q4'] : null;
         $average = null;
         $status = "active";
         if ($q1 !== null && $q2 !== null && $q3 !== null && $q4 !== null) {
@@ -72,20 +80,18 @@ try {
         $stmt->execute([$student_id]);
         $grade_level = $stmt->fetchColumn();
 
-        $q1_grade = (isset($_POST['q1_grade']) && is_numeric($_POST['q1_grade'])) ? (float)$_POST['q1_grade'] : null;
-        $q2_grade = (isset($_POST['q2_grade']) && is_numeric($_POST['q2_grade'])) ? (float)$_POST['q2_grade'] : null;
-        
+        $q1_grade = isset($data['q1_grade']) ? (float)$data['q1_grade'] : null;
+        $q2_grade = isset($data['q2_grade']) ? (float)$data['q2_grade'] : null;
         $final_grade = null;
         $remarks = null;
         $status = "active";
-        
-        // Only calculate final grade and remarks if BOTH grades are entered
+
         if ($q1_grade !== null && $q2_grade !== null) {
             $final_grade = ($q1_grade + $q2_grade) / 2;
             $remarks = ($final_grade >= 75) ? "Passed" : "Failed";
             $status = "completed";
         }
-        
+
         $stmt = $pdo->prepare("SELECT grade_id FROM shs_studentgrade WHERE student_id=? AND section_id=? AND subject_id=?");
         $stmt->execute([$student_id, $section_id, $subject_id]);
         $existing = $stmt->fetch();
@@ -110,7 +116,7 @@ try {
         exit;
     }
 
-    // ✅ Audit trail logging
+    // Audit trail
     if (!empty($details)) {
         $audit = $pdo->prepare("INSERT INTO audit_trail 
             (user_id, username, role, action, details, ip_address, timestamp) 
@@ -121,4 +127,3 @@ try {
 } catch (Throwable $e) {
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
-?>
